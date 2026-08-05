@@ -25,6 +25,10 @@ directly below another one in a different dimension is not a conflict. No refusa
 player: "too close to an existing colony" is as specific as it gets, which is also all a prospective
 settler needs to know.
 
+A successful placement also puts **`founderColonistCount` colonists (default 2) on the ground next to
+the beacon, immediately**. They are the seed of the autonomous build loop — see
+[Construction](Construction.md).
+
 Founding also asks Neroland Core to open its `first_colony` progression gate. It *asks* — the gate
 has its own requirements and NeroColonies does not force past them, and nothing in this mod ever
 requires a gate to be open. The write is a signal to the rest of the ecosystem and can be switched
@@ -84,9 +88,12 @@ their own. That is a structural decision rather than a matter of restraint: ther
 such a detail. A pleasant side effect is that a colonist carries **nothing player-shaped at all** —
 it does not even know who owns its colony.
 
-Colonists use vanilla goal AI only: float, walk to the workstation, walk home, stay inside the
-claim, look around. They **never break or place blocks, never open doors, never attack, and are
-never made hostile by anything in this mod** — there is no target selector on the entity at all.
+Colonists use vanilla goal AI only: float, walk to the workstation or the current build site, walk
+home, stay inside the claim, look around. They **never break blocks, never place blocks themselves,
+never open doors, never attack, and are never made hostile by anything in this mod** — there is no
+target selector on the entity at all. A colony's own construction is colony-tick logic, not something
+a colonist does with its hands; the builder walking to the site is presentation
+([Construction](Construction.md)).
 
 With no owner or access-list member within `aiActiveRadius` (default 64 blocks) a colonist goes
 *quiet*: its NeroColonies goals run on one tick in four and its navigation stops. Pathfinding is the
@@ -133,13 +140,20 @@ whose tier needs research the colony has not unlocked is not counted at all.
 
 The rules are short:
 
-- **Housing is the cap.** The colony grows toward `min(housing capacity, colonistsPerColony)`, one
-  colonist per colony cycle. Building housing is the whole of the population game — there is no
-  birth rate to tune and nothing to wait for beyond your own construction.
+- **Founders bootstrap.** `founderColonistCount` colonists arrive with the beacon and are held on the
+  roster *regardless of housing* — without them nothing could ever start, because housing is what
+  lets colonists arrive and building housing is what colonists do. They are a floor, not an
+  exemption: they still count toward both caps and take exactly the same survival treatment as
+  everybody else. See [Construction](Construction.md).
+- **Housing is the cap.** Above the founder floor the colony grows toward
+  `min(housing capacity, colonistsPerColony)`, one colonist per colony cycle. Building housing is the
+  whole of the population game — there is no birth rate to tune, and the colony builds most of it
+  for you.
 - **Survival is the gate.** Nobody arrives while life support has failed or the food store is empty.
-  A colony in trouble stops growing before it starts shrinking.
+  A colony in trouble stops growing before it starts shrinking. Replacing a lost *founder* is the one
+  exemption, because a colony with nobody left cannot fix the very problems the gate is testing for.
 - **Losing housing shrinks the roster.** Surplus colonists leave, newest first, so a colonist who
-  has been settled and working is the last to go.
+  has been settled and working is the last to go — never below the founder floor.
 
 A server-wide ceiling, `maxLoadedColonists` (default 300), bounds the total across every colony.
 
@@ -193,9 +207,11 @@ trouble.
 works out how long it was away, clamps that to `catchUpMaxHours` (default 24) and applies the missed
 cycles in one aggregate step at `catchUpEfficiency` (default 0.5).
 
-Consumption is applied first, then life support over the whole window, then morale — so a colony
-that would have starved while away is found starving rather than found fed and starving one tick
-later, and a colony left with no atmosphere comes back in `FAILED`.
+Consumption is applied first, then life support over the whole window, then construction credit, then
+morale — so a colony that would have starved while away is found starving rather than found fed and
+starving one tick later, and a colony left with no atmosphere comes back in `FAILED`. Catch-up
+advances a part-built structure's fabrication credit but **places no blocks**, so returning never
+triggers a burst of block placement in a chunk that has just loaded.
 
 Everything is one aggregate step: a colony away for the full 24 hours costs the same to catch up as
 one away for a minute.
@@ -222,8 +238,10 @@ two hundred colonies never land on the same game tick. In order:
 2. **food** — intake from the beacon's supply slots, then the cycle's consumption;
 3. **population** — growth gated on the two above;
 4. **jobs** — production, inside the shared per-tick budget;
-5. **morale** — last, because it is a reaction to everything above;
-6. **threshold events** — published only on an actual crossing, scoped to a colony id.
+5. **construction** — the colony's own building work, after jobs so builders are drawn from whoever
+   production did not need ([Construction](Construction.md));
+6. **morale** — last, because it is a reaction to everything above;
+7. **threshold events** — published only on an actual crossing, scoped to a colony id.
 
 On top of that, `colonyTickBudgetMs` (default 5 ms) caps the total colony work done in any one game
 tick. A colony that is due when the budget is spent stays due and runs on a later tick — it is never
@@ -245,6 +263,7 @@ colonies are never hungry.
 
 ## See also
 
+- [Construction](Construction.md) — founders, and how a colony builds itself
 - [Life support](Life-Support.md) — the other half of survival
 - [Jobs & research](Jobs-and-Research.md) — what a colony actually does all day
 - [Exports & outposts](Exports-and-Outposts.md) — selling the surplus, and remote work sites

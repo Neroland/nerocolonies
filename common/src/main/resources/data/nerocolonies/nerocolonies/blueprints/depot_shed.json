@@ -1,0 +1,21 @@
+{
+  "name": "blueprint.nerocolonies.depot_shed",
+  "category": "storage",
+  "priority": 30,
+  "max": 2,
+  "palette": {
+    "#": "minecraft:smooth_stone",
+    "G": "minecraft:glass",
+    "D": "nerocolonies:colony_depot"
+  },
+  "layers": [
+    [ "###", "###", "###" ],
+    [ "###", "#D#", "#.#" ],
+    [ "#G#", "###", "#.#" ],
+    [ "###", "###", "###" ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_stone", "count": 16 },
+    { "item": "minecraft:iron_ingot", "count": 8 }
+  ]
+}

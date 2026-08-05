@@ -34,6 +34,7 @@ import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
+import za.co.neroland.nerocolonies.colony.Construction;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.JobBoard;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
@@ -538,6 +539,7 @@ public final class NeroColoniesCommands {
         } else {
             ColonyStores.get(server).forget(colony.colonyId());
         }
+        Construction.forget(server, colony.colonyId());
         ColonyState.get(server).remove(colony.colonyId());
         String name = colony.name();
         source.sendSuccess(() -> Component.translatable("message.nerocolonies.claim.dissolved", name),
@@ -724,9 +726,10 @@ public final class NeroColoniesCommands {
         int research = ColonyDefinitions.researchForServer(server).size();
         int housing = ColonyDefinitions.housingForServer(server).size();
         int exports = ColonyDefinitions.exportsForServer(server).size();
+        int blueprints = ColonyDefinitions.blueprintsForServer(server).size();
 
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.reload_check.header",
-                jobs, research, housing, exports), false);
+                jobs, research, housing, exports, blueprints), false);
         if (rereading) {
             source.sendSuccess(() -> Component.translatable("command.nerocolonies.reload_check.reread"),
                     false);

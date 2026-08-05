@@ -8,7 +8,7 @@ of it. The formal statement is [`../PRIVACY.md`](../PRIVACY.md); this page is th
 > optional access log is off by default. One erase request clears the lot, and every other Nero mod
 > with it.
 
-## The two stores
+## The three stores
 
 ### 1. The colony index — `nerocolonies:colonies`
 
@@ -50,7 +50,24 @@ on every morale tick, and two 54-slot item lists have no business being copied t
 The consequence worth knowing: dissolving a colony drops **and forgets** its store in one operation.
 Doing either without the other would duplicate the goods or silently delete them.
 
-### 3. The access log — optional, off by default
+### 3. The construction index — `nerocolonies:construction`
+
+What each colony has built for itself, and the structure it is part way through: a count per
+blueprint id, and — while a build is running — the blueprint, the structure's corner position, how
+far down the build order it has got, banked fabrication credit and whether its materials were paid
+for. Enough to resume a half-built structure after a restart, which matters because a structure takes
+minutes of colony cycles and players log out in the middle of things.
+
+**Nothing player-shaped, again.** It is keyed by colony id, holds blueprint ids, one block position
+and counters, and is therefore out of scope for an erasure request in exactly the way the goods are.
+Like the goods it is separate from the colony index because the colony record is already at its
+sixteen-field codec ceiling and is copied on every morale tick.
+
+Dissolving a colony forgets its plan; the retention sweep drops any plan whose colony has gone by
+some other route. **What a colony already built stays standing** — NeroColonies never demolishes
+anything it put up.
+
+### 4. The access log — optional, off by default
 
 When `accessLogEnabled` is switched on (it is `false` out of the box), a colony records rows of
 exactly three things:

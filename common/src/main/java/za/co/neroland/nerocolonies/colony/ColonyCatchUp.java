@@ -79,6 +79,12 @@ public final class ColonyCatchUp {
         // this is the honest outcome — a colony left with no atmosphere comes back in FAILED.
         updated = LifeSupport.tick(level, updated, (int) Math.min(Integer.MAX_VALUE, window));
 
+        // Construction banks fabrication credit for the missed cycles and places NOTHING. A backlog
+        // of blocks laid on the tick a chunk loads would be a visible stutter and a lighting-update
+        // storm at exactly the worst moment; the credit is capped at a few cycles' worth, so a
+        // returning player sees the build resume briskly and then settle to the normal rate.
+        Construction.catchUp(level.getServer(), updated, cycles, yield);
+
         // Morale last, so it reacts to the state the colony is actually in now. The change is capped
         // by the same per-cycle rate, so a long absence moves morale a long way but never instantly.
         updated = Morale.apply(level, updated, comfortRatio, capacity, cycles);

@@ -18,7 +18,13 @@ buffer.
 - **Colonists** — interchangeable labour units with four fields and no schedule. They path between
   home and workstation, and they are **never deleted as a punishment**.
 - **Housing and population** — three habitat tiers, a chunk-budgeted housing sweep that sums capacity
-  and comfort, and growth gated on food and life support.
+  and comfort, and growth gated on food and life support. Two **founder colonists** arrive with the
+  beacon so the loop can start.
+- **Autonomous construction** — the colony builds itself from datapack **blueprints**: it picks a
+  structure, finds a flat spot inside its own claim, and lays a couple of blocks per cycle. Bring the
+  materials and it builds at full speed; leave it alone and it fabricates from scrap at a quarter
+  rate. It never overwrites an existing block, never builds outside the claim, and never demolishes
+  anything.
 - **Life support** — an oxygen generator burning Core gas and grid power, with an
   OK → DEGRADED → FAILED state machine. Failure decays morale; it never kills a colonist. Airless
   dimensions come from a planet mod through one adapter, and every dimension is breathable without
@@ -39,7 +45,8 @@ buffer.
   data-protection commands.
 - **Companion app support** — five read sections and two actions through Core's link API, scoped to
   the requesting player's own colonies.
-- **Everything is datapack-driven** — jobs, research, housing tiers and export tables are all JSON.
+- **Everything is datapack-driven** — jobs, research, housing tiers, export tables and structure
+  blueprints are all JSON.
 
 Neroland Core is the only hard dependency. Nerospace, NeroAgriculture, NeroLogistics, NeroEconomy and
 Energized Power are optional and detected at runtime; remove them all and the mod still runs.

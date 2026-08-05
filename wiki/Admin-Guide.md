@@ -41,6 +41,8 @@ around bounding that, and these are the dials.
 | `maxLoadedColonists` | 300 | Server-wide colonist entity ceiling across every colony. |
 | `aiActiveRadius` | 64 | How close an owner or member must be for a colonist's AI to run at full rate. Beyond it the goals run at a quarter rate and pathfinding stops entirely — and pathfinding is the expensive part of a colonist. |
 | `housingScanIntervalTicks` | 600 | Rest between housing sweeps. The sweep is already sliced (two loaded chunks at a time, 20 ticks apart) and never loads a chunk, but a longer rest means a colony that has finished building costs almost nothing. |
+| `constructionBlocksPerCycle` | 2 | Blocks a building colony places per cycle. Lowering it slows growth; `constructionEnabled=false` stops autonomous building entirely and hands every structure back to the player. A colony that is not building costs nothing — the site search runs at most eight candidates per cycle and rests for ten cycles after a fruitless sweep. |
+| `maxAutoStructures` | 12 | Ceiling on how much one colony will ever build for itself. |
 
 If colony processing is being deferred often, the server log carries one aggregate line at debug
 level roughly every five minutes — a count of deferrals and the current budget. It is deliberately
@@ -83,7 +85,9 @@ retention pass. It:
 - deletes **access-log rows** older than `accessLogRetentionDays` (default 7);
 - deletes **colony records whose beacon block is gone** — the case where a beacon vanished without a
   break event, such as an explosion or a world edit — and forgets the colony's goods with them;
-- deletes **outpost records** whose parent colony no longer exists, or whose own beacon is gone.
+- deletes **outpost records** whose parent colony no longer exists, or whose own beacon is gone;
+- deletes **construction records** whose colony no longer exists. What those colonies built stays
+  standing — NeroColonies never demolishes anything it put up.
 
 It never loads a chunk. A colony whose beacon is in an unloaded chunk is left alone entirely — an
 absent chunk is not evidence of anything — and will be reconsidered in a later session.
@@ -119,6 +123,18 @@ back — the sale is refused and the goods stay put.
 capped at `catchUpMaxHours` (default 24) and applied at `catchUpEfficiency` (default 0.5). Set
 `catchUpMaxHours` to `0` to disable catch-up entirely.
 
+**A colony is not building anything.** In order: is `constructionEnabled` on; has it reached
+`maxAutoStructures` or every blueprint's own `max`; has morale stopped work or life support failed;
+is the roster empty (`constructionRequiresColonist`); and is there anywhere flat, clear, loaded and
+close to the beacon's level left inside the claim? The beacon's Colony tab says which structure is
+under way, and `/nerocolonies reload-check` says whether any blueprints loaded at all. See
+[Construction](Construction.md).
+
+**A colony is building extremely slowly.** It has no materials and is fabricating from scrap at
+`constructionUnsuppliedFactor` (default 0.25). The Colony tab says `Fabricating …` rather than
+`Building …`. Put the blueprint's materials into colony storage and the same build speeds up
+immediately.
+
 **Players cannot found a colony.** Check `maxColoniesPerPlayer` (0 disables founding entirely),
 `maxColoniesTotal`, and `minColonySpacing` — the last is 192 blocks by default and is measured
 horizontally within one dimension.
@@ -127,6 +143,7 @@ horizontally within one dimension.
 
 - [Commands](Commands.md) — the full `/nerocolonies` tree
 - [Config](Config.md) — every key, default and range
+- [Construction](Construction.md) — founders, the build loop and the blueprint format
 - [Data storage](Data-Storage.md) — what is stored about players, retention and erasure
 - [Content format](Content-Format.md) — writing and debugging datapack content
 - [Telemetry](Telemetry.md) — opt-out crash reporting

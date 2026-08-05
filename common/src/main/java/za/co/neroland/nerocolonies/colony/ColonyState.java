@@ -437,6 +437,9 @@ public final class ColonyState extends SavedData {
                 // without a break event (an explosion, a world edit) left no place to drop them —
                 // but leaving the store behind would leak it forever.
                 ColonyStores.get(server).forget(colony.colonyId());
+                // The build record goes the same way, for the same reason: it is keyed by a colony id
+                // that no longer resolves to anything.
+                ColonyConstruction.get(server).forget(colony.colonyId());
                 orphans++;
             }
         }
@@ -457,6 +460,10 @@ public final class ColonyState extends SavedData {
                 orphanedOutposts++;
             }
         }
+
+        // Build records are keyed by colony id, so any plan whose colony has gone (dissolved, erased
+        // under the dissolve policy, or swept above) is dead weight. One pass, once per server.
+        ColonyConstruction.get(server).retainOnly(java.util.Set.copyOf(this.byId.keySet()));
 
         if (expiredRows > 0 || orphans > 0 || orphanedOutposts > 0) {
             // Counts only — never which colonies or which players (POPIA/GDPR).

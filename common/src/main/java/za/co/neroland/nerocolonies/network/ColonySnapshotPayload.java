@@ -17,6 +17,7 @@ import za.co.neroland.nerolandcore.economy.CurrencyApi;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyStorage;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
+import za.co.neroland.nerocolonies.colony.Construction;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.JobBoard;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
@@ -65,13 +66,16 @@ public record ColonySnapshotPayload(
         int accessCount,
         boolean isOwner,
         boolean marketAvailable,
+        String buildName,
+        int buildPercent,
+        int structuresBuilt,
         List<String> researchUnlocked,
         List<String> affordable) implements CustomPacketPayload {
 
     /** "You have no colony open" — sent when a GUI is opened on an unbound or dissolved beacon. */
     public static final ColonySnapshotPayload EMPTY = new ColonySnapshotPayload(
             false, BlockPos.ZERO, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0L, 0, 0, false, false,
-            List.of(), List.of());
+            "", 0, 0, List.of(), List.of());
 
     public static final Type<ColonySnapshotPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_snapshot"));
@@ -134,6 +138,11 @@ public record ColonySnapshotPayload(
                 colony.accessList().size(),
                 colony.isOwner(viewer.getUUID()),
                 CurrencyApi.hasRealProvider(),
+                // A translation key, not a rendered name: what the client shows is the client's
+                // business, and it keeps the payload the same size in every language.
+                Construction.activeNameKey(server, colony.colonyId()),
+                Construction.progressPercent(server, colony.colonyId()),
+                Construction.structuresBuilt(server, colony.colonyId()),
                 unlocked,
                 affordable);
     }
@@ -164,6 +173,9 @@ public record ColonySnapshotPayload(
         buf.writeVarInt(payload.accessCount);
         buf.writeBoolean(payload.isOwner);
         buf.writeBoolean(payload.marketAvailable);
+        buf.writeUtf(payload.buildName, MAX_ID_CHARS);
+        buf.writeVarInt(payload.buildPercent);
+        buf.writeVarInt(payload.structuresBuilt);
         writeIds(buf, payload.researchUnlocked);
         writeIds(buf, payload.affordable);
     }
@@ -195,6 +207,9 @@ public record ColonySnapshotPayload(
                 buf.readVarInt(),
                 buf.readBoolean(),
                 buf.readBoolean(),
+                buf.readUtf(MAX_ID_CHARS),
+                buf.readVarInt(),
+                buf.readVarInt(),
                 readIds(buf),
                 readIds(buf));
     }

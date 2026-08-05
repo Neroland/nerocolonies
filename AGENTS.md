@@ -80,8 +80,9 @@ za.co.neroland.nerocolonies
 ├── lifecycle/ServerStateReset    server started/stopped; clears the JVM-lifetime caches
 ├── colony/                       Colony, ColonyState, ColonyApi, ColonyClaims, AccessLog,
 │                                 ColonyTicker, ColonyCatchUp, ColonyStorage/Stores, ExportBuffer,
-│                                 HousingScan, JobBoard, Morale, LifeSupport, Population, Research
-├── content/                      ColonyDefinitions + the four datapack record types + effects
+│                                 HousingScan, JobBoard, Morale, LifeSupport, Population, Research,
+│                                 Construction + ColonyConstruction (autonomous building)
+├── content/                      ColonyDefinitions + the five datapack record types + effects
 ├── registry/ block/ item/ menu/  registration, blocks and block entities, menus (via MenuOpener)
 ├── entity/                       ColonistEntity + goals
 ├── client/                       client caches, screens, renderers
@@ -94,7 +95,7 @@ za.co.neroland.nerocolonies
 ## Conventions (cross-loader)
 
 - **Resources are HAND-AUTHORED in `common/src/main/resources`** — the multiloader does not run datagen.
-  Validate JSON after edits. Gameplay content (jobs, research, housing, exports) lives under
+  Validate JSON after edits. Gameplay content (jobs, research, housing, exports, blueprints) lives under
   `data/nerocolonies/nerocolonies/**` and is loaded at runtime, not baked in.
 - **Platform seams via ServiceLoader (no Architectury).** Put loader-agnostic code in `common/`; ship one
   impl per loader plus a `META-INF/services` entry. Keep `common/` free of `net.neoforged.*` /

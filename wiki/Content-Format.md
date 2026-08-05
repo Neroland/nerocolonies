@@ -1,7 +1,7 @@
 # Content format
 
-Jobs, research nodes, housing tiers and export entries are all **datapack JSON**. Adding a job, a
-research branch or a trade good needs no Java at all.
+Jobs, research nodes, housing tiers, export entries and blueprints are all **datapack JSON**. Adding
+a job, a research branch, a trade good or a whole structure needs no Java at all.
 
 ## Where files go
 
@@ -10,7 +10,12 @@ data/<namespace>/nerocolonies/jobs/<path>.json
 data/<namespace>/nerocolonies/research/<path>.json
 data/<namespace>/nerocolonies/housing/<path>.json
 data/<namespace>/nerocolonies/exports/<path>.json
+data/<namespace>/nerocolonies/blueprints/<path>.json
 ```
+
+> **Blueprints** — the structures a colony builds for itself — follow every rule on this page, but
+> their schema is documented with the system that uses it: see
+> [Construction](Construction.md#blueprints).
 
 **The id is the file path.** `data/mypack/nerocolonies/research/mining/drills.json` is the node
 `mypack:mining/drills`. Subdirectories are part of the id, which is how the shipped research tree

@@ -63,6 +63,13 @@ public final class NeroColoniesConfig {
             "colonistsPerColony", 24, 0, 256, true,
             "Population cap per colony. Housing capacity can never raise the roster above this.");
 
+    public static final ConfigValue<Integer> FOUNDER_COLONIST_COUNT = SCHEMA.intRange(
+            "founderColonistCount", 2, 0, 8, true,
+            "Colonists that arrive with a newly placed colony beacon. They exist without housing "
+                    + "(they are what builds the first housing) but still count toward "
+                    + "colonistsPerColony and maxLoadedColonists. 0 disables founders, which also "
+                    + "means autonomous construction never starts until you build housing by hand.");
+
     public static final ConfigValue<Integer> MAX_LOADED_COLONISTS = SCHEMA.intRange(
             "maxLoadedColonists", 300, 0, 5000, true,
             "Global cap on colonist entities alive at once across all loaded colonies.");
@@ -174,6 +181,37 @@ public final class NeroColoniesConfig {
     public static final ConfigValue<Double> EXPORT_VALUE_MULTIPLIER = SCHEMA.doubleRange(
             "exportValueMultiplier", 1.0D, 0.0D, 1000.0D, true,
             "Scalar on the credits paid when an export entry is sold.");
+
+    // --- Autonomous construction (server-authoritative) ---------------------
+
+    public static final ConfigValue<Boolean> CONSTRUCTION_ENABLED = SCHEMA.bool(
+            "constructionEnabled", true, true,
+            "Whether colonies build their own structures from the datapack blueprints. false leaves "
+                    + "every structure to the player; nothing else changes.");
+
+    public static final ConfigValue<Integer> CONSTRUCTION_BLOCKS_PER_CYCLE = SCHEMA.intRange(
+            "constructionBlocksPerCycle", 2, 0, 64, true,
+            "Blocks a colony may place per colony tick while building. Deliberately small: a colony "
+                    + "growing visibly over minutes reads as a colony, one that snaps into existence "
+                    + "reads as a command block.");
+
+    public static final ConfigValue<Double> CONSTRUCTION_UNSUPPLIED_FACTOR = SCHEMA.doubleRange(
+            "constructionUnsuppliedFactor", 0.25D, 0.0D, 1.0D, true,
+            "Build-rate multiplier while a structure's materials are NOT in colony storage - the "
+                    + "colonists fabricate from scrap instead, for free but slowly. Put the materials "
+                    + "in storage (or the beacon) and the same build runs at full speed. 0 means an "
+                    + "unsupplied colony never builds at all.");
+
+    public static final ConfigValue<Boolean> CONSTRUCTION_REQUIRES_COLONIST = SCHEMA.bool(
+            "constructionRequiresColonist", true, true,
+            "Whether a colony needs at least one living colonist to build. This is a roster check, "
+                    + "not a proximity one: block placement is colony-tick logic and never depends on "
+                    + "a colonist actually reaching the site.");
+
+    public static final ConfigValue<Integer> MAX_AUTO_STRUCTURES = SCHEMA.intRange(
+            "maxAutoStructures", 12, 0, 128, true,
+            "Total structures one colony may build for itself. Each blueprint also carries its own "
+                    + "smaller cap; this is the ceiling over all of them.");
 
     // --- Outposts (server-authoritative) ------------------------------------
 

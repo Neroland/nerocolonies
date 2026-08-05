@@ -23,6 +23,16 @@ public class OutpostMenu extends AbstractContainerMenu {
 
     private static final int UPGRADE_SLOTS = OutpostBeaconBlockEntity.UPGRADE_SLOTS;
 
+    /**
+     * Layout constants shared with the screen so the two cannot drift — the screen paints a well and
+     * a tray from these very coordinates rather than from a duplicate set of its own.
+     */
+    public static final int MODULE_X = 152;
+    public static final int MODULE_Y = 22;
+    public static final int INVENTORY_X = 8;
+    public static final int INVENTORY_Y = 103;
+    public static final int HOTBAR_Y = 159;
+
     private final Container container;
     private final ContainerData data;
 
@@ -38,7 +48,7 @@ public class OutpostMenu extends AbstractContainerMenu {
         this.data = data;
 
         for (int slot = 0; slot < UPGRADE_SLOTS; slot++) {
-            this.addSlot(new Slot(container, slot, 152, 20 + slot * 18) {
+            this.addSlot(new Slot(container, slot, MODULE_X, MODULE_Y + slot * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return container.canPlaceItem(this.getContainerSlot(), stack);
@@ -47,11 +57,12 @@ public class OutpostMenu extends AbstractContainerMenu {
         }
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(playerInventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+                this.addSlot(new Slot(playerInventory, col + row * 9 + 9,
+                        INVENTORY_X + col * 18, INVENTORY_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, 142));
+            this.addSlot(new Slot(playerInventory, col, INVENTORY_X + col * 18, HOTBAR_Y));
         }
         this.addDataSlots(data);
     }

@@ -20,6 +20,10 @@ There is exactly **one store that contains player-shaped data**, the colony inde
 The colony's own goods live in a second store (`nerocolonies:stores`) which holds **item stacks
 only**, keyed by colony id, and contains no player data whatsoever.
 
+A third store (`nerocolonies:construction`) records what each colony has built for itself and the
+structure it is part way through: blueprint ids, one block position, and counters. It is keyed by
+colony id, contains **no player data whatsoever**, and is likewise out of scope for a data request.
+
 Colony **research** is stored on the colony record as a set of node ids. It is colony-local rather
 than per-player, is shared by everyone with access to the colony, and is discarded when the colony
 is dissolved. It is not personal data.

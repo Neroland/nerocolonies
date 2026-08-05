@@ -36,10 +36,10 @@ public class ResearchMenu extends AbstractContainerMenu {
 
     /** Layout constants shared with the screen so the two cannot drift. */
     public static final int WIDTH = 256;
-    public static final int INVENTORY_X = 48;
-    public static final int INVENTORY_Y = 140;
-    public static final int HOTBAR_Y = 198;
-    public static final int HEIGHT = 222;
+    public static final int INVENTORY_X = 47;
+    public static final int INVENTORY_Y = 156;
+    public static final int HOTBAR_Y = 212;
+    public static final int HEIGHT = 236;
 
     private final Container container;
     private final ContainerData data;

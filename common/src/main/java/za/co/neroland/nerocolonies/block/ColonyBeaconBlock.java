@@ -39,6 +39,8 @@ import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
+import za.co.neroland.nerocolonies.colony.Construction;
+import za.co.neroland.nerocolonies.colony.Population;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
 import za.co.neroland.nerocolonies.network.ColonySync;
@@ -155,6 +157,10 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
         colonies.log(colony.colonyId(), owner, AccessLog.Action.FOUND);
         beacon.bind(colony.colonyId());
 
+        // The founders arrive with the beacon, not on the first colony tick a minute and a half
+        // later: they are what starts the whole autonomous loop, and the player is standing here now.
+        Population.spawnFounders(serverLevel, colony);
+
         if (NeroColoniesConfig.GATE_WRITES_ENABLED.get()) {
             // tryOpen, never open: requirements are Core's business, and Nerospace opens the same
             // gate from the Star-Guide, so a double open must be (and is) a no-op.
@@ -217,6 +223,9 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
                 // would duplicate them, because the store still holds the same stacks. Dropping and
                 // forgetting is one operation for exactly that reason.
                 ColonyStores.dropAndForget(level, pos, colony.colonyId());
+                // The build record goes with the colony too. What it already put up stays standing:
+                // NeroColonies never demolishes anything it built.
+                Construction.forget(serverLevel.getServer(), colony.colonyId());
                 colonies.remove(colony.colonyId());
                 player.sendSystemMessage(
                         Component.translatable("message.nerocolonies.claim.dissolved", colony.name()));

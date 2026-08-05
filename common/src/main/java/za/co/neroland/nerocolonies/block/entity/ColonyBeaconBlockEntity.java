@@ -41,6 +41,7 @@ import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStorage;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
 import za.co.neroland.nerocolonies.colony.ColonyTicker;
+import za.co.neroland.nerocolonies.colony.Construction;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.FoodSupply;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
@@ -145,7 +146,10 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_WORK_STOPPED = 12;
     public static final int DATA_LIFE_STATE = 13;
     public static final int DATA_GENERATORS = 14;
-    public static final int DATA_SIZE = 15;
+    public static final int DATA_BUILD_PERCENT = 15;
+    public static final int DATA_STRUCTURES_BUILT = 16;
+    public static final int DATA_BUILD_SUPPLIED = 17;
+    public static final int DATA_SIZE = 18;
 
     /** The colony this beacon anchors, or {@code null} until placement binds one. */
     @Nullable
@@ -172,6 +176,15 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
 
     private int refreshCountdown;
 
+    /**
+     * The construction readouts, sampled once per server tick rather than read per data slot. Three
+     * gauges each reaching into the construction saved data on every {@code get} would be three map
+     * lookups per tick per open screen for values that only change on a colony cycle.
+     */
+    private transient int buildPercent;
+    private transient int structuresBuilt;
+    private transient boolean buildSupplied;
+
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -194,6 +207,9 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 case DATA_LIFE_STATE -> colony == null ? 0 : LifeSupport.stateOf(colony).ordinal();
                 case DATA_GENERATORS -> colony == null ? 0
                         : clamp(LifeSupport.generatorCount(colony.colonyId()));
+                case DATA_BUILD_PERCENT -> ColonyBeaconBlockEntity.this.buildPercent;
+                case DATA_STRUCTURES_BUILT -> clamp(ColonyBeaconBlockEntity.this.structuresBuilt);
+                case DATA_BUILD_SUPPLIED -> ColonyBeaconBlockEntity.this.buildSupplied ? 1 : 0;
                 default -> 0;
             };
         }
@@ -305,6 +321,9 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
         }
         if (this.colonyId == null || !(level instanceof ServerLevel serverLevel)) {
             this.cached = null;
+            this.buildPercent = 0;
+            this.structuresBuilt = 0;
+            this.buildSupplied = false;
             return;
         }
         MinecraftServer server = serverLevel.getServer();
@@ -337,6 +356,9 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 this.tickState.housing().restart();
             }
         }
+        this.buildPercent = Construction.progressPercent(server, this.colonyId);
+        this.structuresBuilt = Construction.structuresBuilt(server, this.colonyId);
+        this.buildSupplied = Construction.isSupplied(server, this.colonyId);
         this.cached = colony;
     }
 

@@ -69,7 +69,7 @@ public final class NeroColoniesTelemetry {
      * permission to SEND events and nothing else: it cannot read issues, and it identifies the
      * NeroColonies project, never a player. Still the placeholder; see the guard above.
      */
-    private static final String DSN = PLACEHOLDER_DSN;
+    private static final String DSN = "https://a78299dcdd327f6c5fc574aaab31930f@o4511183823241216.ingest.de.sentry.io/4511860057964624";
 
     /** Stack traces must contain this package for an event to be sent. */
     private static final String PACKAGE_MARKER = "za.co.neroland.nerocolonies";

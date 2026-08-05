@@ -11,11 +11,130 @@ The 0.1.0 build, feature-complete: the foundation wiring, the colony record and 
 colony command block, the datapack content loaders, colonist NPCs and housing, life support, the
 colony tick with food and morale, automated jobs and colony storage, research, exports and planetary
 outposts, the command tree and privacy surface, the NeroLink module, the compatibility bridges, and
-the assets, lang and documentation pass. Everything below is compile-verified across all six cells
+the assets, lang and documentation pass — plus founder colonists and autonomous construction, which
+close the loop that makes a colony grow without being told to. Everything below is compile-verified
+across all six cells
 (`:{fabric,neoforge,forge}:{26.1.2,26.2}:build`) with `ecjCheck` clean on one cell per loader;
 runtime verification is the remaining stage.
 
+### Changed
+
+**GUI overhaul — every screen**
+
+- **Every slot now has a frame.** `NeroColoniesScreen` paints an 18x18 recessed well under each slot
+  the menu declares, walking `menu.slots` rather than a per-screen list of coordinates, so a well can
+  never drift from the slot it belongs to. Groups of slots (supply, modules, the storage grid and the
+  player's own inventory) additionally sit in a recessed tray. The screens painted their hull but not
+  their slots before this, which left the player looking at floating items on a flat rectangle and
+  the player inventory looking detached from the panel entirely.
+- **No text can leave the panel.** New `wrappedLabel` / `clampedLabel` / `labelRight` helpers measure
+  against the font and fold or ellipsise; every hint, status and datapack-supplied name on all six
+  screens goes through one of them. Previously the long hint lines (the research hint, the life-support
+  status, the station's five idle reasons) were drawn as plain single-line labels and ran past the
+  right edge of the hull.
+- **A gauge always has a track.** The trough and its quarter ticks are painted before the fill, so a
+  gauge at zero reads as an empty bar rather than as a missing one, and gauges carry a right-aligned
+  percentage on their caption line.
+- **The beacon's tab strip is a real control.** Tab widths are measured from the font at `init` time
+  and spread across the panel with even padding, with distinct idle / hover / selected states and a
+  selected tab that opens into the content area below it. The old strip used fixed 33px cells, which
+  ran "Colony" and "People" together in English, clipped the selected label, and would have failed in
+  most other languages.
+- **The beacon panel is 208x236** with the supply and module rows in one labelled band above the
+  player inventory, a hint naming the depot as the home for construction materials (they do not go in
+  the food row), and the Colony tab's construction readout kept and split into a progress line plus an
+  actionable "add its materials to colony storage" line. **No slot index moved** — the menu's slot
+  order (3 modules, 6 supply, 27 inventory, 9 hotbar) and its 18-int `ContainerData` are unchanged;
+  only slot coordinates did.
+- Layout constants for every screen now live on the **menu** and are consumed by the screen, so the
+  painted frames and the real slot positions come from one source. The oxygen generator, job station
+  and outpost beacon gained a module tray with a caption in the title band; the colony depot gained a
+  status row so its unlocked-slot count no longer overprints the first row of its grid; the research
+  screen gained a rule between its two panes, a hover state on the list, wrapped node titles and a
+  capped cost list, and its pager no longer collides with the player inventory.
+- New lang keys: `gui.nerocolonies.slots.modules`, `gui.nerocolonies.value.percent`,
+  `gui.nerocolonies.beacon.supply_hint`, `gui.nerocolonies.build.materials_hint`,
+  `gui.nerocolonies.access.online_hint`, `gui.nerocolonies.research.cost_more`.
+
 ### Added
+
+**Textures — the whole referenced set, generated**
+
+- **17 placeholder textures**, filling every path the mod already referenced: the twelve block faces
+  (`colony_beacon`, `outpost_beacon`, `oxygen_generator`, `colony_depot`, `research_station`, the
+  four job stations, the three habitat tiers), the four upgrade-module items, and the colonist's
+  64x64 entity sheet. Before this, every block and item rendered as the missing-texture checker.
+- **`tools/gen_textures.py`** is the entry point — `./gradlew genAssets`, or
+  `python tools/gen_textures.py` directly (`--force` to replace the set, `--list` for a dry run).
+  It is **additive**: an existing PNG is never overwritten, so hand-drawn replacements survive every
+  rerun and the script only fills gaps. It has **no third-party dependency** — PNGs are encoded with
+  `zlib` + `struct`, so `genAssets` is green on a bare Python 3 with no Pillow.
+- **The art follows the GUI palette**, so a block and its screen read as the same machine: dark hull
+  plate (the screens' `0x141C26` panel / `0x2A3A4D` edge) with a per-family accent — colony cyan
+  `0x4FB3D9` for the beacons, oxygen cyan `0x6FD3E8` for life support, work green `0x8FD96F` as the
+  job stations' shared status strip, depot amber `0xD9A64F`, research violet `0x9F7FE0`. Habitat
+  tiers use a lighter panel that brightens per tier. Upgrade modules share one casing and differ
+  only in glyph and hue, so they read as a family against the `0x232F3F` slot fill.
+- **The colonist sheet is painted against the model's real UV map** — vanilla biped offsets plus the
+  6x8x3 suit pack at `texOffs(0, 32)` — rather than as an abstract field, so the helmet visor, chest
+  panel, belt, cuffs and boots land on the faces they belong to.
+- **Every run reports coverage.** The script scans the mod's own blockstates, models and item
+  definitions for `nerocolonies:block/…` / `nerocolonies:item/…` references and the colonist
+  renderer for its entity path, then fails if a reference has no painter, a painter has no
+  reference, a referenced model file is absent, or a written PNG is missing or empty. Current run:
+  17 referenced, 17 painted, 0 orphans.
+- Nothing is written into `textures/gui/`: every screen paints procedurally and references no sheet.
+
+**Founder colonists and autonomous construction**
+
+- **Founder colonists.** Placing a colony beacon now puts `founderColonistCount` colonists (default
+  2) on the ground next to it immediately, rather than waiting for housing to exist first. They are
+  held on the roster regardless of housing capacity — a floor, not an exemption: they still count
+  toward `colonistsPerColony` and `maxLoadedColonists`, and they get exactly the same life-support,
+  food and morale treatment as anybody else. Replacing a lost founder is the one case exempt from the
+  food/life-support growth gate, because a colony with nobody left cannot build the farm or the
+  generator that would fix the problem it is being gated on.
+- **Autonomous construction.** A colony now builds itself. Every colony cycle a colony with nothing
+  under way picks the highest-priority blueprint it is allowed to build, finds a site inside its own
+  claim, and lays `constructionBlocksPerCycle` blocks per cycle (default 2) until it is done. The
+  player's lever is **supply, not command**: if the blueprint's materials are in colony storage they
+  are consumed once and the build runs at full rate; if they are not, the colonists fabricate from
+  scrap at `constructionUnsuppliedFactor` (default 0.25), free but slow. The check re-runs every
+  cycle, so bringing materials speeds up a build already in progress.
+- **Blueprints are datapack content** at `data/<ns>/nerocolonies/blueprints/*.json` — a character
+  grid with a palette, a category, a priority, a per-colony cap, an optional research prerequisite
+  and an `ItemTarget` material list. Deliberately a hand-authorable text format rather than structure
+  NBT. Loaded by `ColonyDefinitions` with the same never-crash `ValidationIssue` treatment as every
+  other schema: an unregistered palette block leaves a hole and the rest still builds, a missing
+  material only means the blueprint always builds unsupplied, and only a blueprint that would place
+  nothing at all is dropped.
+- Five starter blueprints ship: **Habitat Pod** (housing, ×6), **Farm Plot**, **Depot Shed**,
+  **Oxygen Hut** and **Research Cabin**, all built from blocks that already exist. Housing blueprints
+  are only eligible while the colony is short of bunks, so housing tracks population pressure instead
+  of sprawling to the edge of the claim.
+- **Safety rules, all enforced per block at placement time, not merely when the site was chosen:**
+  inside the claim only; only into replaceable blocks, so a player's build is never overwritten;
+  loaded chunks only, never loading one; flat ground within a few blocks of the beacon's level; solid
+  support under the bottom layer. Building pauses (never cancels, never demolishes) on morale
+  work-stop, on life support `FAILED`, on an empty roster when `constructionRequiresColonist` is set,
+  and at `maxAutoStructures`.
+- **Offline catch-up advances fabrication credit and places no blocks**, capped at four cycles'
+  worth, so returning to a colony never triggers a burst of block placement in a chunk that has just
+  loaded.
+- One otherwise-idle colonist is pointed at the active site as a **builder** — a role on the existing
+  `jobId` field, reassigned from scratch each cycle, drawn from whoever the job board did not need.
+  It is presentation only: placement is colony-tick logic and never waits for a colonist to arrive.
+- Surfaced on the beacon's Colony tab (`Building <name> - 34%`, or `Fabricating …` when unsupplied),
+  through three new synced data slots and three new `ColonySnapshotPayload` fields; a completed
+  structure fires Core's new colony-scoped `nerocolonies:structures` threshold channel, pushes an
+  owner-scoped `construction` NeroLink event, and triggers an immediate housing rescan so a finished
+  habitat raises capacity within seconds.
+- New saved data `nerocolonies:construction` (through `SavedDataRecovery`, like every other store),
+  keyed by colony id and holding blueprint counts plus the in-progress site. Nothing player-shaped,
+  so erasure is unaffected. Forgotten on every dissolve path, and swept for orphans.
+- New config keys: `founderColonistCount`, `constructionEnabled`, `constructionBlocksPerCycle`,
+  `constructionUnsuppliedFactor`, `constructionRequiresColonist`, `maxAutoStructures`.
+- New wiki page `wiki/Construction.md`; `reload-check` now reports the blueprint count.
 
 **Commands, admin and the privacy surface — Stage 10**
 
@@ -367,11 +486,12 @@ runtime verification is the remaining stage.
 
 ### Notes
 
-- **Textures are the known gap.** No block, item or entity texture ships yet: the blockstates,
-  models and item definitions all reference the final paths, so blocks and items render as the
-  missing-texture checker in a dev client until the art lands. That is acceptable pre-beta and is
-  tracked as the art follow-on. The two procedurally painted screens (colony storage, research) need
-  no PNG and look correct today.
+- **Textures are placeholder art, generated, not drawn.** Every referenced texture now ships — 12
+  block faces, 4 upgrade-module items and the colonist's 64x64 entity sheet — so nothing renders as
+  the missing-texture checker any more, but they are programmer art and the real art pass will
+  replace them wholesale. See the *Added* entry above for the generator. **All six screens remain
+  painted procedurally** — panel, slot wells, trays, gauges, tabs and buttons are all `fill`s — so
+  no screen needs a PNG and `textures/gui/` is deliberately empty.
 - The access-list editor in the beacon GUI (People tab, owner only) resolves names against **online
   players only** — an offline lookup means consulting the profile cache, which is where names and
   UUIDs are correlated, and doing that from a packet a client can send at will is not a trade this

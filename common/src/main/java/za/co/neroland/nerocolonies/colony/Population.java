@@ -19,10 +19,16 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesEntityTypes;
  * <h2>The rules, and why they are these rules</h2>
  *
  * <ul>
- *   <li><b>Housing is the cap.</b> A colony grows toward
+ *   <li><b>Founders bootstrap.</b> {@code founderColonistCount} colonists arrive with the beacon and
+ *       are held on the roster <em>regardless of housing</em>. Without them the loop cannot start:
+ *       housing is what lets colonists arrive, and building housing is what colonists do. They are a
+ *       floor under the roster, not an exemption — they still count toward
+ *       {@code colonistsPerColony} and {@code maxLoadedColonists}, and they take exactly the same
+ *       life-support and morale treatment as anybody else.</li>
+ *   <li><b>Housing is the cap.</b> Above the founder floor a colony grows toward
  *       {@code min(housingCapacity, colonistsPerColony)}, one colonist per colony tick. Building
  *       housing is therefore the whole of the population game; there is no birth rate to tune and
- *       nothing to wait for beyond your own construction.</li>
+ *       nothing to wait for beyond your colony's own construction.</li>
  *   <li><b>Survival is the gate.</b> Nobody arrives while life support has failed or the food store
  *       is empty. A colony in trouble stops growing before it starts shrinking.</li>
  *   <li><b>Losing housing shrinks the roster, and only the roster.</b> Surplus colonists leave —
@@ -67,7 +73,7 @@ public final class Population {
                 present.get(i).discard();
             }
             present = present.subList(0, Math.max(0, target));
-        } else if (present.size() < target && mayGrow(colony)) {
+        } else if (present.size() < target && mayGrow(colony, present.size())) {
             ColonistEntity arrival = spawnOne(level, colony);
             if (arrival != null) {
                 present = colonistsOf(level, colony);
@@ -78,6 +84,36 @@ public final class Population {
 
         int count = present.size();
         return count == colony.population() ? colony : colony.withPopulation(count);
+    }
+
+    /**
+     * Puts a brand-new colony's founders on the ground, next to the beacon that has just been placed.
+     *
+     * <p>Called from the placement flow rather than waiting for the first colony tick, because the
+     * player is standing right there: colonists that appear a minute and a half later read as a bug,
+     * and the whole point of founders is that placing the beacon visibly starts something.
+     *
+     * <p><b>Life support is not consulted.</b> Placing a beacon on an airless world means the player
+     * is themselves standing on it, and founders get the same treatment everyone else does — the
+     * graceful curve of life support failing, morale decaying, work stopping and colonists idling.
+     * They are never refused at the door and never killed on arrival; see {@code LifeSupport}.
+     *
+     * @return how many founders were actually placed (fewer if there was nowhere to stand)
+     */
+    public static int spawnFounders(ServerLevel level, Colony colony) {
+        int wanted = founderFloor();
+        int placed = 0;
+        for (int i = 0; i < wanted; i++) {
+            if (spawnOne(level, colony) == null) {
+                break; // nowhere to stand right now; the colony tick tops the roster up later
+            }
+            placed++;
+        }
+        if (placed > 0) {
+            NeroColoniesCommon.LOGGER.info("[NeroColonies] {} founder(s) arrived at a new colony.",
+                    placed);
+        }
+        return placed;
     }
 
     /** Every loaded colonist bound to this colony, in a stable order. */
@@ -92,9 +128,9 @@ public final class Population {
     }
 
     /**
-     * How many colonists this colony should have: its housing capacity, capped by
-     * {@code colonistsPerColony} and by whatever room is left under the server-wide
-     * {@code maxLoadedColonists} budget.
+     * How many colonists this colony should have: its housing capacity or the founder floor,
+     * whichever is larger, capped by {@code colonistsPerColony} and by whatever room is left under
+     * the server-wide {@code maxLoadedColonists} budget.
      *
      * <p>The server-wide figure is the sum of the stored colony populations rather than a live
      * entity count — it is O(colonies) instead of O(entities), it is already maintained, and being
@@ -102,7 +138,7 @@ public final class Population {
      */
     private static int targetPopulation(ServerLevel level, Colony colony, int housingCapacity) {
         int perColony = NeroColoniesConfig.COLONISTS_PER_COLONY.get();
-        int target = Math.min(Math.max(0, housingCapacity), perColony);
+        int target = Math.max(Math.min(Math.max(0, housingCapacity), perColony), founderFloor());
 
         int globalCap = NeroColoniesConfig.MAX_LOADED_COLONISTS.get();
         int othersElsewhere = 0;
@@ -114,8 +150,29 @@ public final class Population {
         return Math.clamp(target, 0, Math.max(0, globalCap - othersElsewhere));
     }
 
-    /** Growth gate: life support holding and something in the food store. */
-    private static boolean mayGrow(Colony colony) {
+    /**
+     * The roster size a colony is held at with no housing at all: {@code founderColonistCount},
+     * never above the per-colony cap. Zero disables founders (and with them the whole autonomous
+     * bootstrap — a colony then waits for the player to build the first housing by hand).
+     */
+    public static int founderFloor() {
+        return Math.min(Math.max(0, NeroColoniesConfig.FOUNDER_COLONIST_COUNT.get()),
+                Math.max(0, NeroColoniesConfig.COLONISTS_PER_COLONY.get()));
+    }
+
+    /**
+     * Growth gate: life support holding and something in the food store.
+     *
+     * <p>Replacing a lost <b>founder</b> is exempt. A colony below its founder floor has nothing left
+     * that can fix the very problems this gate is testing for — nobody to build a farm, nobody to
+     * build an oxygen generator — so gating the bootstrap on food and air would make a colony that
+     * lost its founders permanently dead rather than merely in trouble. The exemption is bounded by
+     * {@code founderColonistCount} and cannot grow a colony past it.
+     */
+    private static boolean mayGrow(Colony colony, int present) {
+        if (present < founderFloor()) {
+            return true;
+        }
         return colony.lifeSupportOk()
                 && (colony.foodStock() > 0 || NeroColoniesConfig.FOOD_PER_COLONIST_PER_CYCLE.get() <= 0);
     }

@@ -9,6 +9,12 @@ of goods, one population of interchangeable colonists, one morale figure, one re
 export buffer. Job stations do not run their own recipes — the colony's own cycle drives them, on
 one budget, so twenty stations stay a design choice rather than a server problem.
 
+**The colony builds itself.** Two founders arrive with the beacon and start putting up a habitat with
+no instruction from you at all. Your lever is supply, not command: leave a colony alone and it still
+grows, slowly, fabricating from scrap; bring the materials and the same structure goes up four times
+faster. This is an automation sink, not a management sim — there is no build queue to micromanage and
+no colonist to name.
+
 The failure curve is deliberately gentle and it always stops short of destruction. Life support
 that fails decays morale; morale that collapses stops work and leaves colonists idle; an unpowered
 job station is slow rather than stopped. **No colonist is ever deleted as a punishment and nothing
@@ -19,6 +25,8 @@ a colony produced is ever silently voided.** A colony that has gone wrong is a p
 - [Colony basics](Colony-Basics.md) — founding, claims and spacing, the access list, dissolving,
   colonists, housing tiers and the housing sweep, population growth, morale, and what happens to a
   colony while nobody is there.
+- [Construction](Construction.md) — founder colonists, the autonomous build loop, supplied versus
+  fabricated builds, where a colony may and may not build, and the blueprint datapack format.
 - [Life support](Life-Support.md) — the oxygen generator, Core's gas system, the
   OK → DEGRADED → FAILED state machine, and exactly what a dimension being airless means with and
   without a planet mod installed.
@@ -27,7 +35,8 @@ a colony produced is ever silently voided.** A colony that has gone wrong is a p
 - [Exports & outposts](Exports-and-Outposts.md) — the export buffer as a plain item capability,
   selling for credits, the export tables, and planetary outposts.
 - [Content format](Content-Format.md) — the four datapack JSON schemas (jobs, research, housing,
-  exports) with worked examples, the research effect types, and what happens to bad content.
+  exports) with worked examples, the research effect types, and what happens to bad content. The
+  fifth schema, blueprints, lives in [Construction](Construction.md).
 - [Commands](Commands.md) — the `/nerocolonies` command tree.
 - [Admin guide](Admin-Guide.md) — the operator's view: performance levers, broken datapacks, the
   retention sweep.

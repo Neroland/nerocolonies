@@ -10,6 +10,7 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.link.ColonyLinkEvents;
+import za.co.neroland.nerocolonies.network.ColonySync;
 import za.co.neroland.nerocolonies.progression.ColonyGates;
 
 /**
@@ -64,6 +65,14 @@ public final class ColonyTicker {
     public static final Identifier CHANNEL_MORALE =
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "morale");
 
+    /**
+     * Core threshold channel: how many structures the colony has built for itself. Fired on each
+     * completion, with the new total as the value — a NeroQuests objective can key off
+     * "the colony has built its third structure" with no coupling to this mod at all.
+     */
+    public static final Identifier CHANNEL_STRUCTURES =
+            Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "structures");
+
     /** Morale level whose crossing is worth publishing — the work-stop threshold is the interesting one. */
     private static final long MORALE_THRESHOLD_FALLBACK = 20L;
 
@@ -84,6 +93,8 @@ public final class ColonyTicker {
 
         private final HousingScan.State housing = new HousingScan.State();
 
+        private final Construction.State construction = new Construction.State();
+
         private boolean caughtUp;
         private boolean due;
 
@@ -98,10 +109,11 @@ public final class ColonyTicker {
             return this.housing;
         }
 
-        /** Forces a fresh catch-up and housing cycle (used when the claim radius changes). */
+        /** Forces a fresh catch-up, housing cycle and site search (used when the claim changes). */
         public void invalidate() {
             this.caughtUp = false;
             this.housing.restart();
+            this.construction.restart();
         }
     }
 
@@ -174,6 +186,11 @@ public final class ColonyTicker {
         //    place rather than per block entity.
         updated = tickJobs(level, updated, interval);
 
+        // 4b. Autonomous construction, after jobs so builders are drawn from the colonists production
+        //     did not need. This is the loop that makes a colony build itself: founders arrive with
+        //     the beacon, they put up housing, the housing brings more colonists.
+        tickConstruction(level, state, updated);
+
         // 5. Morale, reacting to everything above.
         updated = Morale.apply(level, updated, state.housing.comfortRatio(), state.housing.capacity(), 1);
 
@@ -208,6 +225,56 @@ public final class ColonyTicker {
             return JobBoard.tick(level, colony, 0);
         }
         return JobBoard.tick(level, colony, elapsedTicks);
+    }
+
+    /**
+     * Advances the colony's own building work and reacts to a finished structure.
+     *
+     * <p>Construction changes no colony field, so nothing is returned: what a new structure changes
+     * is the <em>world</em>, and the housing sweep is what turns that into capacity. Restarting the
+     * sweep here is why a finished habitat raises capacity within a few seconds rather than at the
+     * next scheduled rescan ten minutes later — which is the difference between the loop feeling
+     * alive and feeling broken.
+     */
+    private static void tickConstruction(ServerLevel level, State state, Colony colony) {
+        Identifier completed;
+        try {
+            completed = Construction.tick(level, colony, state.construction);
+        } catch (RuntimeException e) {
+            // Placement touches the world; a failure there must not take the colony tick with it.
+            NeroColoniesCommon.LOGGER.warn(
+                    "[NeroColonies] Colony construction failed this cycle; the colony tick continued.",
+                    e);
+            return;
+        }
+        if (completed == null) {
+            return;
+        }
+        // A new structure is new geometry: rescan now rather than at the next scheduled sweep.
+        state.housing.restart();
+        publishStructure(level, colony, completed);
+    }
+
+    /** Threshold crossing plus one owner-scoped companion event for a completed structure. */
+    private static void publishStructure(ServerLevel level, Colony colony, Identifier blueprint) {
+        int built = Construction.structuresBuilt(level.getServer(), colony.colonyId());
+        if (NeroColoniesConfig.THRESHOLD_EVENTS_ENABLED.get()) {
+            try {
+                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                        CHANNEL_STRUCTURES, colony.colonyId().toString(), built, 0L, true));
+            } catch (RuntimeException | LinkageError e) {
+                NeroColoniesCommon.LOGGER.warn(
+                        "[NeroColonies] A threshold-event subscriber failed; the colony tick continued.",
+                        e);
+            }
+        }
+        ColonyLinkEvents.structureCompleted(colony, blueprint, built);
+        if (level.getServer() != null) {
+            // The beacon's Colony tab names the structure being built, and that name comes from the
+            // per-player snapshot rather than a 16-bit data slot. Push a fresh one so a player
+            // watching the screen sees the next structure's name, not the finished one's.
+            ColonySync.refresh(level.getServer(), colony.colonyId());
+        }
     }
 
     // --- threshold events ---------------------------------------------------

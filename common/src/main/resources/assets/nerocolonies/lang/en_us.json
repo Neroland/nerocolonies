@@ -46,6 +46,9 @@
   "gui.nerocolonies.tab.research": "Tech",
   "gui.nerocolonies.tab.exports": "Trade",
 
+  "gui.nerocolonies.slots.modules": "Modules",
+  "gui.nerocolonies.value.percent": "%s%%",
+
   "gui.nerocolonies.stat.morale": "Morale: %s",
   "gui.nerocolonies.stat.power": "Power",
   "gui.nerocolonies.stat.oxygen": "Oxygen",
@@ -66,8 +69,14 @@
   "gui.nerocolonies.stat.storage": "Storage: %s / %s slots",
   "gui.nerocolonies.stat.export_buffer": "Export buffer: %s / %s slots",
 
+  "gui.nerocolonies.build.active": "Building %s - %s%%",
+  "gui.nerocolonies.build.unsupplied": "Fabricating %s - %s%% (no materials)",
+  "gui.nerocolonies.build.idle": "Not building - %s structure(s) up",
+  "gui.nerocolonies.build.materials_hint": "Add its materials to colony storage",
+
   "gui.nerocolonies.beacon.unbound": "This beacon is not bound to a colony.",
   "gui.nerocolonies.beacon.supply": "Food supply",
+  "gui.nerocolonies.beacon.supply_hint": "Food only. Materials go in the depot.",
   "gui.nerocolonies.beacon.colonists_hint": "Build housing inside the claim to raise capacity.",
   "gui.nerocolonies.beacon.jobs_hint": "Build a job station inside the claim to start production.",
   "gui.nerocolonies.beacon.work_stopped_hint": "Morale is too low to work. Fix food, housing or life support.",
@@ -96,6 +105,7 @@
   "gui.nerocolonies.research.cost": "Cost",
   "gui.nerocolonies.research.cost_none": "Free",
   "gui.nerocolonies.research.cost_line": "%s x %s",
+  "gui.nerocolonies.research.cost_more": "+ %s more",
   "gui.nerocolonies.research.unlock": "Research",
   "gui.nerocolonies.research.needs_power": "Not enough power",
   "gui.nerocolonies.research.page": "%s / %s",
@@ -109,6 +119,7 @@
   "gui.nerocolonies.access.add": "Add",
   "gui.nerocolonies.access.remove": "Remove",
   "gui.nerocolonies.access.members": "Members with access: %s",
+  "gui.nerocolonies.access.online_hint": "Online players only",
 
   "gui.nerocolonies.export.sell": "Sell",
   "gui.nerocolonies.export.value": "%s credits",
@@ -191,7 +202,7 @@
   "command.nerocolonies.admin.list.everywhere": "every dimension",
   "command.nerocolonies.admin.list.truncated": "(only the first %s are shown)",
   "command.nerocolonies.admin.list.outposts": "Outposts on this server: %s",
-  "command.nerocolonies.reload_check.header": "Colony content: %s job(s), %s research node(s), %s housing tier(s), %s export entr(ies).",
+  "command.nerocolonies.reload_check.header": "Colony content: %s job(s), %s research node(s), %s housing tier(s), %s export entr(ies), %s blueprint(s).",
   "command.nerocolonies.reload_check.reread": "The datapacks had changed, so the content was re-read.",
   "command.nerocolonies.reload_check.clean": "No validation issues.",
   "command.nerocolonies.reload_check.issues": "%s validation issue(s):",
@@ -215,6 +226,12 @@
   "job.nerocolonies.hydroponics": "Hydroponics",
   "job.nerocolonies.refine": "Refining",
   "job.nerocolonies.fabricate": "Fabrication",
+
+  "blueprint.nerocolonies.habitat_pod": "Habitat Pod",
+  "blueprint.nerocolonies.farm_plot": "Farm Plot",
+  "blueprint.nerocolonies.depot_shed": "Depot Shed",
+  "blueprint.nerocolonies.oxygen_hut": "Oxygen Hut",
+  "blueprint.nerocolonies.research_cabin": "Research Cabin",
 
   "housing.nerocolonies.habitat_pod": "Habitat Pod",
   "housing.nerocolonies.habitat_module": "Habitat Module",

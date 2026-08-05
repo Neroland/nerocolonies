@@ -28,6 +28,7 @@ opt-out that a server must never force on or off.
 | Key | Type | Default | Range | Server-authoritative | Purpose |
 | --- | --- | --- | --- | --- | --- |
 | `colonistsPerColony` | integer | `24` | 0–256 | yes | Population cap per colony. Housing capacity can never raise the roster above this. |
+| `founderColonistCount` | integer | `2` | 0–8 | yes | Colonists that arrive with a newly placed colony beacon. They exist without housing (they are what builds the first housing) but still count toward `colonistsPerColony` and `maxLoadedColonists`. `0` disables founders, which also means autonomous construction never starts until you build housing by hand. |
 | `maxLoadedColonists` | integer | `300` | 0–5,000 | yes | Global cap on colonist entities alive at once across all loaded colonies. |
 | `colonyTickIntervalTicks` | integer | `100` | 20–12,000 | yes | How often a colony processes production, food and morale. Colonies are staggered across this interval so N colonies never tick on the same game tick. |
 | `colonyTickBudgetMs` | integer | `5` | 1–200 | yes | Millisecond budget for colony processing per game tick. The remainder of a batch is deferred to the next tick rather than blowing the tick time. |
@@ -73,6 +74,18 @@ opt-out that a server must never force on or off.
 | `exportBufferSlots` | integer | `18` | 1–54 | yes | Slots in the beacon's export buffer. Overflow blocks further export production rather than voiding items. |
 | `exportValueMultiplier` | double | `1.0` | 0–1,000 | yes | Scalar on the credits paid when an export entry is sold. |
 
+## Autonomous construction
+
+See [Construction](Construction.md) for what these actually govern.
+
+| Key | Type | Default | Range | Server-authoritative | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `constructionEnabled` | boolean | `true` | — | yes | Whether colonies build their own structures from the datapack blueprints. `false` leaves every structure to the player; nothing else changes. |
+| `constructionBlocksPerCycle` | integer | `2` | 0–64 | yes | Blocks a colony may place per colony tick while building. Deliberately small: a colony growing visibly over minutes reads as a colony, one that snaps into existence reads as a command block. |
+| `constructionUnsuppliedFactor` | double | `0.25` | 0.0–1.0 | yes | Build-rate multiplier while a structure's materials are **not** in colony storage — the colonists fabricate from scrap instead, for free but slowly. Put the materials in storage and the same build runs at full speed. `0` means an unsupplied colony never builds at all. |
+| `constructionRequiresColonist` | boolean | `true` | — | yes | Whether a colony needs at least one living colonist to build. This is a roster check, not a proximity one: block placement is colony-tick logic and never depends on a colonist actually reaching the site. |
+| `maxAutoStructures` | integer | `12` | 0–128 | yes | Total structures one colony may build for itself. Each blueprint also carries its own smaller `max`; this is the ceiling over all of them. |
+
 ## Outposts
 
 | Key | Type | Default | Range | Server-authoritative | Purpose |
@@ -96,12 +109,13 @@ opt-out that a server must never force on or off.
 | Key | Type | Default | Server-authoritative | Purpose |
 | --- | --- | --- | --- | --- |
 | `gateWritesEnabled` | boolean | `true` | yes | Whether founding a colony opens Core's `first_colony` progression gate. NeroColonies never *requires* a gate to be open; this only controls the write. |
-| `thresholdEventsEnabled` | boolean | `true` | yes | Whether colony food, oxygen and morale threshold crossings are published on Core's event bus for other mods. Scope is a colony id, never a person. |
+| `thresholdEventsEnabled` | boolean | `true` | yes | Whether colony food, oxygen, morale and structure-completion threshold crossings are published on Core's event bus for other mods. Scope is a colony id, never a person. |
 | `linkModuleEnabled` | boolean | `true` | yes | Whether the NeroLink companion module is registered. Snapshots are per-player scoped and never enumerate other players. |
 
 ## See also
 
 - [Admin guide](Admin-Guide.md) — which of these to reach for, and when
+- [Construction](Construction.md) — founders and the autonomous build loop
 - [Colony basics](Colony-Basics.md) — what the claim, morale and catch-up keys actually govern
 - [Data storage](Data-Storage.md) — the privacy keys in practice
 - [Telemetry](Telemetry.md) — `telemetryEnabled`

@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.gson.JsonObject;
 
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
@@ -196,6 +197,36 @@ public final class ColonyLinkEvents {
             forOwner(colony, ColonyLinkModule.TOPIC_EXPORTS, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_EXPORTS, e);
+        }
+    }
+
+    // --- construction ------------------------------------------------------------
+
+    /**
+     * Publishes a finished structure. Owner-scoped and no alert: a colony building itself a habitat
+     * is good news, and good news does not survive in an alert store until somebody dismisses it.
+     *
+     * <p>Deliberately <b>not</b> broadcast. The equivalent broadcast would have to carry a colony id
+     * and a blueprint id and nothing else to be safe, which is information nobody has a use for; the
+     * colony-scoped Core threshold channel {@code nerocolonies:structures} already covers the
+     * cross-mod case (a NeroQuests objective, say) without any per-player routing at all.
+     *
+     * @param blueprint the blueprint that was completed — content, never player data
+     * @param built     how many structures the colony has now built for itself
+     */
+    public static void structureCompleted(Colony colony, Identifier blueprint, int built) {
+        if (!enabled()) {
+            return;
+        }
+        try {
+            JsonObject payload = colonyPayload(colony);
+            payload.addProperty("blueprint", blueprint.toString());
+            payload.addProperty("structures_built", built);
+            payload.addProperty("population", colony.population());
+            payload.addProperty("housing_capacity", colony.housingCapacity());
+            forOwner(colony, ColonyLinkModule.TOPIC_CONSTRUCTION, payload);
+        } catch (RuntimeException e) {
+            warn(ColonyLinkModule.TOPIC_CONSTRUCTION, e);
         }
     }
 

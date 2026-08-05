@@ -59,6 +59,7 @@ public final class ColonyDefinitions {
     private static final String RESEARCH_DIRECTORY = "nerocolonies/research";
     private static final String HOUSING_DIRECTORY = "nerocolonies/housing";
     private static final String EXPORT_DIRECTORY = "nerocolonies/exports";
+    private static final String BLUEPRINT_DIRECTORY = "nerocolonies/blueprints";
     private static final String EXTENSION = ".json";
 
     /** Stands in for "the whole load", which belongs to no single resource. */
@@ -82,9 +83,17 @@ public final class ColonyDefinitions {
     private static Map<Identifier, ResearchNode> research = Map.of();
     private static Map<Identifier, HousingTier> housing = Map.of();
     private static Map<Identifier, ExportEntry> exports = Map.of();
+    private static Map<Identifier, Blueprint> blueprints = Map.of();
 
     /** Housing lookup by block id — the housing sweep's hot path, rebuilt with the definitions. */
     private static Map<Identifier, HousingTier> housingByBlock = Map.of();
+
+    /**
+     * Blueprints in the order the construction planner considers them: lowest {@code priority} first,
+     * ties broken by id so the order is stable across loads and across servers. Built once per load
+     * because the planner walks it on every colony tick that has a free build slot.
+     */
+    private static List<Blueprint> blueprintsByPriority = List.of();
 
     /** What the last load complained about, in the order it complained. Replaced wholesale. */
     private static List<ValidationIssue> issues = List.of();
@@ -112,6 +121,20 @@ public final class ColonyDefinitions {
     public static synchronized Map<Identifier, ExportEntry> exportsForServer(MinecraftServer server) {
         ensureLoaded(server);
         return exports;
+    }
+
+    public static synchronized Map<Identifier, Blueprint> blueprintsForServer(MinecraftServer server) {
+        ensureLoaded(server);
+        return blueprints;
+    }
+
+    /**
+     * The blueprints in build-priority order — what the construction planner walks. Sorted once per
+     * load; the planner filters this list rather than sorting one of its own.
+     */
+    public static synchronized List<Blueprint> blueprintsByPriority(MinecraftServer server) {
+        ensureLoaded(server);
+        return blueprintsByPriority;
     }
 
     /**
@@ -199,6 +222,10 @@ public final class ColonyDefinitions {
         return Optional.ofNullable(exports.get(id));
     }
 
+    public static Optional<Blueprint> blueprint(Identifier id) {
+        return Optional.ofNullable(blueprints.get(id));
+    }
+
     /** The currently loaded jobs, keyed by id (empty until a server loads its datapacks). */
     public static Map<Identifier, JobDefinition> jobs() {
         return jobs;
@@ -216,6 +243,10 @@ public final class ColonyDefinitions {
         return exports;
     }
 
+    public static Map<Identifier, Blueprint> blueprints() {
+        return blueprints;
+    }
+
     // --- loading ------------------------------------------------------------
 
     private static void load(MinecraftServer server) {
@@ -228,6 +259,7 @@ public final class ColonyDefinitions {
         Map<Identifier, ResearchNode> loadedResearch = Map.of();
         Map<Identifier, HousingTier> loadedHousing = Map.of();
         Map<Identifier, ExportEntry> loadedExports = Map.of();
+        Map<Identifier, Blueprint> loadedBlueprints = Map.of();
         List<ValidationIssue> collected = new ArrayList<>();
         try {
             ResourceManager resources = server.getResourceManager();
@@ -247,6 +279,13 @@ public final class ColonyDefinitions {
                     read(resources, RESEARCH_DIRECTORY, ResearchNode.CODEC, ResearchNode::withId,
                             "research node", collected),
                     loadedJobs, loadedHousing, loadedExports, collected);
+            // Blueprints last: their optional research prerequisite is checked against the research
+            // that actually survived, so a blueprint gated behind a node that was dropped for a cycle
+            // is reported rather than silently unbuildable.
+            loadedBlueprints = validateBlueprints(
+                    read(resources, BLUEPRINT_DIRECTORY, Blueprint.CODEC, Blueprint::withId,
+                            "blueprint", collected),
+                    loadedResearch, collected);
         } catch (RuntimeException e) {
             NeroColoniesCommon.LOGGER.warn(
                     "[NeroColonies] Colony content load failed; no colony content is active.", e);
@@ -254,6 +293,7 @@ public final class ColonyDefinitions {
             loadedResearch = Map.of();
             loadedHousing = Map.of();
             loadedExports = Map.of();
+            loadedBlueprints = Map.of();
             collected.clear();
             // The exception's own message can carry a filesystem path, so only its type is kept for
             // the operator-facing report; the full trace stays in the log line above.
@@ -264,12 +304,14 @@ public final class ColonyDefinitions {
         research = loadedResearch;
         housing = loadedHousing;
         exports = loadedExports;
+        blueprints = loadedBlueprints;
         housingByBlock = indexHousingByBlock(loadedHousing);
+        blueprintsByPriority = orderBlueprints(loadedBlueprints);
         issues = List.copyOf(collected);
         NeroColoniesCommon.LOGGER.info(
                 "[NeroColonies] Loaded {} job(s), {} research node(s), {} housing tier(s), "
-                        + "{} export entr(ies){}.",
-                jobs.size(), research.size(), housing.size(), exports.size(),
+                        + "{} export entr(ies), {} blueprint(s){}.",
+                jobs.size(), research.size(), housing.size(), exports.size(), blueprints.size(),
                 issues.isEmpty() ? "" : " with " + issues.size() + " validation issue(s)");
     }
 
@@ -493,6 +535,56 @@ public final class ColonyDefinitions {
                     "is in (or behind) a prerequisite cycle and can never unlock", true);
         }
         return Collections.unmodifiableMap(accepted);
+    }
+
+    /**
+     * Drops blueprints that would place nothing and reports the rest of their problems without
+     * dropping them.
+     *
+     * <p>The severity split is the important part. A palette entry naming a block from a mod that is
+     * not installed leaves a <b>hole</b> — the rest of the structure still builds, which is exactly
+     * what you want when somebody removes one mod from a pack — so it is {@code IGNORED}. A missing
+     * research prerequisite is {@code IGNORED} too: the blueprint stays, it simply never becomes
+     * eligible, and saying so in the report is more use than deleting it. Only a blueprint whose
+     * every cell is a hole is {@code DROPPED}, because it can never do anything at all.
+     */
+    private static Map<Identifier, Blueprint> validateBlueprints(Map<Identifier, Blueprint> parsed,
+            Map<Identifier, ResearchNode> validResearch, List<ValidationIssue> collected) {
+        Map<Identifier, Blueprint> accepted = new LinkedHashMap<>();
+        for (Blueprint blueprint : parsed.values()) {
+            for (Identifier missing : blueprint.missingBlocks()) {
+                warn(collected, blueprint.id(),
+                        "names unregistered block " + missing + " (those cells are left empty)", false);
+            }
+            if (blueprint.blockCount() <= 0) {
+                warn(collected, blueprint.id(), "places no blocks at all", true);
+                continue;
+            }
+            blueprint.research().ifPresent(node -> {
+                if (!validResearch.containsKey(node)) {
+                    warn(collected, blueprint.id(),
+                            "requires unknown research " + node + " and can never be built", false);
+                }
+            });
+            for (ItemTarget material : blueprint.materials()) {
+                if (!material.present()) {
+                    warn(collected, blueprint.id(), "material " + material.label()
+                            + " is not present in this launch (it will always build unsupplied)", false);
+                }
+            }
+            accepted.put(blueprint.id(), blueprint);
+        }
+        return Collections.unmodifiableMap(accepted);
+    }
+
+    /** Lowest priority first, ties broken by id so the planner's order never depends on file order. */
+    private static List<Blueprint> orderBlueprints(Map<Identifier, Blueprint> loaded) {
+        List<Blueprint> ordered = new ArrayList<>(loaded.values());
+        ordered.sort((a, b) -> {
+            int byPriority = Integer.compare(a.priority(), b.priority());
+            return byPriority != 0 ? byPriority : a.id().toString().compareTo(b.id().toString());
+        });
+        return List.copyOf(ordered);
     }
 
     private static Map<Identifier, HousingTier> indexHousingByBlock(Map<Identifier, HousingTier> tiers) {

@@ -1,0 +1,22 @@
+{
+  "name": "blueprint.nerocolonies.habitat_pod",
+  "category": "housing",
+  "priority": 10,
+  "max": 6,
+  "palette": {
+    "#": "minecraft:smooth_stone",
+    "G": "minecraft:glass",
+    "H": "nerocolonies:habitat_pod"
+  },
+  "layers": [
+    [ "###", "###", "###" ],
+    [ "###", "#H#", "#.#" ],
+    [ "###", "#G#", "#.#" ],
+    [ "###", "###", "###" ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_stone", "count": 16 },
+    { "item": "minecraft:iron_ingot", "count": 6 },
+    { "item": "minecraft:glass", "count": 2 }
+  ]
+}

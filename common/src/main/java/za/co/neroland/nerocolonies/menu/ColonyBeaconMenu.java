@@ -39,13 +39,23 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
      */
     private static final int LOCAL_SLOTS = ColonyBeaconBlockEntity.LOCAL_SLOTS;
 
-    /** Layout constants shared with the screen so the two cannot drift. */
-    public static final int SUPPLY_ROW_Y = 82;
+    /**
+     * Layout constants shared with the screen so the two cannot drift. The screen paints a well under
+     * every slot from these very coordinates (see {@code NeroColoniesScreen#paintSlotWells}), so a
+     * change here moves the frame with the slot rather than leaving the two out of step.
+     *
+     * <p>Both module and supply slots sit in one band at the foot of the tab content, above the
+     * player inventory: they are the only things on this screen a player puts an item into, and a
+     * player who cannot see where the food goes will not feed the colony.
+     */
+    public static final int SLOT_ROW_Y = 110;
     public static final int SUPPLY_ROW_X = 8;
-    public static final int UPGRADE_COLUMN_X = 152;
-    public static final int UPGRADE_COLUMN_Y = 32;
-    public static final int INVENTORY_Y = 118;
-    public static final int HOTBAR_Y = 176;
+    public static final int SUPPLY_ROW_Y = SLOT_ROW_Y;
+    public static final int UPGRADE_ROW_X = 140;
+    public static final int UPGRADE_ROW_Y = SLOT_ROW_Y;
+    public static final int INVENTORY_X = 23;
+    public static final int INVENTORY_Y = 156;
+    public static final int HOTBAR_Y = 212;
 
     private final Container container;
     private final ContainerData data;
@@ -61,8 +71,10 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         this.container = container;
         this.data = data;
 
+        // Slot order is part of this menu's contract (quickMoveStack and the client's stand-in
+        // container both index off it): three modules, then six supply, then the player inventory.
         for (int slot = 0; slot < UPGRADE_SLOTS; slot++) {
-            this.addSlot(new Slot(container, slot, UPGRADE_COLUMN_X, UPGRADE_COLUMN_Y + slot * 18) {
+            this.addSlot(new Slot(container, slot, UPGRADE_ROW_X + slot * 18, UPGRADE_ROW_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return container.canPlaceItem(this.getContainerSlot(), stack);
@@ -81,11 +93,11 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new Slot(playerInventory, col + row * 9 + 9,
-                        8 + col * 18, INVENTORY_Y + row * 18));
+                        INVENTORY_X + col * 18, INVENTORY_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, HOTBAR_Y));
+            this.addSlot(new Slot(playerInventory, col, INVENTORY_X + col * 18, HOTBAR_Y));
         }
         // Without this the client's gauges are all zero. See the class Javadoc.
         this.addDataSlots(data);
@@ -155,6 +167,25 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
     /** How many oxygen generators are currently feeding this colony. */
     public int generatorCount() {
         return this.data.get(ColonyBeaconBlockEntity.DATA_GENERATORS);
+    }
+
+    /** Progress through the structure the colony is building itself, 0..100. Zero when idle. */
+    public int buildPercent() {
+        return this.data.get(ColonyBeaconBlockEntity.DATA_BUILD_PERCENT);
+    }
+
+    /** How many structures this colony has built for itself. */
+    public int structuresBuilt() {
+        return this.data.get(ColonyBeaconBlockEntity.DATA_STRUCTURES_BUILT);
+    }
+
+    /**
+     * Whether the current structure's materials came out of colony storage. When false the colonists
+     * are fabricating from scrap and the build is running at {@code constructionUnsuppliedFactor} —
+     * which is the one thing on this screen a player can act on.
+     */
+    public boolean buildSupplied() {
+        return this.data.get(ColonyBeaconBlockEntity.DATA_BUILD_SUPPLIED) != 0;
     }
 
     // --- vanilla plumbing ---------------------------------------------------

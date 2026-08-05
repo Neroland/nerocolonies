@@ -1,0 +1,23 @@
+{
+  "name": "blueprint.nerocolonies.oxygen_hut",
+  "category": "life_support",
+  "priority": 40,
+  "max": 1,
+  "palette": {
+    "#": "minecraft:smooth_stone",
+    "G": "minecraft:glass",
+    "O": "nerocolonies:oxygen_generator"
+  },
+  "layers": [
+    [ "###", "###", "###" ],
+    [ "#G#", "#O#", "#.#" ],
+    [ "#G#", "#G#", "#.#" ],
+    [ "###", "###", "###" ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_stone", "count": 14 },
+    { "item": "minecraft:iron_ingot", "count": 12 },
+    { "item": "minecraft:glass", "count": 4 },
+    { "item": "minecraft:redstone", "count": 4 }
+  ]
+}

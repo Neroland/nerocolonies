@@ -97,6 +97,16 @@ public final class ColonyLinkModule {
     public static final String TOPIC_EXPORTS = "exports";
 
     /**
+     * Topic: one of your colonies finished building a structure for itself. Owner-scoped.
+     *
+     * <p>A topic and not a section: the snapshot sections describe standing state and adding a field
+     * to one would need a {@link #SCHEMA_VERSION} bump on every client. A completion is an event, it
+     * is what a companion app would actually want pushed, and a new topic costs an older client
+     * nothing — it simply never sees it.
+     */
+    public static final String TOPIC_CONSTRUCTION = "construction";
+
+    /**
      * Topic: a colony's life-support state changed. <b>Broadcast</b>, because a colony is a place,
      * not a person — the payload carries a colony id, a name, a dimension and a state, and nothing
      * else at all.

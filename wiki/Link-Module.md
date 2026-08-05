@@ -24,6 +24,7 @@ registered and no event is ever published.
 | Event | `morale` | One of your colonies crossed the work-stop threshold |
 | Event | `food` | One of your colonies ran out of rations, or started eating again |
 | Event | `exports` | One of your export buffers filled up, or was drained |
+| Event | `construction` | One of your colonies finished building a structure for itself |
 | Event | `colony_state` | A colony changed life-support state (**broadcast**) |
 | Alert | life support has failed | Raised for the colony's owner |
 | Alert | morale collapsed, work stopped | Raised for the colony's owner |
@@ -194,9 +195,16 @@ invent a mechanic through the back door. It belongs with the job board's next re
 
 ## Events and alerts
 
-Four of the five events are **owner-scoped**: they are published to the colony's owner, and the
+Five of the six events are **owner-scoped**: they are published to the colony's owner, and the
 bridge routes them to that player's sessions and nobody else's. A colony with no owner (after an
 erasure request under the default policy) publishes none of them, because there is nobody to tell.
+
+`construction` fires once per completed structure and carries the blueprint id, the colony's new
+structure total, its population and its housing capacity. It raises **no alert**: a colony building
+itself a habitat is good news, and good news has no business surviving in an alert store until
+somebody dismisses it. It is a topic rather than a snapshot section deliberately — adding a field to
+a section would force a schema-version bump on every client, while a new topic costs an older client
+nothing at all.
 
 `colony_state` is the one **broadcast**, and it reaches every session, so it carries a colony id, a
 dimension id and a life-support state — **not even the colony's name**, and certainly no owner, no
@@ -223,6 +231,7 @@ which any mod can subscribe to:
 | `nerocolonies:food_stock` | A colony starts or stops starving |
 | `nerocolonies:oxygen` | A colony's life support fails or recovers |
 | `nerocolonies:morale` | A colony crosses the work-stop threshold |
+| `nerocolonies:structures` | A colony finishes building a structure for itself (the value is the new total) |
 
 The scope of every one of them is a **colony id string, never a person**. They are crossings only —
 a colony that has been starving for an hour publishes nothing further — which is what makes them

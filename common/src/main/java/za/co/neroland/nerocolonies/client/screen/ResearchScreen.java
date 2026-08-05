@@ -33,6 +33,13 @@ import za.co.neroland.nerocolonies.platform.Services;
  * the two things a player needs — what leads to what, and what is reachable now — at any pack size,
  * and it pages instead of overflowing.
  *
+ * <h2>Two panes, and nothing crosses the rule between them</h2>
+ *
+ * <p>A datapack picks the node names and the cost items, so every string on this screen is somebody
+ * else's and could be any length. The list ellipsises each row against the list pane's width, the
+ * detail pane wraps the node's title and clamps its cost lines to a fixed count — nothing here is
+ * allowed to spill into the neighbouring pane or off the hull.
+ *
  * <h2>It renders synced state and decides nothing</h2>
  *
  * <p>Node states come from {@link ClientColonySnapshot}: researched, affordable and (derived from the
@@ -47,23 +54,29 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
     private static final int WIDTH = ResearchMenu.WIDTH;
     private static final int HEIGHT = ResearchMenu.HEIGHT;
 
-    private static final int LIST_X = 8;
-    private static final int LIST_Y = 30;
-    private static final int LIST_WIDTH = 140;
-    private static final int ROW_HEIGHT = 11;
-    private static final int ROWS_PER_PAGE = 9;
+    private static final int HEADER_Y = 20;
+    private static final int SPLIT_X = 148;
 
-    private static final int PANEL_X = 154;
-    private static final int PANEL_WIDTH = 94;
+    private static final int LIST_X = 8;
+    private static final int LIST_Y = 32;
+    private static final int LIST_WIDTH = 134;
+    private static final int ROW_HEIGHT = 11;
+    private static final int ROWS_PER_PAGE = 7;
+
+    private static final int PANEL_X = 156;
+    private static final int PANEL_WIDTH = 92;
 
     private static final int BUTTON_X = PANEL_X;
-    private static final int BUTTON_Y = 112;
+    private static final int BUTTON_Y = 110;
     private static final int BUTTON_WIDTH = PANEL_WIDTH;
     private static final int BUTTON_HEIGHT = 14;
 
     private static final int PAGE_BUTTON_Y = LIST_Y + ROWS_PER_PAGE * ROW_HEIGHT + 2;
     private static final int PAGE_BUTTON_WIDTH = 18;
     private static final int PAGE_BUTTON_HEIGHT = 11;
+
+    /** How many cost lines the detail pane will print before it stops. */
+    private static final int MAX_COST_LINES = 3;
 
     /** Row colours by state. */
     private static final int DONE = 0xFF5BE08A;
@@ -133,17 +146,32 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
     // --- drawing ------------------------------------------------------------
 
     @Override
+    protected void paintTrays(GuiGraphicsExtractor g) {
+        playerInventoryTray(g, ResearchMenu.INVENTORY_X, ResearchMenu.INVENTORY_Y,
+                ResearchMenu.HOTBAR_Y);
+    }
+
+    @Override
     protected void extractForeground(GuiGraphicsExtractor g) {
         if (!this.menu.bound()) {
-            label(g, Component.translatable("gui.nerocolonies.research.unclaimed"), LIST_X, 18, BAD);
+            wrappedLabel(g, Component.translatable("gui.nerocolonies.research.unclaimed"),
+                    LIST_X, HEADER_Y, WIDTH - 2 * LIST_X, 2, BAD);
             return;
         }
-        label(g, Component.translatable("gui.nerocolonies.research.header",
-                this.menu.unlockedCount(), this.menu.jobSlots()), LIST_X, 18, SUBTLE);
+        clampedLabel(g, Component.translatable("gui.nerocolonies.research.header",
+                this.menu.unlockedCount(), this.menu.jobSlots()), LIST_X, HEADER_Y,
+                WIDTH - 2 * LIST_X, SUBTLE);
+
+        // The rule between the two panes, so the list and the detail read as separate surfaces.
+        int ruleTop = this.topPos + LIST_Y - 3;
+        int ruleBottom = this.topPos + this.inventoryLabelY - 7;
+        g.fill(this.leftPos + SPLIT_X, ruleTop, this.leftPos + SPLIT_X + 1, ruleBottom, DIVIDER);
+        divider(g, LIST_X, LIST_Y - 4, WIDTH - 2 * LIST_X);
 
         List<Row> rows = rows();
         if (rows.isEmpty()) {
-            label(g, Component.translatable("gui.nerocolonies.research.no_content"), LIST_X, LIST_Y, SUBTLE);
+            wrappedLabel(g, Component.translatable("gui.nerocolonies.research.no_content"),
+                    LIST_X, LIST_Y, LIST_WIDTH, 2, SUBTLE);
         } else {
             drawList(g, rows);
             drawPager(g, rows.size());
@@ -157,13 +185,19 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
             Row row = rows.get(first + i);
             int dy = LIST_Y + i * ROW_HEIGHT;
             boolean isSelected = row.node().id().equals(this.selected);
-            if (isSelected) {
+            boolean hovered = !isSelected
+                    && within(this.hoverX, this.hoverY, LIST_X - 1, dy - 1, LIST_WIDTH + 2, ROW_HEIGHT);
+            if (isSelected || hovered) {
                 int x = this.leftPos + LIST_X - 1;
                 int y = this.topPos + dy - 1;
-                g.fill(x, y, x + LIST_WIDTH + 2, y + ROW_HEIGHT, TROUGH);
+                g.fill(x, y, x + LIST_WIDTH + 2, y + ROW_HEIGHT, isSelected ? TROUGH : PANEL_HEADER);
+                if (isSelected) {
+                    g.fill(x, y, x + 1, y + ROW_HEIGHT, ACCENT);
+                }
             }
             int indent = Math.min(row.depth(), 4) * 6;
-            label(g, Component.translatable(row.node().titleKey()), LIST_X + indent, dy, colourOf(row.node()));
+            clampedLabel(g, Component.translatable(row.node().titleKey()), LIST_X + indent + 2, dy,
+                    LIST_WIDTH - indent - 4, colourOf(row.node()));
         }
     }
 
@@ -186,42 +220,58 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
                 Component.literal("<"), this.page > 0);
         button(g, LIST_X + PAGE_BUTTON_WIDTH + 2, PAGE_BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT,
                 Component.literal(">"), this.page < pages - 1);
-        label(g, Component.translatable("gui.nerocolonies.research.page", this.page + 1, pages),
-                LIST_X + PAGE_BUTTON_WIDTH * 2 + 8, PAGE_BUTTON_Y + 2, SUBTLE);
+        clampedLabel(g, Component.translatable("gui.nerocolonies.research.page", this.page + 1, pages),
+                LIST_X + PAGE_BUTTON_WIDTH * 2 + 8, PAGE_BUTTON_Y + 2,
+                LIST_WIDTH - PAGE_BUTTON_WIDTH * 2 - 8, SUBTLE);
     }
 
     private void drawDetail(GuiGraphicsExtractor g) {
         ResearchNode node = selectedNode();
         if (node == null) {
-            label(g, Component.translatable("gui.nerocolonies.research.select"), PANEL_X, LIST_Y, SUBTLE);
+            wrappedLabel(g, Component.translatable("gui.nerocolonies.research.select"),
+                    PANEL_X, LIST_Y, PANEL_WIDTH, 2, SUBTLE);
             return;
         }
-        label(g, Component.translatable(node.titleKey()), PANEL_X, LIST_Y, TITLE);
-        label(g, Component.translatable("research.nerocolonies.branch." + node.branch()),
-                PANEL_X, LIST_Y + 11, SUBTLE);
+        // A datapack picked this name; it can be any length, so it wraps rather than overruns.
+        int dy = wrappedLabel(g, Component.translatable(node.titleKey()), PANEL_X, LIST_Y,
+                PANEL_WIDTH, 2, TITLE);
+        clampedLabel(g, Component.translatable("research.nerocolonies.branch." + node.branch()),
+                PANEL_X, dy, PANEL_WIDTH, SUBTLE);
 
-        int dy = LIST_Y + 26;
-        label(g, Component.translatable("gui.nerocolonies.research.cost"), PANEL_X, dy, SUBTLE);
-        dy += 10;
+        dy += 14;
+        clampedLabel(g, Component.translatable("gui.nerocolonies.research.cost"), PANEL_X, dy,
+                PANEL_WIDTH, SUBTLE);
+        dy += LINE;
         if (node.cost().isEmpty()) {
-            label(g, Component.translatable("gui.nerocolonies.research.cost_none"), PANEL_X, dy, SUBTLE);
-            dy += 10;
+            clampedLabel(g, Component.translatable("gui.nerocolonies.research.cost_none"), PANEL_X, dy,
+                    PANEL_WIDTH, SUBTLE);
+            dy += LINE;
         } else {
+            int printed = 0;
             for (ItemAmount amount : node.cost()) {
-                label(g, Component.translatable("gui.nerocolonies.research.cost_line",
-                        amount.count(), itemName(amount)), PANEL_X, dy, SUBTLE);
-                dy += 10;
+                if (printed == MAX_COST_LINES) {
+                    clampedLabel(g, Component.translatable("gui.nerocolonies.research.cost_more",
+                            node.cost().size() - printed), PANEL_X, dy, PANEL_WIDTH, MUTED);
+                    dy += LINE;
+                    break;
+                }
+                clampedLabel(g, Component.translatable("gui.nerocolonies.research.cost_line",
+                        amount.count(), itemName(amount)), PANEL_X, dy, PANEL_WIDTH, SUBTLE);
+                dy += LINE;
+                printed++;
             }
         }
-        label(g, stateLine(node), PANEL_X, dy + 2, colourOf(node));
+        // The state line has a fixed home: a variable cost list must never push it under the button.
+        clampedLabel(g, stateLine(node), PANEL_X, Math.min(dy + 2, BUTTON_Y - 12), PANEL_WIDTH,
+                colourOf(node));
 
         boolean enabled = available(node) && ClientColonySnapshot.isAffordable(node.id())
                 && this.menu.powered();
         button(g, BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT,
                 Component.translatable("gui.nerocolonies.research.unlock"), enabled);
         if (!this.menu.powered()) {
-            label(g, Component.translatable("gui.nerocolonies.research.needs_power"),
-                    PANEL_X, BUTTON_Y + BUTTON_HEIGHT + 3, BAD);
+            wrappedLabel(g, Component.translatable("gui.nerocolonies.research.needs_power"),
+                    PANEL_X, BUTTON_Y + BUTTON_HEIGHT + 3, PANEL_WIDTH, 1, BAD);
         }
     }
 
@@ -247,17 +297,6 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
             return Component.literal(amount.item().toString());
         }
         return new ItemStack(BuiltInRegistries.ITEM.getValue(amount.item())).getHoverName();
-    }
-
-    /** A flat panel button. Drawn by hand so there is no widget state to keep in step with the model. */
-    private void button(GuiGraphicsExtractor g, int dx, int dy, int width, int height, Component text,
-            boolean enabled) {
-        int x = this.leftPos + dx;
-        int y = this.topPos + dy;
-        g.fill(x - 1, y - 1, x + width + 1, y + height + 1, INK);
-        g.fill(x, y, x + width, y + height, enabled ? TROUGH : PANEL);
-        g.fill(x, y, x + width, y + 1, enabled ? ACCENT : PANEL_EDGE);
-        labelCentered(g, text, dx, width, dy + (height - 8) / 2, enabled ? TITLE : LOCKED);
     }
 
     // --- input --------------------------------------------------------------
@@ -291,10 +330,6 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
             return true;
         }
         return super.mouseClicked(event, doubleClick);
-    }
-
-    private static boolean within(double x, double y, int dx, int dy, int width, int height) {
-        return x >= dx && x < dx + width && y >= dy && y < dy + height;
     }
 
     /**

@@ -36,11 +36,17 @@ public class ColonyStorageMenu extends AbstractContainerMenu {
     public static final int COLUMNS = 9;
     public static final int ROWS = SLOTS / COLUMNS;
 
-    /** Layout constants shared with the screen so the two cannot drift. */
+    /**
+     * Layout constants shared with the screen so the two cannot drift. The grid starts below a status
+     * row rather than immediately under the title: the unlocked-slot count and the "not in a claim"
+     * warning both need somewhere to live that is not on top of the first row of slots.
+     */
     public static final int GRID_X = 8;
-    public static final int GRID_Y = 18;
-    public static final int INVENTORY_Y = GRID_Y + ROWS * 18 + 13;
-    public static final int HOTBAR_Y = INVENTORY_Y + 58;
+    public static final int GRID_Y = 32;
+    public static final int STATUS_Y = 20;
+    public static final int INVENTORY_X = 8;
+    public static final int INVENTORY_Y = 156;
+    public static final int HOTBAR_Y = 212;
 
     private final Container container;
     private final ContainerData data;
@@ -74,11 +80,11 @@ public class ColonyStorageMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new Slot(playerInventory, col + row * 9 + 9,
-                        8 + col * 18, INVENTORY_Y + row * 18));
+                        INVENTORY_X + col * 18, INVENTORY_Y + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(playerInventory, col, 8 + col * 18, HOTBAR_Y));
+            this.addSlot(new Slot(playerInventory, col, INVENTORY_X + col * 18, HOTBAR_Y));
         }
         this.addDataSlots(data);
     }
