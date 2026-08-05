@@ -1,0 +1,14 @@
+{
+  "branch": "life_support",
+  "title": "research.nerocolonies.life_support.hydroponics",
+  "requires": [ "nerocolonies:life_support/recyclers" ],
+  "cost": [
+    { "item": "minecraft:copper_ingot", "count": 8 },
+    { "item": "minecraft:glass", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:hydroponics" },
+    { "type": "nerocolonies:oxygen_efficiency", "multiplier": 0.9 },
+    { "type": "nerocolonies:morale_bonus", "amount": 2.0 }
+  ]
+}

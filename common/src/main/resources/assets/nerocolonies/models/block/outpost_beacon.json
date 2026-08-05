@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/outpost_beacon",
+    "particle": "nerocolonies:block/outpost_beacon"
+  }
+}

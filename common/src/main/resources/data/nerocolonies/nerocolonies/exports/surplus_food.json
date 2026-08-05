@@ -1,0 +1,5 @@
+{
+  "target": { "tag": "nerocolonies:colony_food/staple", "count": 1 },
+  "base_value": 1.0,
+  "stack_size": 64
+}

@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "nerocolonies:habitat_pod",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:habitat_module",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:habitat_block",
+      "required": false
+    }
+  ]
+}

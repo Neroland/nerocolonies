@@ -1,0 +1,6 @@
+{
+  "target": { "item": "minecraft:repeater", "count": 1 },
+  "base_value": 12.0,
+  "stack_size": 16,
+  "research": "nerocolonies:trade/manifest"
+}

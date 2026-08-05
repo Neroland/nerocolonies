@@ -1,0 +1,13 @@
+{
+  "branch": "habitation",
+  "title": "research.nerocolonies.habitation.pressurised_modules",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:glass", "count": 4 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:housing_tier", "tier": "nerocolonies:habitat_module" },
+    { "type": "nerocolonies:morale_bonus", "amount": 2.0 }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass",
+    "A": "minecraft:amethyst_shard",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "B": "minecraft:iron_block"
+  },
+  "pattern": [
+    "GAG",
+    "IRI",
+    "IBI"
+  ],
+  "result": {
+    "id": "nerocolonies:outpost_beacon",
+    "count": 1
+  }
+}

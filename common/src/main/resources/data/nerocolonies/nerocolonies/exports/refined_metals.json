@@ -1,0 +1,6 @@
+{
+  "target": { "item": "minecraft:iron_ingot", "count": 1 },
+  "base_value": 4.0,
+  "stack_size": 64,
+  "research": "nerocolonies:trade/manifest"
+}

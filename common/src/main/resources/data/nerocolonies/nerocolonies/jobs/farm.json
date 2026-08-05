@@ -1,0 +1,13 @@
+{
+  "station": "nerocolonies:farm_station",
+  "inputs": [
+    { "item": "minecraft:wheat_seeds", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:wheat", "count": 2 }
+  ],
+  "ticks": 200,
+  "colonists": 1,
+  "morale_floor": 20.0,
+  "export": false
+}

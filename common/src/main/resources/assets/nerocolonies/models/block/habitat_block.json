@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/habitat_block",
+    "particle": "nerocolonies:block/habitat_block"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "E": "minecraft:ender_pearl",
+    "P": "minecraft:prismarine_shard",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    " E ",
+    "PIP",
+    " E "
+  ],
+  "result": {
+    "id": "nerocolonies:range_module",
+    "count": 1
+  }
+}

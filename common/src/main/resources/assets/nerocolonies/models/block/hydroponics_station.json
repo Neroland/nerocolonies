@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/hydroponics_station",
+    "particle": "nerocolonies:block/hydroponics_station"
+  }
+}

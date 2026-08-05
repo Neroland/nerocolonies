@@ -1,0 +1,11 @@
+{
+  "branch": "habitation",
+  "title": "research.nerocolonies.habitation.shelter",
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 4 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:morale_bonus", "amount": 2.0 },
+    { "type": "nerocolonies:job_slots", "amount": 1 }
+  ]
+}

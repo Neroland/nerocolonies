@@ -1,0 +1,14 @@
+{
+  "station": "nerocolonies:refinery_station",
+  "inputs": [
+    { "item": "minecraft:raw_iron", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:iron_ingot", "count": 1 }
+  ],
+  "ticks": 300,
+  "colonists": 2,
+  "morale_floor": 30.0,
+  "research": "nerocolonies:industry/refining",
+  "export": false
+}

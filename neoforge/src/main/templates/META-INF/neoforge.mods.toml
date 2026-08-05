@@ -27,3 +27,59 @@ type = "required"
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+
+# Neroland Core — required shared foundation; must load BEFORE NeroColonies (ordering = AFTER).
+# Core is the ONLY hard dependency: every other Nero mod stays soft and is detected at runtime.
+[[dependencies.${mod_id}]]
+modId = "nerolandcore"
+type = "required"
+versionRange = "${nerolandcore_version_range}"
+ordering = "AFTER"
+side = "BOTH"
+
+# Nerospace — optional per-dimension breathability interop. When present it must load BEFORE
+# NeroColonies so its planet facade is ready when life support asks whether a dimension is airless;
+# discovery is runtime-guarded behind a compat facade, never a hard import. Without it every
+# dimension is treated as breathable and colonies simply run Earth-side.
+[[dependencies.${mod_id}]]
+modId = "nerospace"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# NeroAgriculture — optional food interop. Recognised through its item tags only; no class reference.
+[[dependencies.${mod_id}]]
+modId = "neroagriculture"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# NeroLogistics — optional. Colony storage and the export buffer are standard item capabilities, so
+# pipes and supply drops work with no bespoke coupling; the ordering only guarantees its tags exist.
+[[dependencies.${mod_id}]]
+modId = "nerologistics"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# NeroEconomy — optional. It registers itself as Core's CurrencyApi provider and export valuation
+# picks it up; absent, Core's in-memory fallback applies and the sell path is skipped.
+[[dependencies.${mod_id}]]
+modId = "neroeconomy"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
+# Energized Power — optional interop. When present it must load BEFORE NeroColonies so its
+# Forge-Energy capabilities and c: material tags are available; discovery is via Core
+# tags/capabilities, never a hard import.
+[[dependencies.${mod_id}]]
+modId = "energizedpower"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"

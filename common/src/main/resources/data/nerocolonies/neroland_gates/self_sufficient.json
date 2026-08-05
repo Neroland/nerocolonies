@@ -1,0 +1,5 @@
+{
+  "scope": "player",
+  "requires": ["nerocolonies:established"],
+  "title": "Self-Sufficient Colony"
+}

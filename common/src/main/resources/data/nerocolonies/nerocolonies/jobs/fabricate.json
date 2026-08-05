@@ -1,0 +1,15 @@
+{
+  "station": "nerocolonies:fabricator_station",
+  "inputs": [
+    { "item": "minecraft:iron_ingot", "count": 1 },
+    { "item": "minecraft:redstone", "count": 2 }
+  ],
+  "outputs": [
+    { "item": "minecraft:repeater", "count": 1 }
+  ],
+  "ticks": 400,
+  "colonists": 2,
+  "morale_floor": 35.0,
+  "research": "nerocolonies:industry/fabrication",
+  "export": true
+}

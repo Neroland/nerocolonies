@@ -1,0 +1,7 @@
+{
+  "block": "nerocolonies:habitat_block",
+  "tier": 3,
+  "capacity": 8,
+  "comfort": 0.9,
+  "research": "nerocolonies:habitation/residential_blocks"
+}

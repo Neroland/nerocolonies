@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "Q": "minecraft:quartz",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    " A ",
+    "QIQ",
+    " A "
+  ],
+  "result": {
+    "id": "nerocolonies:efficiency_module",
+    "count": 1
+  }
+}

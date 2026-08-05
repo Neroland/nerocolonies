@@ -1,0 +1,7 @@
+{
+  "block": "nerocolonies:habitat_module",
+  "tier": 2,
+  "capacity": 4,
+  "comfort": 0.65,
+  "research": "nerocolonies:habitation/pressurised_modules"
+}

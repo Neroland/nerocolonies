@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/oxygen_generator",
+    "particle": "nerocolonies:block/oxygen_generator"
+  }
+}

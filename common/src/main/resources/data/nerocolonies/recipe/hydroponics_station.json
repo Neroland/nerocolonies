@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass",
+    "L": "minecraft:lapis_lazuli",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "GLG",
+    "GLG",
+    "IRI"
+  ],
+  "result": {
+    "id": "nerocolonies:hydroponics_station",
+    "count": 1
+  }
+}

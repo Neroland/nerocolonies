@@ -1,0 +1,12 @@
+{
+  "branch": "industry",
+  "title": "research.nerocolonies.industry.refining",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:refine" },
+    { "type": "nerocolonies:job_slots", "amount": 1 }
+  ]
+}

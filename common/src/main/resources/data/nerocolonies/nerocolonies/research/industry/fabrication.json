@@ -1,0 +1,13 @@
+{
+  "branch": "industry",
+  "title": "research.nerocolonies.industry.fabrication",
+  "requires": [ "nerocolonies:industry/refining" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 12 },
+    { "item": "minecraft:redstone", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:fabricate" },
+    { "type": "nerocolonies:job_slots", "amount": 1 }
+  ]
+}

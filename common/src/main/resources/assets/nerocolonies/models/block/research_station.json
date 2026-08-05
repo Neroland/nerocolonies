@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/research_station",
+    "particle": "nerocolonies:block/research_station"
+  }
+}

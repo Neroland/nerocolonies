@@ -1,0 +1,11 @@
+{
+  "branch": "life_support",
+  "title": "research.nerocolonies.life_support.recyclers",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:copper_ingot", "count": 6 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:oxygen_efficiency", "multiplier": 0.85 }
+  ]
+}

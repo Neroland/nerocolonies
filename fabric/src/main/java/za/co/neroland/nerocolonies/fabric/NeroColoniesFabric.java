@@ -10,6 +10,12 @@ public final class NeroColoniesFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         NeroColoniesCommon.LOGGER.info("[NeroColonies] Fabric bootstrap");
+        // Common init declares the payloads and (on Fabric) registers content eagerly; the calls
+        // below consume those declarations. Core's RegistrationProvider needs no attach on Fabric —
+        // its registrations apply immediately at class-load.
         NeroColoniesCommon.init();
+        FabricColonyNetwork.registerCommon();
+        FabricColonyCapabilities.register();
+        FabricColonyEvents.register();
     }
 }

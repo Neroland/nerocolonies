@@ -11,6 +11,7 @@ plugins {
 def mc = stonecutter.current.version
 def forgeVersion = project.findProperty("forge_version_${mc}")
 def jeiVersion = project.findProperty("jei_version_${mc}")
+def nerolandcoreVersion = project.findProperty('nerolandcore_version')
 
 if (!forgeVersion) {
     throw new GradleException("Missing forge_version_${mc} in gradle.properties")
@@ -70,6 +71,11 @@ dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${forgeVersion}")
     annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.5'
 
+    // Neroland Core — REQUIRED shared foundation (registration seam, config, creative tab, data
+    // erasure, machine base, side config, energy/gas, progression gates). Core ships as its own mod
+    // and loads BEFORE NeroColonies (see mods.toml, ordering = AFTER); it is never bundled.
+    implementation "za.co.neroland.nerolandcore:nerolandcore-forge-${mc}:${nerolandcoreVersion}"
+
     implementation 'io.sentry:sentry:8.45.0'
     jarJar(group: 'io.sentry', name: 'sentry', version: '8.45.0')
 
@@ -89,6 +95,8 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
         mod_license               : rootProject.mod_license,
         forge_loader_version_range: "[${forgeMajor},)",
         minecraft_version_range   : "[${mc},)",
+        // Floor at the compiled Core version — see the NeoForge build script for the reasoning.
+        nerolandcore_version_range: "[${nerolandcoreVersion},2.0)",
     ]
     inputs.properties(props)
     expand(props)

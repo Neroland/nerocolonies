@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "O": "minecraft:copper_ingot",
+    "C": "minecraft:chest"
+  },
+  "pattern": [
+    "IOI",
+    "OCO",
+    "IOI"
+  ],
+  "result": {
+    "id": "nerocolonies:colony_depot",
+    "count": 1
+  }
+}

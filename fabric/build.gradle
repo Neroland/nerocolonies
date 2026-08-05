@@ -10,6 +10,7 @@ plugins {
 def mc = stonecutter.current.version
 def fabricApi = project.findProperty("fabric_api_version_${mc}")
 def jeiVersion = project.findProperty("jei_version_${mc}")
+def nerolandcoreVersion = project.findProperty('nerolandcore_version')
 
 // This node's projectDir is <loader>/versions/<v>; the authoritative loader source +
 // resources live in the BRANCH root (fabric/). Resolve branch-root paths via the parent.
@@ -30,6 +31,13 @@ dependencies {
     if (fabricApi != null) {
         implementation "net.fabricmc.fabric-api:fabric-api:${fabricApi}"
     }
+
+    // Neroland Core — REQUIRED shared foundation (registration seam, config, creative tab, data
+    // erasure, machine base, side config, energy/gas, progression gates). Plain `implementation`
+    // (NOT `include`) — this de-obf 26.x Loom setup omits `mappings`, so there is no
+    // intermediary→named remap and `modImplementation` isn't available. Core ships as its own mod
+    // and loads BEFORE NeroColonies (see fabric.mod.json depends).
+    implementation "za.co.neroland.nerolandcore:nerolandcore-fabric-${mc}:${nerolandcoreVersion}"
 
     // Sentry SDK (telemetry/NeroColoniesTelemetry): compile against it + embed it as a jar-in-jar so the
     // shipped Fabric jar carries it. Counterpart to the NeoForge JarJar bundling.
@@ -61,6 +69,7 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
         mod_license          : rootProject.mod_license,
         fabric_loader_version: rootProject.fabric_loader_version,
         minecraft_version    : mc,
+        nerolandcore_version : nerolandcoreVersion,
     ]
     inputs.properties(props)
     expand(props)

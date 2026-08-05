@@ -1,0 +1,14 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "minecraft:bread", "required": false },
+    { "id": "minecraft:wheat", "required": false },
+    { "id": "minecraft:carrot", "required": false },
+    { "id": "minecraft:potato", "required": false },
+    { "id": "minecraft:beetroot", "required": false },
+    { "id": "minecraft:dried_kelp", "required": false },
+    { "id": "minecraft:sweet_berries", "required": false },
+    { "id": "minecraft:melon_slice", "required": false },
+    { "id": "minecraft:apple", "required": false }
+  ]
+}

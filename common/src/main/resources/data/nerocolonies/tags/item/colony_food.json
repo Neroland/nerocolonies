@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#nerocolonies:colony_food/staple", "required": false },
+    { "id": "#c:foods", "required": false },
+    { "id": "#c:crops", "required": false },
+    { "id": "minecraft:cooked_beef", "required": false },
+    { "id": "minecraft:cooked_porkchop", "required": false },
+    { "id": "minecraft:cooked_chicken", "required": false },
+    { "id": "minecraft:cooked_mutton", "required": false },
+    { "id": "minecraft:cooked_cod", "required": false },
+    { "id": "minecraft:cooked_salmon", "required": false },
+    { "id": "minecraft:baked_potato", "required": false },
+    { "id": "minecraft:pumpkin_pie", "required": false },
+    { "id": "minecraft:golden_carrot", "required": false },
+    { "id": "minecraft:mushroom_stew", "required": false },
+    { "id": "minecraft:beetroot_soup", "required": false },
+    { "id": "minecraft:rabbit_stew", "required": false },
+    { "id": "minecraft:suspicious_stew", "required": false }
+  ]
+}

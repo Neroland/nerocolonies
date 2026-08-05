@@ -1,0 +1,41 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "nerocolonies:colony_beacon",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:outpost_beacon",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:oxygen_generator",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:colony_depot",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:research_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:farm_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:hydroponics_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:refinery_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:fabricator_station",
+      "required": false
+    }
+  ]
+}

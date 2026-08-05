@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "Q": "minecraft:quartz",
+    "R": "minecraft:redstone",
+    "T": "minecraft:crafting_table"
+  },
+  "pattern": [
+    "IQI",
+    "RTR",
+    "III"
+  ],
+  "result": {
+    "id": "nerocolonies:fabricator_station",
+    "count": 1
+  }
+}

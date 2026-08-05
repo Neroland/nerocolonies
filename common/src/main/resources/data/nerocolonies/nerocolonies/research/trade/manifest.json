@@ -1,0 +1,12 @@
+{
+  "branch": "trade",
+  "title": "research.nerocolonies.trade.manifest",
+  "requires": [ "nerocolonies:industry/refining" ],
+  "cost": [
+    { "item": "minecraft:gold_ingot", "count": 6 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:export_unlock", "export": "nerocolonies:refined_metals" },
+    { "type": "nerocolonies:export_unlock", "export": "nerocolonies:fabricated_goods" }
+  ]
+}

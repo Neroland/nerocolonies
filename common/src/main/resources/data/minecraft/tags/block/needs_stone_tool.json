@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "nerocolonies:colony_beacon",
+    "nerocolonies:outpost_beacon",
+    "nerocolonies:oxygen_generator",
+    "nerocolonies:colony_depot",
+    "nerocolonies:research_station",
+    "nerocolonies:habitat_pod",
+    "nerocolonies:habitat_module",
+    "nerocolonies:habitat_block",
+    "nerocolonies:farm_station",
+    "nerocolonies:hydroponics_station",
+    "nerocolonies:refinery_station",
+    "nerocolonies:fabricator_station"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "nerocolonies:speed_module",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:efficiency_module",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:range_module",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:capacity_module",
+      "required": false
+    }
+  ]
+}

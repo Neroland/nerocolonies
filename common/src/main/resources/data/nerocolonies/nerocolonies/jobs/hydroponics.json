@@ -1,0 +1,14 @@
+{
+  "station": "nerocolonies:hydroponics_station",
+  "inputs": [
+    { "item": "minecraft:wheat_seeds", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:carrot", "count": 3 }
+  ],
+  "ticks": 240,
+  "colonists": 1,
+  "morale_floor": 25.0,
+  "research": "nerocolonies:life_support/hydroponics",
+  "export": false
+}

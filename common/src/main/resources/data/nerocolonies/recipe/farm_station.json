@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "H": "minecraft:iron_hoe",
+    "C": "minecraft:composter",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "IHI",
+    "RCR",
+    "III"
+  ],
+  "result": {
+    "id": "nerocolonies:farm_station",
+    "count": 1
+  }
+}

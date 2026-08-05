@@ -1,0 +1,13 @@
+{
+  "branch": "habitation",
+  "title": "research.nerocolonies.habitation.residential_blocks",
+  "requires": [ "nerocolonies:habitation/pressurised_modules" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 16 },
+    { "item": "minecraft:copper_ingot", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:housing_tier", "tier": "nerocolonies:habitat_block" },
+    { "type": "nerocolonies:morale_bonus", "amount": 3.0 }
+  ]
+}

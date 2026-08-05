@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:copper_ingot",
+    "F": "minecraft:furnace",
+    "R": "minecraft:redstone"
+  },
+  "pattern": [
+    "ICI",
+    "IFI",
+    "IRI"
+  ],
+  "result": {
+    "id": "nerocolonies:refinery_station",
+    "count": 1
+  }
+}
