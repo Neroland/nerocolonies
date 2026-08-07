@@ -55,11 +55,10 @@ public final class NeroColoniesTelemetry {
      * anywhere</b> and no network connection is opened, regardless of the {@code telemetryEnabled}
      * config value.
      *
-     * <p>NeroColonies has no Sentry project yet, so this branch is live: telemetry is fully wired
-     * and completely inert until the {@code SENTRY_PROJECT} secret lands and {@link #DSN} is
-     * replaced. <b>Do not remove the guard</b> when it is — it is what keeps a fork, a stripped
-     * build or a half-configured branch silent instead of crashing on SDK init or reporting into
-     * somebody else's project.
+     * <p>A real NeroColonies Sentry project is now configured, so this branch is <b>dormant</b> in
+     * shipped builds: telemetry is live and opt-out. <b>Do not remove the guard</b> — it is what
+     * keeps a fork, a stripped build or a half-configured branch silent instead of crashing on SDK
+     * init or reporting into somebody else's project.
      * ===================================================================================
      */
     private static final String PLACEHOLDER_DSN = "https://REPLACE-ME@sentry.invalid/0";
@@ -67,7 +66,8 @@ public final class NeroColoniesTelemetry {
     /**
      * Sentry DSN — a public client key (write-only ingest), safe to ship in the jar. It grants
      * permission to SEND events and nothing else: it cannot read issues, and it identifies the
-     * NeroColonies project, never a player. Still the placeholder; see the guard above.
+     * NeroColonies project, never a player. This is the real production DSN, so reporting is live
+     * unless the player has opted out via {@code telemetryEnabled=false}.
      */
     private static final String DSN = "https://a78299dcdd327f6c5fc574aaab31930f@o4511183823241216.ingest.de.sentry.io/4511860057964624";
 
@@ -92,7 +92,10 @@ public final class NeroColoniesTelemetry {
     private NeroColoniesTelemetry() {
     }
 
-    /** True while the shipped DSN is still the placeholder, i.e. telemetry is wired but inert. */
+    /**
+     * True only if the shipped DSN has been stripped back to the placeholder (fork / unconfigured
+     * build), in which case telemetry stays wired but inert. False in released builds.
+     */
     private static boolean dsnIsPlaceholder() {
         return PLACEHOLDER_DSN.equals(DSN);
     }

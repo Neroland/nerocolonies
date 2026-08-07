@@ -123,8 +123,8 @@ za.co.neroland.nerocolonies
   wiki as part of "done"; code without a matching wiki update is incomplete.
 - One page per topic; keep `wiki/Home.md` as the index that links every page, with relative links
   between pages. Validate Markdown via the gradle MCP `markdown_check` (honours `.markdownlint.json`).
-- The wiki is **per-mod** — document only NeroColonies here; cross-mod / ecosystem concepts live in the
-  umbrella docs and are referenced by relative path.
+- The wiki is **per-mod** — document only NeroColonies here; cross-mod / ecosystem concepts belong in the
+  relevant other mod's own wiki.
 - `PRIVACY.md` and `USING-CORE.md` at the repo root are part of the same contract: privacy behaviour
   and the Core API surface must stay true of the code.
 

@@ -85,8 +85,3 @@ The build is the repo root, with a flattened cross-loader structure driven by St
 ```
 
 See [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) for agent and contributor context.
-
-## Planning docs
-
-Design, feature and dependency docs for this mod live in the ecosystem umbrella repository alongside
-this one.

@@ -187,9 +187,9 @@ runtime verification is the remaining stage.
   live player. `acknowledge_alert` acks one of your own alerts in Core's store and works offline.
   **`set_job_priority` is deliberately absent**: the job board has no priority model in 0.1.0, and an
   action by that name would invent a mechanic through the back door.
-- Four owner-scoped events (`life_support`, `morale`, `food`, `exports`) and one broadcast
-  (`colony_state`). The broadcast reaches every session, so it carries a colony id, a dimension and a
-  state — **not even the colony's name**.
+- Five owner-scoped events (`life_support`, `morale`, `food`, `exports`, `construction`) and one
+  broadcast (`colony_state`). The broadcast reaches every session, so it carries a colony id, a
+  dimension and a state — **not even the colony's name**.
 - Two alerts through Core's per-player store: life support failed (critical) and morale collapsed
   (warning), raised for the colony's owner alone, **rate-limited to once per five minutes per colony**
   so a flapping generator cannot spam a companion client. A colony with no owner raises nothing.
@@ -427,8 +427,11 @@ runtime verification is the remaining stage.
 - Opt-out, NeroColonies-only Sentry crash reporting: `sendDefaultPii=false`, no hostname, no user
   identity, OS-account names scrubbed from file paths, per-session de-duplication and a hard cap of
   10 events per session.
-- Ships **inert**: the DSN is still the placeholder, so nothing is sent and no connection is opened
-  regardless of the config value, until a Sentry project is configured.
+- **Live and opt-out.** A real NeroColonies Sentry project (EU ingest) is configured, so reports are
+  sent unless the player sets `telemetryEnabled=false` in `config/nerocolonies.properties` — a
+  client-local key a server can never override. The unconfigured-build guard remains in the code: a
+  fork or stripped build whose DSN is back to the placeholder stays a hard no-op and opens no
+  connection. See `PRIVACY.md` and `wiki/Telemetry.md` for the full disclosure.
 
 **Networking — Stage 0**
 

@@ -165,9 +165,9 @@ Concretely:
   check is asked of a live player) and `acknowledge_alert` (which touches only the caller's own row in
   Core's alert store). Neither can reach another player's colony: "not yours" and "does not exist" are
   the same refusal, so an action cannot be used to probe for other people's bases.
-- **Four owner-scoped events** (`life_support`, `morale`, `food`, `exports`) go to the colony's owner
-  alone. The one **broadcast** (`colony_state`) reaches every session, so it carries a colony id, a
-  dimension and a life-support state — not even the colony's name.
+- **Five owner-scoped events** (`life_support`, `morale`, `food`, `exports`, `construction`) go to
+  the colony's owner alone. The one **broadcast** (`colony_state`) reaches every session, so it
+  carries a colony id, a dimension and a life-support state — not even the colony's name.
 - **Two alerts**, raised for the colony's owner alone and rate-limited to one every five minutes per
   colony. Their text names a colony and a condition, never a player.
 - A colony with **no owner** (after an erasure request under the default policy) raises no alert and
@@ -186,10 +186,10 @@ of the Neroland ecosystem. It is **on by default and opt-out**:
 - **NeroColonies-only:** a report is sent only if its stack trace touches
   `za.co.neroland.nerocolonies`; everything else is dropped before it leaves the game.
 
-> **Current status: wired and completely inert.** This build carries a placeholder Sentry DSN, so
-> nothing is sent anywhere and no network connection is opened, regardless of the config value. When
-> a real DSN lands, everything described here applies. A build that carries no DSN (a fork, a
-> stripped build) stays a hard no-op.
+> **Current status: live.** This build carries a real Sentry DSN, so everything described here
+> applies: reports are sent unless you opt out with `telemetryEnabled=false`. A build whose DSN has
+> been stripped back to the placeholder (a fork, a stripped build) stays a hard no-op and opens no
+> connection.
 
 ### What a report contains
 

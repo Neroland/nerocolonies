@@ -4,10 +4,11 @@ NeroColonies can report **its own crashes** to the developer, so bugs get fixed 
 having to notice, reproduce and file them. This page says exactly what that means, what it does not
 mean, and how to turn it off.
 
-> **Current status: wired and completely inert.** NeroColonies has no Sentry project yet, so the
-> build carries a placeholder DSN. While that is the case, telemetry initialisation returns before
-> the Sentry SDK is touched: **nothing is sent anywhere and no network connection is opened**,
-> whatever `telemetryEnabled` says. Everything below describes what happens once a real DSN lands.
+> **Current status: live and opt-out.** NeroColonies has a real Sentry project, so everything below
+> is what actually happens: reports are sent unless you set `telemetryEnabled=false`. A build whose
+> DSN has been stripped back to the placeholder (a fork, a stripped build) returns before the Sentry
+> SDK is touched — **nothing is sent anywhere and no network connection is opened** in that case,
+> whatever `telemetryEnabled` says.
 
 ## What it is
 
@@ -69,13 +70,14 @@ Set it before launching. When telemetry is off, Sentry is never initialised at a
 - The DSN lives in `telemetry/NeroColoniesTelemetry` as `DSN` — a public, write-only ingest key,
   safe to ship in the jar: it grants permission to *send* events and nothing else, it cannot read
   issues, and it identifies the project rather than a player. `PLACEHOLDER_DSN` is the guard: while
-  `DSN` equals it, `init()` returns immediately and nothing is started. **Do not remove that guard**
-  when a real DSN lands — it is what keeps a fork, a stripped build or a half-configured branch
-  silent instead of crashing on SDK init or reporting into somebody else's project.
-- One synthetic event can be fired to confirm end-to-end reporting on a real jar; see
-  [Commands](Commands.md). It reports honestly when nothing was sent — opted out, or an
-  unconfigured build. Repeat calls in one session collapse into one event thanks to the per-session
-  de-duplication, so restart to test again.
+  `DSN` equals it, `init()` returns immediately and nothing is started. The real DSN has landed, so
+  the guard is dormant in released builds — **do not remove it**: it is what keeps a fork, a
+  stripped build or a half-configured branch silent instead of crashing on SDK init or reporting
+  into somebody else's project.
+- `NeroColoniesTelemetry.sendTestEvent(String)` fires one synthetic event to confirm end-to-end
+  reporting on a real jar. It returns `false` when nothing was sent — opted out, or an unconfigured
+  build. No command exposes it yet; it is called from code. Repeat calls in one session collapse
+  into one event thanks to the per-session de-duplication, so restart to test again.
 - Development and IDE runs **do** report, so error reporting can be tested end to end, but they are
   tagged `environment=development` and `runtime=development` so they never mix with real releases.
   Release channels map to `alpha`, `beta` and `production` from the mod version string.
