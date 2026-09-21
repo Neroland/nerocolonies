@@ -19,6 +19,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.registry.BlockCodecs;
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 
 import za.co.neroland.nerocolonies.block.entity.ColonyDepotBlockEntity;
@@ -40,13 +41,12 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  */
 public class ColonyDepotBlock extends BaseEntityBlock {
 
-    public static final MapCodec<ColonyDepotBlock> CODEC = simpleCodec(ColonyDepotBlock::new);
+    public static final MapCodec<ColonyDepotBlock> CODEC = BlockCodecs.simple(ColonyDepotBlock::new);
 
     public ColonyDepotBlock(Properties properties) {
         super(properties);
     }
 
-    @Override
     protected MapCodec<ColonyDepotBlock> codec() {
         return CODEC;
     }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.1] - 2026-09-20
+
+Minecraft **26.3** support, plus the changes previously listed under *Unreleased*.
+
 The 0.1.0 build, feature-complete: the foundation wiring, the colony record and claim model, the
 colony command block, the datapack content loaders, colonist NPCs and housing, life support, the
 colony tick with food and morale, automated jobs and colony storage, research, exports and planetary
@@ -55,6 +59,7 @@ runtime verification is the remaining stage.
 - New lang keys: `gui.nerocolonies.slots.modules`, `gui.nerocolonies.value.percent`,
   `gui.nerocolonies.beacon.supply_hint`, `gui.nerocolonies.build.materials_hint`,
   `gui.nerocolonies.access.online_hint`, `gui.nerocolonies.research.cost_more`.
+- JEI pins moved to the newest published builds on each Minecraft version: `29.40.0.101` (26.1.2), `30.35.0.223` (26.2) and `31.3.0.18` (26.3). Compile-time API only — JEI remains a soft dependency and the shipped jar gains no hard requirement.
 
 ### Added
 
@@ -504,3 +509,22 @@ runtime verification is the remaining stage.
 - `JobBoard` and `LifeSupport` hold session state rebuilt from self-registration on load; both are
   now cleared on server stop through `lifecycle/ServerStateReset`, together with the definition and
   content caches, so two worlds in one JVM no longer share them.
+
+### Minecraft 26.3
+
+- **Minecraft 26.3** as a new Stonecutter node on every loader — NeoForge `26.3.0.7-beta`,
+  Forge `26.3-66.0.2` and Fabric (fabric-api `0.161.0+26.3`, NeoForm `26.3-1`) — built alongside
+  26.1.2 and 26.2, so every release now ships **nine** loader × version jars.
+- VS Code run/debug configurations (`.vscode/launch.json`, `.vscode/tasks.json`) gain the three
+  26.3 cells; the "Build all" task now builds all nine.
+- CI (`multiloader.yml`, `publish.yml`) builds, attaches and publishes the 26.3 jars.
+- Requires **Neroland Core 1.13.0** (was `1.10.0`) — the first Core release with a 26.3
+  build. The loader range still derives from the pin (`[${nerolandcore_version},2.0)`).
+
+### 26.3 port notes
+
+- Block classes build their codecs through Core's `BlockCodecs` (26.3 removed block-type codecs); `codec()` is kept without `@Override` so one source compiles on every version.
+- 26.3 API differences are handled with Stonecutter blocks: `PoseStack#rotate` (was `mulPose`), the new `Prediction` argument on `drop` / `placeItemBackInInventory`, `setPermanentlyInvulnerable`, and similar renames.
+- Build: the shared `common/` Java source is now preprocessed by Stonecutter for every non-active node (`stonecutterProcessCommon`), so common code can carry `//? if >=26.3 {` blocks, and `common/src/main/resources-<mc>` overlay folders are merged over the shared resources for matching nodes (`mergeCommonResources`). The active node still compiles the raw `common/` folder.
+- Build plugins aligned with Neroland Core: ModDevGradle `2.0.147` (the older 2.0.141 cannot set up NeoForge 26.3), ForgeGradle `7.0.40`, Stonecutter `0.9.8`.
+

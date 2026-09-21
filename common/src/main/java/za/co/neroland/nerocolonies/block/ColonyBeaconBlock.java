@@ -26,6 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.registry.BlockCodecs;
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 import za.co.neroland.nerolandcore.progression.CoreGates;
 import za.co.neroland.nerolandcore.progression.ProgressionGates;
@@ -73,13 +74,12 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  */
 public class ColonyBeaconBlock extends BaseEntityBlock {
 
-    public static final MapCodec<ColonyBeaconBlock> CODEC = simpleCodec(ColonyBeaconBlock::new);
+    public static final MapCodec<ColonyBeaconBlock> CODEC = BlockCodecs.simple(ColonyBeaconBlock::new);
 
     public ColonyBeaconBlock(Properties properties) {
         super(properties);
     }
 
-    @Override
     protected MapCodec<ColonyBeaconBlock> codec() {
         return CODEC;
     }
@@ -183,7 +183,11 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
             ItemStack refund = stack.copy();
             refund.setCount(1);
             if (!player.getInventory().add(refund)) {
+                //? if >=26.3 {
+                /*player.drop(refund, false, net.minecraft.util.Prediction.SERVER_ONLY);
+                *///?} else {
                 player.drop(refund, false);
+                //?}
             }
         }
         player.sendSystemMessage(reason);

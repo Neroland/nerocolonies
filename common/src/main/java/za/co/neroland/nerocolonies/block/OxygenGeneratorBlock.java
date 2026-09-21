@@ -19,6 +19,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.registry.BlockCodecs;
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 
 import za.co.neroland.nerocolonies.block.entity.OxygenGeneratorBlockEntity;
@@ -37,13 +38,12 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  */
 public class OxygenGeneratorBlock extends BaseEntityBlock {
 
-    public static final MapCodec<OxygenGeneratorBlock> CODEC = simpleCodec(OxygenGeneratorBlock::new);
+    public static final MapCodec<OxygenGeneratorBlock> CODEC = BlockCodecs.simple(OxygenGeneratorBlock::new);
 
     public OxygenGeneratorBlock(Properties properties) {
         super(properties);
     }
 
-    @Override
     protected MapCodec<OxygenGeneratorBlock> codec() {
         return CODEC;
     }

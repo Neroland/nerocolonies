@@ -19,6 +19,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.registry.BlockCodecs;
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 
 import za.co.neroland.nerocolonies.block.entity.JobStationBlockEntity;
@@ -41,13 +42,12 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  */
 public class JobStationBlock extends BaseEntityBlock {
 
-    public static final MapCodec<JobStationBlock> CODEC = simpleCodec(JobStationBlock::new);
+    public static final MapCodec<JobStationBlock> CODEC = BlockCodecs.simple(JobStationBlock::new);
 
     public JobStationBlock(Properties properties) {
         super(properties);
     }
 
-    @Override
     protected MapCodec<JobStationBlock> codec() {
         return CODEC;
     }

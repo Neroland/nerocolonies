@@ -2,7 +2,7 @@
 
 > Part of the Neroland sci-fi Minecraft mod ecosystem, built on **Neroland Core**.
 
-**Status:** 0.1.0 feature-complete and compile-verified across all six cells; runtime verification is
+**Status:** 0.1.0 feature-complete and compile-verified across all nine cells; runtime verification is
 the remaining stage. Version `0.0.1-alpha.1`.
 
 NeroColonies turns a place into a colony. You plant a **colony beacon**, it claims the ground around
@@ -60,8 +60,8 @@ Energized Power are optional and detected at runtime; remove them all and the mo
 
 ## Build targets
 
-- **Minecraft:** 26.1.2 and 26.2
-- **Loaders:** NeoForge, MinecraftForge/Forge, Fabric (the "6 cells")
+- **Minecraft:** 26.1.2, 26.2 and 26.3
+- **Loaders:** NeoForge, MinecraftForge/Forge, Fabric (the "9 cells")
 - **Java:** 25
 - Mod id: `nerocolonies` · package `za.co.neroland.nerocolonies`
 
@@ -79,9 +79,9 @@ The build is the repo root, with a flattened cross-loader structure driven by St
 
 ```sh
 ./gradlew :fabric:26.2:build          # one cell
-./gradlew :neoforge:26.1.2:build :neoforge:26.2:build \
-          :forge:26.1.2:build :forge:26.2:build \
-          :fabric:26.1.2:build :fabric:26.2:build   # all six
+./gradlew :neoforge:26.1.2:build :neoforge:26.2:build :neoforge:26.3:build \
+          :forge:26.1.2:build :forge:26.2:build :forge:26.3:build \
+          :fabric:26.1.2:build :fabric:26.2:build :fabric:26.3:build   # all nine
 ```
 
 See [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) for agent and contributor context.
