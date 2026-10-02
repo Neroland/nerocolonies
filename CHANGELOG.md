@@ -7,6 +7,363 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0-beta.1] - 2026-10-02
+
+The living-colony release, and the first beta. A colony now starts with two founders and four
+Starter Works that the player supplies, and from there grows through five stages on its own: its
+people take trades, clear land, build from a catalogue of 51 blueprints, have children, defend the
+claim and leave gifts for their owner. Colonists are called **Nerans** everywhere a player reads;
+the entity id `nerocolonies:colonist` is unchanged, so existing worlds load (see *Migration*).
+Checked so far by automation only: all nine loader/version cells build, `ecjCheck` passes and the
+146 JUnit tests pass. Nothing in this release has been run in a game client yet.
+
+### Added
+
+**Nerans**
+
+- **Twelve trades**, loaded from `data/<ns>/nerocolonies/professions/*.json`: Farmer, Forester,
+  Miner, Builder, Hauler, Cook, Toolsmith, Guard, Beastkeeper, Researcher, Quartermaster and Medic.
+  A finished building opens places in the trades its blueprint `unlocks` (`per_building` each, up
+  to `max_per_colony`), and an adult without a trade takes the open one with the lowest `priority`.
+  Numbers and bindings are data; the twelve behaviours are code, and an unknown behaviour id falls
+  back to standing at the post.
+- **Experience and levels.** Working earns experience; each level above the first (five levels as
+  shipped) adds 15% to what the Neran gathers. Changing trade starts again from nothing.
+- **Tools.** A trade can name a tool. A Neran is handed one from colony storage, or a Toolsmith
+  makes one from a stored iron ingot; it is held in hand, a Neran without it gathers at half rate,
+  and it goes back to colony storage on a trade change or on death.
+- **Work you can watch.** Farmers harvest ripe crops and replant them, and sow empty farmland from
+  stored wheat seeds. Foresters fell logs around their yard and replant a sapling from storage.
+  Guards walk the watch posts, Beastkeepers heal the colony's wolves and golems, Medics heal wounded
+  Nerans, and Haulers walk between the beacon and the building site. The other trades stand at
+  their post. Block changes stay inside the claim and the trade's `work_radius`, and every drop
+  goes to colony storage.
+- **Work that counts.** Every colony cycle in daylight each tradesperson gathers its trade's
+  `outputs` into colony storage with `output_chance`, scaled by morale, level and tool. This runs
+  on the colony tick, so a colony produces whether or not anyone is near. Cooks turn stored food
+  into food stock and Medics lift morale a little. Output that does not fit in storage is not
+  produced; nothing is voided.
+- **A daily schedule** read from the dimension clock: work, a midday meal at a granary or canteen,
+  an evening at the plaza (or the beacon when there is none), and sleep at home.
+- **Status symbols.** A small symbol in front of a Neran's name within 12 blocks says what it is
+  doing: working, hauling, no path, hungry, no tool, sleeping, guarding or socialising.
+- **Names.** New arrivals get a display name from a pool of 64 in the language file
+  (`neranNamesEnabled`). Members may rename a Neran with a name tag; strangers may not.
+- **Navigation.** Nerans walk to a standable spot next to their target instead of to the solid
+  block itself. A shared stuck detector notices a walk that is going nowhere and works down a
+  recovery ladder: plan again, try another side of the target, take a short hop, then leave the
+  target alone for 30 seconds and count one stuck event for the colony. The per-colony total is
+  shown by `/nerocolonies colony info`.
+- **Stuck rescue.** A Neran that gives up a walk while standing inside or right against something
+  the colony built or is building, with no standable block beside it, is moved to the nearest safe
+  spot within 8 blocks inside the claim. That is the only case: a Neran stuck in open country
+  waits out its 30 seconds, so the rescue is never a general teleport.
+
+**Progression**
+
+- **Five stages**: Founding, Settled, Growing, Thriving and Metropolis. A stage never goes back.
+  Founding becomes Settled when every Starter Works blueprint has been built once; after that the
+  colony needs both a population and a structure count (6 and 6 for Growing, 16 and 14 for
+  Thriving, 32 and 24 for Metropolis; six `stage*` config keys). The beacon shows the stage and the
+  next milestone, and members online are told when it advances.
+- **Starter Works.** The Founder's Lodge, Homestead Farm, Lumber Yard and Mine Head are the only
+  things a Founding colony builds, and while it is Founding they are built only from materials the
+  player delivers. Nothing is fabricated from scrap, so the first four buildings are the player's
+  contribution. They open the Builder, Farmer, Forester and Miner trades.
+- **The needs list.** What the colony is short of, worked out fresh each time it is asked for and
+  never stored: the unpaid materials of the building under way (or of the next Starter Works), a
+  food shortfall against ten cycles of eating, and tools its tradespeople lack. Each line shows how
+  much it has, how much it needs and how long its own gatherers would take alone ("not without
+  help" when nobody gathers that item, and always for a Starter Works material while the colony
+  is Founding). The beacon's new **Needs** tab also shows how long the current building will take
+  alone and if supplied now.
+- **Needs Board** block. Use it empty-handed to read the list in chat; use it holding an item the
+  list wants and that much of the stack goes into colony storage. Food still goes in the beacon's
+  supply row.
+- **Prioritise a need.** The owner or a Chief may pick one item on the list; the trades that gather
+  it work half as fast again (`/nerocolonies colony need prioritise`, the Needs tab, or the link).
+- **A growth curve.** A growth score of `population + 2 x structures` runs through a logistic curve
+  `g = 1 / (1 + e^(-0.15 x (score - 20)))`. Construction speed is `1 + (growthMaxBuildMultiplier -
+  1) x g` (up to 3x as shipped) and, from Growing, the claim radius gains
+  `round(growthMaxClaimBonus x g)` blocks (up to 32). The gain is trimmed so a grown claim never
+  touches a neighbouring colony's claim.
+- **Births.** A colony that is at least Growing, with two adults, a free bed, `breedingSurplusCycles`
+  cycles of food in store and morale at `breedingMoraleFloor` or above, rolls
+  `breedingBaseChance x (0.25 + 0.75 x g)` each cycle. A child Neran is born, plays near the plaza,
+  and grows up after `childGrowthDays` in-game days, when the colony gives it a trade. Births run
+  before arrivals in the colony cycle, so one free bed is enough and a child has first call on it
+  (`breedingEnabled` turns births off).
+- **Slower immigration once a colony can have children.** `immigrationIntervalCycles` (6): once a
+  colony is Growing and breeding is on, a newcomer arrives only every that many cycles, and never
+  in a cycle a child was born, so the colony grows mostly from within. Before Growing, or with
+  breeding off, a newcomer may arrive every cycle as before.
+- A `nerocolonies:stage` threshold crossing on Neroland Core's event bus when a colony advances,
+  scoped to the colony id like the others.
+
+**Buildings**
+
+- **51 blueprints** (there were 5): the 4 Starter Works, 18 for Settled colonies, 13 for Growing,
+  11 for Thriving and 5 for Metropolis.
+  - *Settled:* Neran Cottage (three levels), Granary, Canteen, Toolsmith's Forge, Hauler's Depot,
+    Watch Post, Well Plaza, Kennel, Needs Board Pavilion, Gratitude Cache Pavilion and Planning
+    Hall, plus the five original structures.
+  - *Growing:* Longhouse, Market Square, Barracks, Golem Forge, Med Bay, Stables Pasture, Windmill,
+    Quarry Terrace, Greenhouse, Workshop Hall and Watchtower (three levels).
+  - *Thriving:* Grand Town Hall, Colony Citadel, Hydroponic Spire, Crystal Biodome, Observatory,
+    Grand Bazaar, Amphitheatre, Nexus Spire, Sky Bridge, Lighthouse and Harbour.
+  - *Metropolis:* Arcology Tower, Skyport, Colossus, Floating Garden and Grand Archive.
+- **Blueprint format.** A palette entry may be a full block-state string
+  (`minecraft:oak_stairs[facing=north,half=bottom]`), so stairs, slabs, logs and doors are placed
+  the right way round. New fields: `stage`, `level`, `upgrade_to`, `unlocks`, `roles`, `capacity`
+  and `rotate`. A character mapped to `minecraft:air` is a clear cell. Instead of `palette` and
+  `layers` a blueprint may name a vanilla structure file with `structure`
+  (`data/<ns>/structure/<path>.nbt`); block-entity contents in the file are ignored. No shipped
+  blueprint uses a structure file.
+- **Land clearing.** Natural blocks in the way of a building (block tag `nerocolonies:clearable`,
+  whose surface part is `nerocolonies:clearable_vegetation`) are cleared first, top down, and their
+  drops go to colony storage. Nothing in `nerocolonies:protected`, no block with a block entity and
+  nothing outside the claim is ever broken (`landClearingEnabled`).
+- **Siting.** A site may be up to two blocks uneven once vegetation is ignored, keeps a two-block
+  street to every other finished building, and the building is turned so its front faces the
+  beacon when the blueprint allows it.
+- **Upgrades.** A standing building whose blueprint names an `upgrade_to` the colony's stage and
+  research allow is rebuilt in place as the next level (Neran Cottage and Watchtower, I to III).
+  Blocks in the way of the new level are returned to colony storage, except anything in
+  `nerocolonies:protected` or with a block entity, which is left where it is.
+- **Entrance check.** When a building with an interior is finished, a bounded flood fill checks it
+  can be walked into; if not, a doorway is opened in the wall nearest its access spot.
+- **Builders.** Each Builder standing at the site adds 50% to the build rate, up to four.
+- **Size limits.** `maxBlueprintFootprint` (32) and `maxBlueprintHeight` (40); larger blueprints
+  are skipped. The format itself allows 48 by 48 by 64.
+- `tools/gen_blueprints.py` generates the whole catalogue from parametric shapes and
+  `tools/check_blueprints.py` validates it. `CREDITS.md` records that every shipped design is
+  original.
+
+**Roles and defence**
+
+- **Owner, Chief, Ally, Enemy.** An Ally may use the colony's blocks, contribute to its needs and
+  rename its Nerans. A Chief may also plan buildings, add and remove Allies and Enemies and
+  prioritise a need. Only the owner makes or unmakes Chiefs, renames the colony and shares the
+  Gratitude Cache. Operators act as the owner. Each list holds at most 64 players.
+- **The rules.** Nobody changes the owner's role or their own. Removing or marking a Chief takes
+  the owner. Marking a member as an Enemy removes them from the colony first and has to be
+  confirmed. An operator who is online cannot be marked. Making somebody an Ally or a Chief clears
+  an Enemy mark.
+- **Commands.** `/nerocolonies colony role <ally|chief|enemy> <add|remove|list> <colony> ...`.
+  `list` answers with a count, the cap and the caller's own role, never a roster. `<player>` is an
+  online player's name or a UUID.
+- **Roles tab** on the beacon: every member sees their own role and three counts. A viewer who may
+  manage members also sees who is on the lists and can add or remove an online player by name (see
+  `PRIVACY.md` for exactly what is sent).
+- **Guards.** Guard Nerans, and only Guards, fight: hostile mobs (never creepers) and players on
+  the colony's Enemy list, inside the claim plus `guardPursuitMargin` (16). They never attack the
+  owner, an operator, a player in creative or spectator mode, another Neran or a guardian animal.
+  `guardsAttackEnemyPlayers` turns the player half off.
+- **Guardian animals.** A Kennel keeps two wolves and a Golem Forge one iron golem. A Beastkeeper
+  replaces a missing one each cycle from colony storage (two bones for a wolf, four iron blocks for
+  a golem). They follow the same target rule as the Guards.
+- **Roles in the data export.** `/nerocolonies data export` also lists the colonies the caller is
+  a Chief of (`chief_of_colonies`) and the colonies that list the caller as an Enemy
+  (`enemy_of_colonies`). Still nobody else's id.
+- **Retribution.** When a player on a colony's Enemy list kills that colony's owner (directly,
+  with a projectile, or through a pet they own), they come off that colony's Enemy list. The
+  colony's online members are told that an enemy has claimed retribution, naming nobody. Otherwise
+  only the owner or a Chief can lift an enmity, so with PvP off that is the only way.
+
+**Gratitude Cache**
+
+- One cache per colony, 27 slots, kept with the colony rather than in a block: every Gratitude
+  Cache block in the claim opens the same contents and breaking one loses nothing.
+- With a Gratitude Cache Pavilion and a Quartermaster, the colony rolls the loot table
+  `nerocolonies:gratitude/tier_<n>` for its stage (1 for Founding to 5 for Metropolis) every
+  `cacheStockIntervalCycles` (36) cycles. A rare roll includes a **Thank-you Note**. A roll that
+  does not fit is dropped whole and nothing is added, so no part of it is voided; the "cache is
+  full" event and alert go out once, and not again until a roll fits.
+- Only the owner may open it, until the owner shares it with the colony's members
+  (`/nerocolonies colony cache share`, the beacon, or the link).
+
+**Colony Planner**
+
+- **Colony Planner** item, for the owner and Chiefs. Use it in the air to pick the next building
+  the colony has unlocked, sneak-use to turn it, use it on the ground for a particle outline of the
+  footprint the server has checked, and use the same spot again within 30 seconds to confirm.
+- A plan jumps the colony's own queue, oldest first, and is then paid for and built like any other
+  building. Up to `maxConcurrentPlans` (4) wait at once; a plan whose site has been blocked by the
+  time its turn comes is dropped.
+- **Chief's Planning Table** block and `/nerocolonies colony plan list|cancel` show what can be
+  planned and what is queued.
+
+**Companion link (schema version 2)**
+
+- Six new sections: `summary`, `needs`, `buildings`, `professions`, `roles` and `cache`. `roles`
+  carries the requester's own role and three counts; `buildings` lists blueprints, never
+  positions; `cache` says how full the Gratitude Cache is, never what is in it.
+- Two new actions: `prioritise_need` (owner or Chief) and `toggle_cache_sharing` (owner). Both
+  check the caller's stored role on every call. `prioritise_need` refuses a `#tag` need as a
+  validation error: only a single item can be prioritised.
+- Six new member-scoped events (`stage`, `neran_born`, `needs`, `enemy`, `cache`, `guards`) and
+  three new alerts (enemies inside the claim, the Gratitude Cache is full, the colony needs help).
+  An enemy event carries a count, never who.
+
+**Gallery**
+
+- `/nerocolonies gallery`, for an operator in creative mode: every blueprint built on a lit floor
+  around the caller (upgrade chains at their top level), and a court with a stall for each trade,
+  an AI course (a door house, a maze that ends in "no path", a claim-edge walk), a guard demo and a
+  Gratitude Cache stocked with one roll of every stage's table.
+- `/nerocolonies gallery release` lets the held demo mobs go; `/nerocolonies gallery clear` removes
+  the blocks, the entities and the records.
+- The gallery is one ownerless sandbox colony that never runs a colony cycle and appears in no link
+  section, event or alert. It needs its whole footprint loaded, there is one per server, and
+  whatever stood above its floor is cut away and not put back by `clear`.
+
+**Blocks, items and config**
+
+- Needs Board, Gratitude Cache and Chief's Planning Table blocks, and the Colony Planner and
+  Thank-you Note items. The three blocks and the planner have recipes and JEI and EMI information
+  pages.
+- 22 config keys for the above, all server-authoritative: the six `stage*` thresholds,
+  `growthMaxBuildMultiplier`, `growthMaxClaimBonus`, `breedingEnabled`, `breedingBaseChance`,
+  `breedingSurplusCycles`, `immigrationIntervalCycles`, `breedingMoraleFloor`, `childGrowthDays`,
+  `maxBlueprintFootprint`,
+  `maxBlueprintHeight`, `landClearingEnabled`, `maxConcurrentPlans`, `guardsAttackEnemyPlayers`,
+  `guardPursuitMargin`, `cacheStockIntervalCycles` and `neranNamesEnabled`.
+
+**Tests**
+
+- The JUnit suite grew to 146 tests in 12 classes (`:neoforge:<mc>:test`), covering the growth
+  curve and stage rule, the breeding gate, needs estimates and ordering, the permission table,
+  block-state parsing, blueprint rotation, turning a site to face the beacon, profession levels,
+  the day schedule, target resolution, the stuck detector and the lenient codecs.
+
+### Changed
+
+- **Colonists are now Nerans** in every player-facing string. The entity id `nerocolonies:colonist`
+  and the config key names (`colonistsPerColony`, `founderColonistCount`, `maxLoadedColonists`)
+  are unchanged.
+- **A new colony starts in Founding.** It used to start building from scrap at once; now the four
+  Starter Works wait for the player's materials.
+- **Colonies clear their own sites.** A site no longer has to be empty, flat ground, and buildings
+  are turned to face the beacon.
+- **The five original blueprints were redesigned** with doors, interiors and new material lists
+  (Habitat Pod, Farm Plot, Depot Shed, Oxygen Hut, Research Cabin).
+- **Construction speeds up as a colony grows** (the growth curve and Builders on site), on top of
+  the existing supplied and unsupplied rates.
+- **`maxAutoStructures` is now the cap for a Settled colony**; each stage past Settled adds the
+  same again (12, 24, 36 and 48 as shipped).
+- **`colonistsPerColony` defaults to 48** (was 24), which leaves room for the Metropolis threshold.
+- **Permissions are decided in one place.** Every colony block, the beacon's actions, the
+  commands and the link actions ask the same role table. Managing the access list used to be the
+  owner's alone; a Chief may now add and remove Allies. A player marked as an Enemy is refused
+  even if stale data left them on a list. A refusal says whether the player is unknown to the
+  colony or lacks the rank.
+- **`/nerocolonies colony access ...` is the older spelling of `role ally ...`** and keeps
+  working. `access list` now answers any member (it was owner only).
+- **`/nerocolonies colony info`** adds the stage, structures built, stuck events, births and the
+  three role counts. `reload-check` also reports professions.
+- **The beacon has seven tabs** (Needs and Roles are new). When the labels do not fit on one row
+  the strip becomes two shorter rows.
+- **Job stations** are staffed by adults with no trade or with a trade that lists that station;
+  children never staff one. Tradespeople keep the workplace their trade gave them.
+- **Link visibility follows roles.** A companion client sees the colonies its player owns or is an
+  Ally or Chief of; a player a colony has marked as an Enemy sees nothing of it. Schema version 1
+  sections are unchanged.
+- **Erasure under the `dissolve` policy cleans up at once.** The dissolved colony's goods, build
+  record, life record and role lists go with the colony record, not at the next server start.
+- The erasure log line also counts Chief and Enemy listings removed.
+
+### Fixed
+
+- Nerans were sent to the solid block of their home or workstation, which could not be reached
+  from some sides. They now walk to a standable neighbour.
+- A finished building with no way in is given a doorway instead of standing sealed.
+- Trees, grass and snow no longer stop a colony finding a site: they are cleared.
+- Blueprints placed every block in its default state, so stairs, slabs, logs and doors could not
+  face the right way. Palettes now carry block states and turn with the building.
+- The link module had no `summary` section, so a client that asked for one was given nothing. It
+  now answers one.
+
+### Fixed (audit)
+
+From the October 2026 audit (`docs/AUDIT-2026-10.md`, items AUD-01 to AUD-40).
+
+- **Nerans no longer vanish when a colony's chunk reloads.** The colony uses its saved housing
+  figure until the first housing sweep after a load has finished, and never grows or shrinks the
+  roster before then. Previously every colonist above the two founders was removed on each reload.
+- **Nerans far from any member move again.** Quiet mode used to stop them pathing entirely (and,
+  for half of them, stopped their goals from ever starting). They now start walks less often, and a
+  walk under way always finishes.
+- **Construction never builds a block into a Neran.** Cells with anyone standing in them are
+  held; Nerans in the way are moved to a spot just outside the footprint, which is also where the
+  builder now stands (it used to be sent to the first cell to be built).
+- **Nerans open and close wooden doors**, and drop a walk that keeps failing for half a minute
+  instead of re-planning it forever.
+- Day and night follow the dimension clock with hysteresis, so thunderstorms no longer send Nerans
+  home and rain no longer makes them flicker. New `fixedTimeIsDay` config for dimensions without a
+  day/night cycle.
+- Arrivals spawn only on solid, dry, hazard-free ground outside the structure being built, preferring
+  a spot that can walk to the beacon.
+- The roster counts Nerans up to 16 blocks past the claim edge (they are walked back rather than
+  replaced) and sheds the most recent arrival first, never a founder. Nerans now persist whether
+  they are a founder and when they arrived.
+- Catch-up after a reload no longer applies the full overcrowding penalty.
+- **Privacy:** new colonies are named `Colony N` instead of `<player>'s Colony`; erasure under the
+  transfer policy also replaces the colony's name; a one-time pass renames existing colonies still
+  carrying their owner's name.
+- **Saved data:** one unreadable entry (an item from a removed mod, a bad id) is skipped instead of
+  failing the whole file, and an unreadable file is copied to `.dat.corrupt-<time>` before recovery
+  starts that store empty.
+- Access-log retention now runs every hour, not only at server start.
+- Access-list members receive the colony's link events and alerts, not only the owner.
+- Crash reports also scrub UUID-shaped strings. Performance tracing is off (nothing used it), and the
+  privacy docs no longer promise breadcrumbs or timing data that were never sent.
+- The beacon says why arrivals are paused (food, life support, housing full, caps) and why
+  construction is idle (no flat site, cap reached, nothing needed, ...).
+- JEI and EMI information pages for every colony block.
+- Performance: the housing sweep runs inside the colony tick budget, the roster is queried once per
+  colony cycle, the server-wide population sum is computed once per tick, Nerans cache their
+  colony record, and the beacon reads construction state once per tick.
+- New `debugFastGrowth` config (off by default) that compresses timings for testing.
+- First automated tests (pure JVM, run by `:neoforge:<mc>:test`).
+- Removed dead code; corrected drifted docs.
+
+### Migration
+
+What happens to a world last saved with 0.2.0-alpha.1, the first time it loads:
+
+- **Nerans.** The entity id is unchanged, so every colonist loads as a Neran. The new fields are
+  absent from old saves and read as: adult, no trade, no experience, empty carry inventory, not a
+  founder, arrived at time zero. Existing Nerans keep whatever name they had (none, unless a
+  player named them); generated names go to new arrivals only. The colony hands out trades on its
+  next cycle, once it has a building that opens them.
+- **Stage.** A colony with no stage on record is placed the first time it is asked: **Settled** if
+  it has already built a housing blueprint and a farm blueprint, or has more Nerans than
+  `founderColonistCount`; otherwise **Founding**. A colony placed in Founding builds only the
+  Starter Works, and only from delivered materials, until all four stand. A colony placed in
+  Settled still builds the four Starter Works, from scrap or from supplies: they sort ahead of
+  everything else it chooses for itself.
+- **Structures built before 0.3** are remembered as counts, not as places. They still count
+  towards stage thresholds, the growth curve, each blueprint's `max` and the structure cap, and
+  their housing blocks and job stations work as before. They do not open trades, are not meal,
+  social or guard-post destinations, cannot be upgraded and are not listed in the link `buildings`
+  section.
+- **A build in progress.** All five original blueprints changed shape. A build whose saved block
+  count no longer matches its blueprint is abandoned on the first cycle (what was placed stays)
+  and the colony chooses again.
+- **Access list.** Nothing moved: every player on a colony's access list is now an Ally with the
+  rights they had. Chief and Enemy lists start empty in a new `nerocolonies:roles` store.
+- **Colony names.** A one-time pass renames any colony still called `<owner's name>'s Colony`,
+  and any ownerless colony in that pattern, to `Colony N`. A colony renamed by hand is left alone.
+- **Saved data.** The colony record itself did not change. Two stores are created on first use:
+  `nerocolonies:roles` and `nerocolonies:life` (stage, counters, the Gratitude Cache). The build
+  record gains finished-structure positions and the plan queue.
+- **Config.** `colonistsPerColony` now defaults to 48. A config that still sets 24 keeps a colony
+  below the 32 Nerans Metropolis needs, so raise it by hand if you want that stage. The 22 new
+  keys take their defaults. No other default changed.
+- **Link clients.** The module reports schema version 2. The five version 1 sections and both
+  version 1 actions are unchanged, so a version 1 client keeps working and simply does not see
+  the new sections.
+
 ## [0.2.0-alpha.1] - 2026-09-24
 
 EMI compatibility. No gameplay, id, tag or config change.
@@ -538,4 +895,3 @@ runtime verification is the remaining stage.
 - 26.3 API differences are handled with Stonecutter blocks: `PoseStack#rotate` (was `mulPose`), the new `Prediction` argument on `drop` / `placeItemBackInInventory`, `setPermanentlyInvulnerable`, and similar renames.
 - Build: the shared `common/` Java source is now preprocessed by Stonecutter for every non-active node (`stonecutterProcessCommon`), so common code can carry `//? if >=26.3 {` blocks, and `common/src/main/resources-<mc>` overlay folders are merged over the shared resources for matching nodes (`mergeCommonResources`). The active node still compiles the raw `common/` folder.
 - Build plugins aligned with Neroland Core: ModDevGradle `2.0.147` (the older 2.0.141 cannot set up NeoForge 26.3), ForgeGradle `7.0.40`, Stonecutter `0.9.8`.
-

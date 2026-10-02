@@ -280,12 +280,6 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
         g.text(this.font, text, this.leftPos + dx, this.topPos + dy, color, false);
     }
 
-    /** Centred label text within {@code [dx, dx+width)}. */
-    protected void labelCentered(GuiGraphicsExtractor g, Component text, int dx, int width, int dy,
-            int color) {
-        g.centeredText(this.font, text, this.leftPos + dx + width / 2, this.topPos + dy, color);
-    }
-
     /** Right-aligned label text within {@code [dx, dx+width)}. */
     protected void labelRight(GuiGraphicsExtractor g, Component text, int dx, int width, int dy,
             int color) {
@@ -324,11 +318,6 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
             y += LINE;
         }
         return y;
-    }
-
-    /** How tall {@link #wrappedLabel} will be for the same arguments. */
-    protected int wrappedHeight(Component text, int maxWidth, int maxLines) {
-        return wrap(text.getString(), maxWidth, maxLines).size() * LINE;
     }
 
     /**

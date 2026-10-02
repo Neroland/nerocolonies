@@ -1,0 +1,115 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:beds",
+    "#minecraft:doors",
+    "#minecraft:rails",
+    "#minecraft:shulker_boxes",
+    "#minecraft:signs",
+    {
+      "id": "#minecraft:all_signs",
+      "required": false
+    },
+    "minecraft:chest",
+    "minecraft:trapped_chest",
+    "minecraft:ender_chest",
+    "minecraft:barrel",
+    "minecraft:redstone_wire",
+    "minecraft:repeater",
+    "minecraft:comparator",
+    "minecraft:observer",
+    "minecraft:piston",
+    "minecraft:sticky_piston",
+    "minecraft:piston_head",
+    "minecraft:hopper",
+    "minecraft:dropper",
+    "minecraft:dispenser",
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker",
+    "minecraft:spawner",
+    {
+      "id": "minecraft:trial_spawner",
+      "required": false
+    },
+    {
+      "id": "minecraft:vault",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_chest",
+      "required": false
+    },
+    "minecraft:end_portal_frame",
+    "minecraft:beacon",
+    "minecraft:bedrock",
+    {
+      "id": "#c:chests",
+      "required": false
+    },
+    {
+      "id": "#c:barrels",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:colony_beacon",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:outpost_beacon",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:habitat_pod",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:habitat_module",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:habitat_block",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:farm_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:hydroponics_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:refinery_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:fabricator_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:research_station",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:oxygen_generator",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:colony_depot",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:needs_board",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:gratitude_cache",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:planning_table",
+      "required": false
+    }
+  ]
+}

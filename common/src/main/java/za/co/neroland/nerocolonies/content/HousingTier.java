@@ -7,7 +7,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
 
 /**
  * One kind of colonist housing, loaded from {@code data/<ns>/nerocolonies/housing/<path>.json}.
@@ -63,10 +62,5 @@ public record HousingTier(
     /** Whether the housing block is registered in this launch. */
     public boolean blockPresent() {
         return BuiltInRegistries.BLOCK.containsKey(this.block);
-    }
-
-    /** The resolved block, or {@code null} when it is not registered. */
-    public Block resolvedBlock() {
-        return blockPresent() ? BuiltInRegistries.BLOCK.getValue(this.block) : null;
     }
 }

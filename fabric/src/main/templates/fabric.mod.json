@@ -10,7 +10,9 @@
   "environment": "*",
   "entrypoints": {
     "main": ["za.co.neroland.nerocolonies.fabric.NeroColoniesFabric"],
-    "client": ["za.co.neroland.nerocolonies.fabric.NeroColoniesFabricClient"]
+    "client": ["za.co.neroland.nerocolonies.fabric.NeroColoniesFabricClient"],
+    "jei_mod_plugin": ["za.co.neroland.nerocolonies.compat.jei.NeroColoniesJeiPlugin"],
+    "emi": ["za.co.neroland.nerocolonies.compat.emi.NeroColoniesEmiPlugin"]
   },
   "mixins": [
     "nerocolonies-common.mixins.json",

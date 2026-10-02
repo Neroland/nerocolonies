@@ -1,20 +1,39 @@
 {
   "name": "blueprint.nerocolonies.farm_plot",
   "category": "farm",
+  "stage": "settled",
   "priority": 20,
   "max": 2,
+  "level": 1,
+  "unlocks": ["nerocolonies:farmer"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
   "palette": {
-    "F": "minecraft:farmland",
+    "C": "minecraft:cobblestone",
+    "F": "minecraft:farmland[moisture=7]",
     "W": "minecraft:water",
-    "S": "nerocolonies:farm_station"
+    "_": "minecraft:air",
+    "a": "nerocolonies:farm_station"
   },
   "layers": [
-    [ "FFFFF", "FFFFF", "FFWFF", "FFFFF", "FFFFF" ],
-    [ "S....", ".....", ".....", ".....", "....." ]
+    [
+      "CFFFF",
+      "FFFFF",
+      "FFWFF",
+      "FFFFF",
+      "FFFFF"
+    ],
+    [
+      "a____",
+      "_____",
+      "_____",
+      "_____",
+      "_____"
+    ]
   ],
   "materials": [
-    { "item": "minecraft:dirt", "count": 24 },
-    { "item": "minecraft:wheat_seeds", "count": 8 },
-    { "item": "minecraft:iron_ingot", "count": 4 }
-  ]
+    {"item": "minecraft:dirt", "count": 11},
+    {"item": "minecraft:cobblestone", "count": 1},
+    {"item": "nerocolonies:farm_station", "count": 1}
+  ],
+  "rotate": true
 }

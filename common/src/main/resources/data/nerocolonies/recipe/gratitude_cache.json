@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "C": "minecraft:chest",
+    "O": "minecraft:copper_ingot"
+  },
+  "pattern": [
+    "OGO",
+    "GCG",
+    "OGO"
+  ],
+  "result": {
+    "id": "nerocolonies:gratitude_cache",
+    "count": 1
+  }
+}

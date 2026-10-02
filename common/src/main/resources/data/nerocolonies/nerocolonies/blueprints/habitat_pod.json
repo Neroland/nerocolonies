@@ -1,22 +1,67 @@
 {
   "name": "blueprint.nerocolonies.habitat_pod",
   "category": "housing",
+  "stage": "settled",
   "priority": 10,
   "max": 6,
+  "level": 1,
+  "roles": ["sleep"],
+  "capacity": {"housing": 2, "storage": 0, "jobs": 0},
   "palette": {
-    "#": "minecraft:smooth_stone",
+    "*": "minecraft:lantern[hanging=false]",
     "G": "minecraft:glass",
-    "H": "nerocolonies:habitat_pod"
+    "H": "nerocolonies:habitat_pod",
+    "S": "minecraft:smooth_stone",
+    "U": "minecraft:cut_copper",
+    "_": "minecraft:air",
+    "a": "minecraft:birch_door[facing=south,half=lower,hinge=left,open=false]",
+    "b": "minecraft:birch_door[facing=south,half=upper,hinge=left,open=false]",
+    "c": "minecraft:smooth_stone_slab[type=bottom]"
   },
   "layers": [
-    [ "###", "###", "###" ],
-    [ "###", "#H#", "#.#" ],
-    [ "###", "#G#", "#.#" ],
-    [ "###", "###", "###" ]
+    [
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS"
+    ],
+    [
+      "UUUUU",
+      "U_H_U",
+      "U___U",
+      "U*__U",
+      "UUaUU"
+    ],
+    [
+      "SGSGS",
+      "S___S",
+      "G___G",
+      "S___S",
+      "SSbSS"
+    ],
+    [
+      "SSSSS",
+      "S___S",
+      "S___S",
+      "S___S",
+      "SSSSS"
+    ],
+    [
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc"
+    ]
   ],
   "materials": [
-    { "item": "minecraft:smooth_stone", "count": 16 },
-    { "item": "minecraft:iron_ingot", "count": 6 },
-    { "item": "minecraft:glass", "count": 2 }
-  ]
+    {"item": "minecraft:smooth_stone", "count": 35},
+    {"tag": "c:ingots/copper", "count": 7},
+    {"item": "minecraft:glass", "count": 2},
+    {"item": "minecraft:birch_door", "count": 1},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "nerocolonies:habitat_pod", "count": 1}
+  ],
+  "rotate": true
 }

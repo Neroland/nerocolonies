@@ -1,0 +1,152 @@
+{
+  "name": "blueprint.nerocolonies.watchtower",
+  "category": "defence",
+  "stage": "growing",
+  "priority": 52,
+  "max": 3,
+  "level": 1,
+  "upgrade_to": "nerocolonies:watchtower_2",
+  "unlocks": ["nerocolonies:guard"],
+  "roles": ["guard_post"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "_": "minecraft:air",
+    "a": "minecraft:iron_bars",
+    "b": "minecraft:ladder[facing=south]",
+    "c": "minecraft:polished_andesite",
+    "d": "minecraft:spruce_door[facing=south,half=lower,hinge=left,open=false]",
+    "h": "minecraft:spruce_door[facing=south,half=upper,hinge=left,open=false]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "#######",
+      "#######",
+      "#######",
+      "#######",
+      "#######",
+      "#######",
+      "#######"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#__*__#",
+      "#_____#",
+      "c##d##c"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "c##h##c"
+    ],
+    [
+      "c##a##c",
+      "#__b__#",
+      "#_____#",
+      "a_____a",
+      "#_____#",
+      "#_____#",
+      "c#####c"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "c#####c"
+    ],
+    [
+      "c#####c",
+      "#ppbpp#",
+      "#ppppp#",
+      "#ppppp#",
+      "#ppppp#",
+      "#ppppp#",
+      "c#####c"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "c#####c"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "c#####c"
+    ],
+    [
+      "c#####c",
+      "#__b__#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "#_____#",
+      "c#####c"
+    ],
+    [
+      "#######",
+      "###b###",
+      "#######",
+      "#######",
+      "#######",
+      "#######",
+      "#######"
+    ],
+    [
+      "#.#.#.#",
+      "._____.",
+      "#_____#",
+      "._____.",
+      "#_____#",
+      ".*____.",
+      "#.#.#.#"
+    ],
+    [
+      ".......",
+      "._____.",
+      "._____.",
+      "._____.",
+      "._____.",
+      "._____.",
+      "......."
+    ],
+    [
+      ".......",
+      "._____.",
+      "._____.",
+      "._____.",
+      "._____.",
+      "._____.",
+      "......."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:stone_bricks", "count": 119},
+    {"item": "minecraft:polished_andesite", "count": 15},
+    {"tag": "minecraft:planks", "count": 11},
+    {"item": "minecraft:ladder", "count": 5},
+    {"tag": "c:ingots/iron", "count": 2},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:spruce_door", "count": 1}
+  ],
+  "rotate": true
+}

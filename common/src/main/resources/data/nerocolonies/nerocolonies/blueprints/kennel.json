@@ -1,0 +1,70 @@
+{
+  "name": "blueprint.nerocolonies.kennel",
+  "category": "defence",
+  "stage": "settled",
+  "priority": 55,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:beastkeeper"],
+  "roles": ["kennel"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 1},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "Y": "minecraft:hay_block[axis=y]",
+    "_": "minecraft:air",
+    "a": "minecraft:cauldron",
+    "b": "minecraft:hay_block[axis=x]",
+    "c": "minecraft:spruce_log[axis=y]",
+    "d": "minecraft:grass_block",
+    "f": "minecraft:oak_fence",
+    "h": "minecraft:spruce_slab[type=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "ppppddddd",
+      "ppppddddd",
+      "ppppddddd",
+      "ppppddddd",
+      "ddddddddd",
+      "ddddddddd",
+      "ddddddddd"
+    ],
+    [
+      "cppcfffff",
+      "pY_p_b_af",
+      "p__p____f",
+      "cp_c____f",
+      "f_______f",
+      "f_______f",
+      "ffff_ffff"
+    ],
+    [
+      "cppc....*",
+      "p__p____.",
+      "p__p____.",
+      "cp_c____.",
+      "._______.",
+      "._______.",
+      "...._...."
+    ],
+    [
+      "hhhh.....",
+      "hhhh.....",
+      "hhhh.....",
+      "hhhh.....",
+      ".........",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 30},
+    {"item": "minecraft:dirt", "count": 22},
+    {"tag": "minecraft:logs", "count": 4},
+    {"item": "minecraft:cauldron", "count": 1},
+    {"item": "minecraft:hay_block", "count": 1},
+    {"item": "minecraft:lantern", "count": 1}
+  ],
+  "rotate": true
+}

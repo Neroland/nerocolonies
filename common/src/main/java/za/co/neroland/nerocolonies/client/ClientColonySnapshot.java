@@ -5,21 +5,29 @@ import java.util.Set;
 
 import net.minecraft.resources.Identifier;
 
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
+import za.co.neroland.nerocolonies.colony.ColonyStage;
 import za.co.neroland.nerocolonies.network.ColonySnapshotPayload;
 
 /**
  * The client's mirror of the one colony the player currently has open.
  *
- * <p>Read by the beacon's Trade tab and by the research screen; written only by the server's
- * snapshot payload. Like {@link ClientColonyDefinitions} it is one immutable value in one
- * {@code volatile} field, replaced wholesale on the client thread, so readers never need a lock and
- * never see half a colony.
+ * <p>Read by the beacon screen and by the research screen; written only by the server's snapshot
+ * payload. Like {@link ClientColonyDefinitions} it is one immutable value in one {@code volatile}
+ * field, replaced wholesale on the client thread, so readers never need a lock and never see half a
+ * colony.
  *
- * <p><b>Privacy:</b> what is in here is exactly what {@link ColonySnapshotPayload} carries — colony
- * state, counts, and one boolean about the viewing player. There is no owner UUID, no access list and
- * no other player's name to leak, because none was ever sent.
+ * <p><b>Privacy (POPIA/GDPR):</b> what is in here is exactly what {@link ColonySnapshotPayload}
+ * carries, for exactly as long as the server lets it stand. That is colony state, counts, and the
+ * viewing player's own role — and, <em>only</em> for a viewer who may manage the colony's members,
+ * the roster of names the beacon's Roles tab draws. There is never a UUID of any player. The mirror
+ * lives in memory only: nothing here is written to disk or to a log, each snapshot replaces the last
+ * one whole (so a roster the server stops sending is gone), and {@link #clear} drops it when the
+ * client leaves the world.
  */
 public final class ClientColonySnapshot {
+
+    private static final ColonyPermissions.Role[] ROLES = ColonyPermissions.Role.values();
 
     private static volatile ColonySnapshotPayload current = ColonySnapshotPayload.EMPTY;
     private static volatile Set<String> unlocked = Set.of();
@@ -60,5 +68,37 @@ public final class ClientColonySnapshot {
     /** Whether the colony could pay for a node right now, as of the last snapshot. */
     public static boolean isAffordable(Identifier node) {
         return affordable.contains(node.toString());
+    }
+
+    // --- the living-colony half -------------------------------------------------
+
+    /** Stage, needs, role and counts. Never null; all zeroes when no colony is open. */
+    public static ColonySnapshotPayload.Life life() {
+        return current.life();
+    }
+
+    /** The colony's growth stage, as of the last snapshot. */
+    public static ColonyStage stage() {
+        return ColonyStage.byOrdinal(current.life().stage());
+    }
+
+    /** The viewing player's own role. An ordinal this jar does not know reads as a stranger. */
+    public static ColonyPermissions.Role role() {
+        return roleOf(current.present() ? current.life().role() : 0);
+    }
+
+    /** The role for an ordinal off the wire, bounded. */
+    public static ColonyPermissions.Role roleOf(int ordinal) {
+        return ordinal >= 0 && ordinal < ROLES.length ? ROLES[ordinal] : ColonyPermissions.Role.STRANGER;
+    }
+
+    /**
+     * Whether the viewing player's role allows an action, by the same rule table the server uses.
+     * This only decides what the screen <em>offers</em>: the server asks itself the same question
+     * again before it does anything.
+     */
+    public static boolean may(ColonyPermissions.Action action) {
+        return current.present()
+                && ColonyPermissions.allows(role(), action, current.life().cacheShared());
     }
 }

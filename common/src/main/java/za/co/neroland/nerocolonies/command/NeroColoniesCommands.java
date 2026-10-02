@@ -8,8 +8,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 
@@ -17,6 +20,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -29,9 +33,15 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerolandcore.data.PlayerDataErasure;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
-import za.co.neroland.nerocolonies.colony.AccessLog;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyLife;
+import za.co.neroland.nerocolonies.colony.ColonyMembership;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
+import za.co.neroland.nerocolonies.colony.ColonyPlanner;
+import za.co.neroland.nerocolonies.colony.ColonyProgress;
+import za.co.neroland.nerocolonies.colony.ColonyRoles;
+import za.co.neroland.nerocolonies.colony.ColonyStage;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
 import za.co.neroland.nerocolonies.colony.Construction;
@@ -55,13 +65,30 @@ import za.co.neroland.nerocolonies.telemetry.NeroColoniesTelemetry;
  * built once here in common.
  *
  * <pre>
- * PLAYER (permission 0)
+ * PLAYER (permission 0) — what a member may do depends on their role: Owner, Chief or Ally
  *   /nerocolonies colony list                          your colonies, ids and names
- *   /nerocolonies colony info [&lt;colony&gt;]               one of your colonies in detail
- *   /nerocolonies colony rename &lt;colony&gt; &lt;name&gt;         owner only
- *   /nerocolonies colony access list &lt;colony&gt;           owner only — a COUNT, never a roster
- *   /nerocolonies colony access add &lt;colony&gt; &lt;player&gt;   owner only
- *   /nerocolonies colony access remove &lt;colony&gt; &lt;player&gt; owner only
+ *   /nerocolonies colony info [&lt;colony&gt;]               one of your colonies in detail: state, stage,
+ *                                                      and its roles as COUNTS
+ *   /nerocolonies colony rename &lt;colony&gt; &lt;name&gt;         owner
+ *
+ *   /nerocolonies colony role ally add &lt;colony&gt; &lt;player&gt;      owner or Chief
+ *   /nerocolonies colony role ally remove &lt;colony&gt; &lt;player&gt;   owner or Chief (owner, for a Chief)
+ *   /nerocolonies colony role ally list &lt;colony&gt;              any member — a COUNT, never a roster
+ *   /nerocolonies colony role chief add &lt;colony&gt; &lt;player&gt;     owner
+ *   /nerocolonies colony role chief remove &lt;colony&gt; &lt;player&gt;  owner — they stay an Ally
+ *   /nerocolonies colony role chief list &lt;colony&gt;             any member — a COUNT
+ *   /nerocolonies colony role enemy add &lt;colony&gt; &lt;player&gt; [confirm]
+ *                                                      owner or Chief; "confirm" is required to mark
+ *                                                      somebody who is a member (owner, for a Chief)
+ *   /nerocolonies colony role enemy remove &lt;colony&gt; &lt;player&gt;  owner or Chief
+ *   /nerocolonies colony role enemy list &lt;colony&gt;             any member — a COUNT
+ *   /nerocolonies colony access list|add|remove …      the older spelling of "role ally …"
+ *
+ *   /nerocolonies colony plan list &lt;colony&gt;            owner or Chief — what can be planned or is queued
+ *   /nerocolonies colony plan cancel &lt;colony&gt; &lt;n&gt;      owner or Chief — drop queued plan number n
+ *   /nerocolonies colony cache share &lt;colony&gt; &lt;true|false&gt;   owner — share the Gratitude Cache with Allies
+ *   /nerocolonies colony need prioritise &lt;colony&gt; [&lt;item&gt;]   owner or Chief — no item clears it
+ *
  *   /nerocolonies data export                          your own stored records, as JSON
  *   /nerocolonies data erase                           erase yourself across every Nero mod
  *
@@ -73,17 +100,25 @@ import za.co.neroland.nerocolonies.telemetry.NeroColoniesTelemetry;
  *   /nerocolonies colony grant-research &lt;colony&gt; &lt;node&gt;
  *   /nerocolonies colony sell &lt;colony&gt;
  *   /nerocolonies admin list [&lt;dimension&gt;]              ids and names only, never an owner
- *   /nerocolonies reload-check                         the datapack validation report
+ *   /nerocolonies reload-check                         the datapack validation report, with how much
+ *                                                      content of each kind (professions included) loaded
  *   /nerocolonies purge-stale                          run the retention sweep now
  * </pre>
+ *
+ * <p>An operator may run every player-level command on any colony and acts as its owner. Every role
+ * change goes through {@link ColonyMembership}, which is also what the beacon's Roles tab calls, so
+ * the two cannot disagree about who may do what.
  *
  * <h2>Privacy (POPIA/GDPR)</h2>
  *
  * <ul>
- *   <li><b>No command prints an owner or a member.</b> {@code admin list} reports colony ids, names,
- *       dimensions and state; {@code colony access list} answers with a <em>count</em>. A colony's
- *       membership never leaves {@link ColonyState}, whoever is asking — an operator who genuinely
- *       needs to know who plays where has the server's own player data, not this mod's.</li>
+ *   <li><b>No command prints an owner, a member or an enemy</b> — not a name and not a UUID.
+ *       {@code admin list} reports colony ids, names, dimensions and state; {@code colony info} and
+ *       the {@code role … list} commands answer with <em>counts</em>; a role change answers with what
+ *       happened and never to whom. An operator who genuinely needs to know who plays where has the
+ *       server's own player data, not this mod's. (The one place membership is shown is the beacon's
+ *       Roles tab, to somebody who may manage that colony's members;
+ *       {@code ColonySnapshotPayload} documents exactly what it is sent.)</li>
  *   <li>Every {@code sendSuccess} passes {@code false} for "broadcast to ops", so output goes to the
  *       invoker alone and stays out of {@code latest.log} under the {@code logAdminCommands} game
  *       rule. The one exception is {@code colony dissolve}, which is destructive and therefore
@@ -99,13 +134,13 @@ import za.co.neroland.nerocolonies.telemetry.NeroColoniesTelemetry;
  *
  * <h2>The {@code <player>} argument, and why it is a plain string</h2>
  *
- * <p>An access list has to be manageable for somebody who is <b>offline</b> — a co-op colony whose
+ * <p>A colony's roles have to be manageable for somebody who is <b>offline</b> — a co-op colony whose
  * second player is asleep is the normal case, and the beacon's own editor is deliberately
  * online-only. So {@code <player>} accepts an online player's name <em>or</em> a raw UUID, and
- * nothing else: NeroColonies never consults the server's profile cache to turn an offline name into
- * a UUID, because a name/UUID correlation lookup driven by user input is exactly the kind of
+ * nothing else: a command never consults the server's profile cache to turn a typed name into a
+ * UUID, because a name/UUID correlation lookup driven by user input is exactly the kind of
  * incidental personal-data processing this mod is built to avoid. The limitation is real and
- * documented: to add somebody who is offline, use their UUID.
+ * documented: to act on somebody who is offline, use their UUID.
  *
  * <p>Server thread only.
  */
@@ -141,23 +176,44 @@ public final class NeroColoniesCommands {
                                         .then(Commands.argument("name", StringArgumentType.greedyString())
                                                 .executes(ctx -> runSafely(ctx.getSource(), "colony rename",
                                                         () -> rename(ctx))))))
-                        .then(Commands.literal("access")
+                        // "access" is the older spelling of "role ally": same handlers, same rules.
+                        .then(roleBranch("access", "colony access", ColonyPermissions.Role.ALLY))
+                        .then(Commands.literal("role")
+                                .then(roleBranch("ally", "colony role ally", ColonyPermissions.Role.ALLY))
+                                .then(roleBranch("chief", "colony role chief",
+                                        ColonyPermissions.Role.CHIEF))
+                                .then(roleBranch("enemy", "colony role enemy",
+                                        ColonyPermissions.Role.ENEMY)))
+                        .then(Commands.literal("plan")
                                 .then(Commands.literal("list")
                                         .then(colonyArgument()
                                                 .executes(ctx -> runSafely(ctx.getSource(),
-                                                        "colony access list", () -> accessList(ctx)))))
-                                .then(Commands.literal("add")
+                                                        "colony plan list", () -> planList(ctx)))))
+                                .then(Commands.literal("cancel")
                                         .then(colonyArgument()
-                                                .then(playerArgument()
+                                                .then(Commands.argument("place",
+                                                                IntegerArgumentType.integer(1))
                                                         .executes(ctx -> runSafely(ctx.getSource(),
-                                                                "colony access add",
-                                                                () -> access(ctx, true))))))
-                                .then(Commands.literal("remove")
+                                                                "colony plan cancel",
+                                                                () -> planCancel(ctx)))))))
+                        .then(Commands.literal("cache")
+                                .then(Commands.literal("share")
                                         .then(colonyArgument()
-                                                .then(playerArgument()
+                                                .then(Commands.argument("shared", BoolArgumentType.bool())
                                                         .executes(ctx -> runSafely(ctx.getSource(),
-                                                                "colony access remove",
-                                                                () -> access(ctx, false)))))))
+                                                                "colony cache share",
+                                                                () -> cacheShare(ctx)))))))
+                        .then(Commands.literal("need")
+                                .then(Commands.literal("prioritise")
+                                        .then(colonyArgument()
+                                                .executes(ctx -> runSafely(ctx.getSource(),
+                                                        "colony need prioritise",
+                                                        () -> needPrioritise(ctx, false)))
+                                                .then(Commands.argument("item",
+                                                                StringArgumentType.greedyString())
+                                                        .executes(ctx -> runSafely(ctx.getSource(),
+                                                                "colony need prioritise",
+                                                                () -> needPrioritise(ctx, true)))))))
                         // --- operator level ---
                         .then(Commands.literal("dissolve")
                                 .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -223,7 +279,39 @@ public final class NeroColoniesCommands {
                 .then(Commands.literal("purge-stale")
                         .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(ctx -> runSafely(ctx.getSource(), "purge-stale",
-                                () -> purgeStale(ctx.getSource())))));
+                                () -> purgeStale(ctx.getSource()))))
+                .then(GalleryCommand.node()));
+    }
+
+    /**
+     * {@code <literal> add|remove|list …} for one role. The three roles share a shape, and
+     * {@code colony access} is the Ally branch under its older name, so one builder makes all four.
+     * Only the Enemy branch grows the trailing {@code confirm}.
+     *
+     * @param label the subcommand name {@link #runSafely} reports — never an argument
+     */
+    private static LiteralArgumentBuilder<CommandSourceStack> roleBranch(String literal, String label,
+            ColonyPermissions.Role role) {
+        RequiredArgumentBuilder<CommandSourceStack, String> addTarget = playerArgument()
+                .executes(ctx -> runSafely(ctx.getSource(), label + " add",
+                        () -> roleChange(ctx, role, true, false)));
+        if (role == ColonyPermissions.Role.ENEMY) {
+            addTarget.then(Commands.literal("confirm")
+                    .executes(ctx -> runSafely(ctx.getSource(), label + " add",
+                            () -> roleChange(ctx, role, true, true))));
+        }
+        return Commands.literal(literal)
+                .then(Commands.literal("list")
+                        .then(colonyArgument()
+                                .executes(ctx -> runSafely(ctx.getSource(), label + " list",
+                                        () -> roleList(ctx, role)))))
+                .then(Commands.literal("add")
+                        .then(colonyArgument().then(addTarget)))
+                .then(Commands.literal("remove")
+                        .then(colonyArgument()
+                                .then(playerArgument()
+                                        .executes(ctx -> runSafely(ctx.getSource(), label + " remove",
+                                                () -> roleChange(ctx, role, false, false))))));
     }
 
     // --- arguments -----------------------------------------------------------
@@ -378,13 +466,27 @@ public final class NeroColoniesCommands {
                         + ExportBuffer.usableSlots()
                         + " §7worth§r " + ExportBuffer.previewValue(server, colony)
                         + " §7outposts§r " + colony.outpostIds().size()), false);
-        // A count, never a roster — see the class notes.
+        ColonyStage stage = ColonyProgress.stage(server, colony);
+        ColonyLife.Life life = ColonyLife.get(server).life(id);
+        int structures = Construction.structuresBuilt(server, id);
+        long stuck = life.stuckEvents();
+        int births = life.births();
+        source.sendSuccess(() -> Component.literal("  §7stage§r ")
+                .append(Component.translatable("stage.nerocolonies." + stage.key()))
+                .append(Component.literal(" §7structures§r " + structures
+                        + " §7stuck events§r " + stuck
+                        + " §7births§r " + births)), false);
+        // Counts, never a roster — see the class notes.
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.info.members",
                 colony.accessList().size(), colony.hasOwner()), false);
+        int[] roles = roleCounts(server, colony);
+        source.sendSuccess(() -> Component.literal(
+                "  §7allies§r " + roles[0] + " §7chiefs§r " + roles[1] + " §7enemies§r " + roles[2]),
+                false);
         return Command.SINGLE_SUCCESS;
     }
 
-    // --- player: rename and access ------------------------------------------
+    // --- player: rename -----------------------------------------------------
 
     private static int rename(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
@@ -403,57 +505,215 @@ public final class NeroColoniesCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    /** The size of the access list, and nothing else — see the class notes. */
-    private static int accessList(CommandContext<CommandSourceStack> ctx) {
+    // --- player: roles -------------------------------------------------------
+
+    /**
+     * How many players hold one role, the cap, and the caller's own role — and nothing else. See the
+     * class notes: a command never prints who.
+     */
+    private static int roleList(CommandContext<CommandSourceStack> ctx, ColonyPermissions.Role role) {
         CommandSourceStack source = ctx.getSource();
         MinecraftServer server = source.getServer();
         if (server == null) {
             return noServer(source);
         }
-        Colony colony = resolveColony(source, server, colonyId(ctx), true);
-        if (colony == null) {
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
             return 0;
         }
-        source.sendSuccess(() -> Component.translatable("command.nerocolonies.access.count",
-                colony.accessList().size(), Colony.MAX_ACCESS_LIST), false);
+        int[] counts = roleCounts(server, acting.colony());
+        int count = switch (role) {
+            case CHIEF -> counts[1];
+            case ENEMY -> counts[2];
+            default -> counts[0];
+        };
+        ColonyPermissions.Role own = acting.role();
+        source.sendSuccess(() -> Component.translatable("command.nerocolonies.role.count." + role.key(),
+                count, Colony.MAX_ACCESS_LIST, Component.translatable("role.nerocolonies." + own.key())),
+                false);
         return Command.SINGLE_SUCCESS;
     }
 
-    /** Adds or removes an access-list member. Owner (or operator) only, and it works offline by UUID. */
-    private static int access(CommandContext<CommandSourceStack> ctx, boolean grant) {
+    /**
+     * Gives a player a role or takes it away. Works offline by UUID. What is allowed is
+     * {@link ColonyMembership}'s decision; the answer says what happened and never to whom.
+     */
+    private static int roleChange(CommandContext<CommandSourceStack> ctx, ColonyPermissions.Role role,
+            boolean add, boolean confirm) {
         CommandSourceStack source = ctx.getSource();
         MinecraftServer server = source.getServer();
         if (server == null) {
             return noServer(source);
         }
-        Colony colony = resolveColony(source, server, colonyId(ctx), true);
-        if (colony == null) {
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
             return 0;
+        }
+        // Every role change needs at least this, so say so before looking anybody up.
+        if (!ColonyPermissions.allows(acting.role(), ColonyPermissions.Action.MANAGE_MEMBERS, false)) {
+            return refuse(source, ColonyMembership.Result.NOT_ALLOWED);
         }
         UUID target = resolvePlayer(source, server, ctx);
         if (target == null) {
             return 0;
         }
-        if (colony.isOwner(target)) {
-            source.sendFailure(Component.translatable("message.nerocolonies.access.is_owner"));
+        Colony colony = acting.colony();
+        ColonyMembership.Result result = switch (role) {
+            case CHIEF -> ColonyMembership.setChief(server, colony, acting.role(), acting.actorId(), target,
+                    add);
+            case ENEMY -> {
+                // Only somebody online can be seen to be an operator; offline, the mark is allowed and
+                // an operator's own override keeps working regardless.
+                ServerPlayer online = server.getPlayerList().getPlayer(target);
+                yield ColonyMembership.setEnemy(server, colony, acting.role(), acting.actorId(), target,
+                        add, confirm, online != null && ColonyClaims.isGamemaster(online));
+            }
+            default -> ColonyMembership.setAlly(server, colony, acting.role(), acting.actorId(), target,
+                    add);
+        };
+        if (result != ColonyMembership.Result.DONE) {
+            return refuse(source, result);
+        }
+        source.sendSuccess(() -> Component.translatable(
+                ColonyMembership.messageKey(ColonyMembership.Result.DONE)), false);
+        Colony latest = ColonyState.get(server).colony(colony.colonyId());
+        int[] counts = roleCounts(server, latest == null ? colony : latest);
+        source.sendSuccess(() -> Component.translatable("command.nerocolonies.role.counts",
+                counts[0], counts[1], counts[2], Colony.MAX_ACCESS_LIST), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** {allies, chiefs, enemies} for one colony, counted the way {@link ColonyPermissions} reads them. */
+    private static int[] roleCounts(MinecraftServer server, Colony colony) {
+        UUID id = colony.colonyId();
+        ColonyRoles roles = ColonyRoles.get(server);
+        int allies = 0;
+        int chiefs = 0;
+        for (UUID member : colony.accessList()) {
+            if (roles.isEnemy(id, member)) {
+                continue;
+            }
+            if (roles.isChief(id, member)) {
+                chiefs++;
+            } else {
+                allies++;
+            }
+        }
+        return new int[] {allies, chiefs, roles.counts(id)[1]};
+    }
+
+    private static int refuse(CommandSourceStack source, ColonyMembership.Result result) {
+        source.sendFailure(Component.translatable(ColonyMembership.messageKey(result)));
+        return 0;
+    }
+
+    // --- player: planning and colony settings --------------------------------
+
+    /** The planner's readout — what can be planned and what is queued — for an owner or a Chief. */
+    private static int planList(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        MinecraftServer server = source.getServer();
+        if (server == null) {
+            return noServer(source);
+        }
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.translatable("command.nerocolonies.player_only"));
             return 0;
         }
-        Colony updated = grant ? colony.grantAccess(target) : colony.revokeAccess(target);
-        if (updated == colony) {
-            source.sendFailure(Component.translatable(grant
-                    ? "message.nerocolonies.access.already"
-                    : "message.nerocolonies.access.absent"));
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
             return 0;
         }
-        ColonyState state = ColonyState.get(server);
-        state.put(updated);
-        state.log(colony.colonyId(), target,
-                grant ? AccessLog.Action.ACCESS_GRANT : AccessLog.Action.ACCESS_REVOKE);
-        ColonySync.refresh(server, colony.colonyId());
-        int members = updated.accessList().size();
-        source.sendSuccess(() -> Component.translatable(grant
-                ? "message.nerocolonies.access.granted"
-                : "message.nerocolonies.access.revoked", members), false);
+        if (!ColonyPermissions.allows(acting.role(), ColonyPermissions.Action.PLAN, false)) {
+            return refuse(source, ColonyMembership.Result.NOT_ALLOWED);
+        }
+        ColonyPlanner.describe(player.level(), player, acting.colony());
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** Drops one queued plan by its place in the queue, counting from 1 as {@code plan list} does. */
+    private static int planCancel(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        MinecraftServer server = source.getServer();
+        if (server == null) {
+            return noServer(source);
+        }
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
+            return 0;
+        }
+        if (!ColonyPermissions.allows(acting.role(), ColonyPermissions.Action.PLAN, false)) {
+            return refuse(source, ColonyMembership.Result.NOT_ALLOWED);
+        }
+        int place = IntegerArgumentType.getInteger(ctx, "place");
+        if (!ColonyPlanner.cancel(server, acting.colony(), place)) {
+            source.sendFailure(Component.translatable("command.nerocolonies.plan.none", place));
+            return 0;
+        }
+        ColonySync.refresh(server, acting.colony().colonyId());
+        source.sendSuccess(() -> Component.translatable("command.nerocolonies.plan.cancelled", place),
+                false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** Shares the Gratitude Cache with Allies, or stops. Owner (or operator) only. */
+    private static int cacheShare(CommandContext<CommandSourceStack> ctx) {
+        CommandSourceStack source = ctx.getSource();
+        MinecraftServer server = source.getServer();
+        if (server == null) {
+            return noServer(source);
+        }
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
+            return 0;
+        }
+        boolean shared = BoolArgumentType.getBool(ctx, "shared");
+        ColonyMembership.Result result =
+                ColonyMembership.setCacheShared(server, acting.colony(), acting.role(), shared);
+        if (result != ColonyMembership.Result.DONE && result != ColonyMembership.Result.ALREADY) {
+            return refuse(source, result);
+        }
+        source.sendSuccess(() -> Component.translatable(shared
+                ? "message.nerocolonies.cache.shared" : "message.nerocolonies.cache.private"), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /**
+     * Prioritises one need — the trades that gather it work faster — or, with no item, clears the
+     * priority. Owner or Chief. The item has to be a real one; it does not have to be on the needs
+     * list today, so an owner can line up what the next building will want.
+     */
+    private static int needPrioritise(CommandContext<CommandSourceStack> ctx, boolean hasItem) {
+        CommandSourceStack source = ctx.getSource();
+        MinecraftServer server = source.getServer();
+        if (server == null) {
+            return noServer(source);
+        }
+        Acting acting = resolveActing(source, server, colonyId(ctx));
+        if (acting == null) {
+            return 0;
+        }
+        if (!ColonyPermissions.allows(acting.role(), ColonyPermissions.Action.PLAN, false)) {
+            return refuse(source, ColonyMembership.Result.NOT_ALLOWED);
+        }
+        Identifier item = null;
+        if (hasItem) {
+            String raw = StringArgumentType.getString(ctx, "item").trim();
+            item = Identifier.tryParse(raw);
+            if (item == null || !BuiltInRegistries.ITEM.containsKey(item)) {
+                source.sendFailure(Component.translatable("command.nerocolonies.need.unknown_item", raw));
+                return 0;
+            }
+        }
+        ColonyMembership.Result result =
+                ColonyMembership.setPriorityNeed(server, acting.colony(), acting.role(), item);
+        if (result != ColonyMembership.Result.DONE && result != ColonyMembership.Result.ALREADY) {
+            return refuse(source, result);
+        }
+        boolean cleared = item == null;
+        source.sendSuccess(() -> Component.translatable(cleared
+                ? "message.nerocolonies.need.cleared" : "message.nerocolonies.need.prioritised"), false);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -477,7 +737,9 @@ public final class NeroColoniesCommands {
         JsonObject json = new JsonObject();
         json.addProperty("player", player.getUUID().toString());
         json.addProperty("exported_at", System.currentTimeMillis());
-        json.add("nerocolonies", ColonyState.get(server).export(player.getUUID()));
+        JsonObject mine = ColonyState.get(server).export(player.getUUID());
+        ColonyRoles.get(server).exportInto(mine, player.getUUID());
+        json.add("nerocolonies", mine);
 
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.export.header"), false);
         String pretty = new GsonBuilder().setPrettyPrinting().create().toJson(json);
@@ -536,10 +798,14 @@ public final class NeroColoniesCommands {
         ServerLevel level = server.getLevel(colony.dimension());
         if (level != null && level.isLoaded(colony.beaconPos())) {
             ColonyStores.dropAndForget(level, colony.beaconPos(), colony.colonyId());
+            za.co.neroland.nerocolonies.colony.GratitudeCache.dropAll(level, colony.beaconPos(),
+                    colony.colonyId());
         } else {
             ColonyStores.get(server).forget(colony.colonyId());
         }
         Construction.forget(server, colony.colonyId());
+        // The Chief and Enemy lists hold player ids, and they have no business outliving the colony.
+        ColonyRoles.get(server).forget(colony.colonyId());
         ColonyState.get(server).remove(colony.colonyId());
         String name = colony.name();
         source.sendSuccess(() -> Component.translatable("message.nerocolonies.claim.dissolved", name),
@@ -563,8 +829,17 @@ public final class NeroColoniesCommands {
             return 0;
         }
         // The new owner is removed from the access list if they were on it: owner and member are
-        // separate slots and holding both would double-count them.
+        // separate slots and holding both would double-count them. Any Chief rank or Enemy mark they
+        // carried goes too — an owner is neither.
+        ColonyRoles roles = ColonyRoles.get(server);
+        roles.removeChief(colony.colonyId(), target);
+        roles.removeEnemy(colony.colonyId(), target);
         ColonyState.get(server).put(colony.revokeAccess(target).withOwner(target));
+        // The previous owner is no longer a member, so the fan-out below will not reach them: blank
+        // their view rather than leave the old snapshot (and its roster) on their client.
+        if (colony.hasOwner() && !colony.ownerId().equals(target)) {
+            ColonySync.clearView(server, colony.ownerId());
+        }
         ColonySync.refresh(server, colony.colonyId());
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.transfer.done",
                 colony.name()), false);
@@ -727,9 +1002,12 @@ public final class NeroColoniesCommands {
         int housing = ColonyDefinitions.housingForServer(server).size();
         int exports = ColonyDefinitions.exportsForServer(server).size();
         int blueprints = ColonyDefinitions.blueprintsForServer(server).size();
+        int professions = ColonyDefinitions.professionsForServer(server).size();
 
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.reload_check.header",
                 jobs, research, housing, exports, blueprints), false);
+        source.sendSuccess(() -> Component.translatable("command.nerocolonies.reload_check.professions",
+                professions), false);
         if (rereading) {
             source.sendSuccess(() -> Component.translatable("command.nerocolonies.reload_check.reread"),
                     false);
@@ -777,7 +1055,10 @@ public final class NeroColoniesCommands {
      * having already told the caller why not.
      *
      * <p>A refusal deliberately does not distinguish "no such colony" from "not yours": the two
-     * answers together would let anyone probe for the existence of other people's colonies.
+     * answers together would let anyone probe for the existence of other people's colonies. Only a
+     * member is ever told that their rank is the problem. Membership is {@link ColonyPermissions}'
+     * reading of it, so somebody the colony has marked as an Enemy is not a member here even if stale
+     * data left them on a list.
      *
      * @param ownerOnly {@code true} for the operations only an owner (or an operator) may perform
      */
@@ -805,14 +1086,48 @@ public final class NeroColoniesCommands {
             source.sendFailure(Component.translatable("command.nerocolonies.player_only"));
             return null;
         }
-        boolean allowed = ownerOnly ? colony.isOwner(player.getUUID()) : colony.isMember(player.getUUID());
-        if (!allowed) {
-            source.sendFailure(Component.translatable(ownerOnly
-                    ? "message.nerocolonies.access.owner_only"
-                    : "command.nerocolonies.colony.unknown"));
+        ColonyPermissions.Role role = ColonyPermissions.roleOf(server, colony, player.getUUID());
+        if (!role.member()) {
+            source.sendFailure(Component.translatable("command.nerocolonies.colony.unknown"));
+            return null;
+        }
+        if (ownerOnly && role != ColonyPermissions.Role.OWNER) {
+            source.sendFailure(Component.translatable("message.nerocolonies.permission.rank"));
             return null;
         }
         return colony;
+    }
+
+    /**
+     * A colony, and who is acting on it: the role the rank-gated commands hand to
+     * {@link ColonyPermissions#allows} and {@link ColonyMembership}.
+     *
+     * @param actorId the acting player, or {@code null} for the server console
+     */
+    private record Acting(Colony colony, ColonyPermissions.Role role, @Nullable UUID actorId) {
+    }
+
+    /**
+     * The colony named by {@code raw} and the caller's role in it, or {@code null} having already
+     * told the caller why not. An operator acts as the owner; anybody else acts as what they are, and
+     * somebody who is not a member gets the same non-revealing answer as for a colony that does not
+     * exist.
+     */
+    @Nullable
+    private static Acting resolveActing(CommandSourceStack source, MinecraftServer server, String raw) {
+        Colony colony = resolveColony(source, server, raw, false);
+        if (colony == null) {
+            return null;
+        }
+        ServerPlayer player = source.getPlayer();
+        UUID actorId = player == null ? null : player.getUUID();
+        if (isOperator(source)) {
+            return new Acting(colony, ColonyPermissions.Role.OWNER, actorId);
+        }
+        ColonyPermissions.Role role = actorId == null
+                ? ColonyPermissions.Role.STRANGER
+                : ColonyPermissions.roleOf(server, colony, actorId);
+        return new Acting(colony, role, actorId);
     }
 
     /**
@@ -884,7 +1199,9 @@ public final class NeroColoniesCommands {
             return true;
         }
         ServerPlayer player = source.getPlayer();
-        return ColonyClaims.canAccess(player, colony);
+        MinecraftServer server = source.getServer();
+        return player != null && server != null
+                && ColonyPermissions.roleOf(server, colony, player.getUUID()).member();
     }
 
     /** {@code <id> "Name" — dimension, morale, pop/cap}. Never an owner. */
@@ -905,7 +1222,7 @@ public final class NeroColoniesCommands {
      * telemetry event instead of a Brigadier stack trace in chat. The captured context is the
      * subcommand name only — never its arguments, which may name a player or a colony.
      */
-    private static int runSafely(CommandSourceStack source, String subcommand, CommandBody body) {
+    static int runSafely(CommandSourceStack source, String subcommand, CommandBody body) {
         try {
             return body.run();
         } catch (RuntimeException e) {
@@ -917,7 +1234,7 @@ public final class NeroColoniesCommands {
     }
 
     @FunctionalInterface
-    private interface CommandBody {
+    interface CommandBody {
 
         int run();
     }

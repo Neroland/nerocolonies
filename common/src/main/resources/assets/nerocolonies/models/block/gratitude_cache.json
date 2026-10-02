@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/gratitude_cache",
+    "particle": "nerocolonies:block/gratitude_cache"
+  }
+}

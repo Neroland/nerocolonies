@@ -1,21 +1,64 @@
 {
   "name": "blueprint.nerocolonies.depot_shed",
   "category": "storage",
+  "stage": "settled",
   "priority": 30,
   "max": 2,
+  "level": 1,
+  "capacity": {"housing": 0, "storage": 27, "jobs": 0},
   "palette": {
-    "#": "minecraft:smooth_stone",
     "G": "minecraft:glass",
-    "D": "nerocolonies:colony_depot"
+    "S": "minecraft:smooth_stone",
+    "_": "minecraft:air",
+    "a": "minecraft:birch_door[facing=south,half=lower,hinge=left,open=false]",
+    "b": "minecraft:birch_door[facing=south,half=upper,hinge=left,open=false]",
+    "c": "minecraft:oak_log[axis=z]",
+    "d": "minecraft:smooth_stone_slab[type=bottom]",
+    "h": "nerocolonies:colony_depot"
   },
   "layers": [
-    [ "###", "###", "###" ],
-    [ "###", "#D#", "#.#" ],
-    [ "#G#", "###", "#.#" ],
-    [ "###", "###", "###" ]
+    [
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS"
+    ],
+    [
+      "SSSSS",
+      "SchcS",
+      "S___S",
+      "S___S",
+      "SSaSS"
+    ],
+    [
+      "SGSGS",
+      "S___S",
+      "G___G",
+      "S___S",
+      "SSbSS"
+    ],
+    [
+      "SSSSS",
+      "S___S",
+      "S___S",
+      "S___S",
+      "SSSSS"
+    ],
+    [
+      "ddddd",
+      "ddddd",
+      "ddddd",
+      "ddddd",
+      "ddddd"
+    ]
   ],
   "materials": [
-    { "item": "minecraft:smooth_stone", "count": 16 },
-    { "item": "minecraft:iron_ingot", "count": 8 }
-  ]
+    {"item": "minecraft:smooth_stone", "count": 42},
+    {"item": "minecraft:glass", "count": 2},
+    {"item": "minecraft:birch_door", "count": 1},
+    {"tag": "minecraft:logs", "count": 1},
+    {"item": "nerocolonies:colony_depot", "count": 1}
+  ],
+  "rotate": true
 }

@@ -1,0 +1,109 @@
+{
+  "name": "blueprint.nerocolonies.neran_cottage",
+  "category": "housing",
+  "stage": "settled",
+  "priority": 10,
+  "max": 8,
+  "level": 1,
+  "upgrade_to": "nerocolonies:neran_cottage_2",
+  "roles": ["sleep"],
+  "capacity": {"housing": 2, "storage": 0, "jobs": 0},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "H": "nerocolonies:habitat_pod",
+    "P": "minecraft:oak_planks",
+    "_": "minecraft:air",
+    "a": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "b": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "c": "minecraft:oak_log[axis=y]",
+    "d": "minecraft:spruce_stairs[facing=north,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:spruce_stairs[facing=south,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCCCCCCCC"
+    ],
+    [
+      ".cCCCCCc.",
+      ".CH____C.",
+      ".C_____C.",
+      ".C_____C.",
+      ".C____*C.",
+      ".C_____C.",
+      ".cCCaCCc."
+    ],
+    [
+      ".cPgPgPc.",
+      ".P_____P.",
+      ".g_____g.",
+      ".P_____P.",
+      ".g_____g.",
+      ".P_____P.",
+      ".cgPbPgc."
+    ],
+    [
+      ".cPPPPPc.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".cPPPPPc."
+    ],
+    [
+      "hhhhhhhhh",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      "ddddddddd"
+    ],
+    [
+      ".........",
+      "hhhhhhhhh",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      "ddddddddd",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      "hhhhhhhhh",
+      ".P_____P.",
+      "ddddddddd",
+      ".........",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      ".........",
+      "ppppppppp",
+      ".........",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 62},
+    {"item": "minecraft:cobblestone", "count": 26},
+    {"tag": "minecraft:logs", "count": 6},
+    {"item": "minecraft:glass", "count": 4},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1},
+    {"item": "nerocolonies:habitat_pod", "count": 1}
+  ],
+  "rotate": true
+}

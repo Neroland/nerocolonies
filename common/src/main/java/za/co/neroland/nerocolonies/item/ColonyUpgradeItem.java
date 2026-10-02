@@ -40,10 +40,6 @@ public class ColonyUpgradeItem extends Item {
         this.type = type;
     }
 
-    public UpgradeType upgradeType() {
-        return this.type;
-    }
-
     /** The upgrade type a stack provides, or {@code null} when it is not a module at all. */
     @Nullable
     public static UpgradeType typeOf(ItemStack stack) {

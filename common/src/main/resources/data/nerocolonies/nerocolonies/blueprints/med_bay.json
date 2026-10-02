@@ -1,0 +1,124 @@
+{
+  "name": "blueprint.nerocolonies.med_bay",
+  "category": "civic",
+  "stage": "growing",
+  "priority": 55,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:medic"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "I": "minecraft:quartz_pillar[axis=y]",
+    "Q": "minecraft:quartz_block",
+    "S": "minecraft:smooth_stone",
+    "_": "minecraft:air",
+    "a": "minecraft:brewing_stand",
+    "b": "minecraft:cauldron",
+    "c": "minecraft:lime_concrete",
+    "d": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "i": "minecraft:quartz_stairs[facing=north,half=bottom]",
+    "j": "minecraft:quartz_stairs[facing=south,half=bottom]",
+    "k": "minecraft:smooth_quartz",
+    "l": "minecraft:white_carpet",
+    "m": "minecraft:white_concrete"
+  },
+  "layers": [
+    [
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS",
+      "SkkkkkkkkkS"
+    ],
+    [
+      ".IkkkkkkkI.",
+      ".kllbamllk.",
+      ".k_______k.",
+      ".k_______k.",
+      ".k_______k.",
+      ".k*_____*k.",
+      ".IkkkdkkkI."
+    ],
+    [
+      ".ImgmgmgmI.",
+      ".m_______m.",
+      ".g_______g.",
+      ".m_______m.",
+      ".g_______g.",
+      ".m_______m.",
+      ".ImgmhmgmI."
+    ],
+    [
+      ".ImmmmmmmI.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".ImmmmmmmI."
+    ],
+    [
+      ".ImmmmmmmI.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".ImmcccmmI."
+    ],
+    [
+      "jjjjjjjjjjj",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      "iiiiiiiiiii"
+    ],
+    [
+      "...........",
+      "jjjjjjjjjjj",
+      ".m_______m.",
+      ".m_______m.",
+      ".m_______m.",
+      "iiiiiiiiiii",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "jjjjjjjjjjj",
+      ".m_______m.",
+      "iiiiiiiiiii",
+      "...........",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "...........",
+      "QQQQQQQQQQQ",
+      "...........",
+      "...........",
+      "..........."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:quartz_block", "count": 81},
+    {"item": "minecraft:white_concrete", "count": 36},
+    {"item": "minecraft:smooth_stone", "count": 7},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:lime_concrete", "count": 2},
+    {"item": "minecraft:white_carpet", "count": 2},
+    {"item": "minecraft:brewing_stand", "count": 1},
+    {"item": "minecraft:cauldron", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

@@ -1,0 +1,124 @@
+{
+  "name": "blueprint.nerocolonies.planning_hall",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 43,
+  "max": 1,
+  "level": 1,
+  "roles": ["planning"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 0},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "B": "minecraft:bookshelf",
+    "C": "minecraft:cobblestone",
+    "P": "minecraft:oak_planks",
+    "_": "minecraft:air",
+    "a": "minecraft:cartography_table",
+    "b": "minecraft:dark_oak_log[axis=y]",
+    "c": "minecraft:dark_oak_planks",
+    "d": "minecraft:dark_oak_stairs[facing=north,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:dark_oak_stairs[facing=south,half=bottom]",
+    "i": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "j": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "k": "nerocolonies:planning_table",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "C#########C",
+      "C#ppppppp#C",
+      "C#ppppppp#C",
+      "C#ppppppp#C",
+      "C#ppppppp#C",
+      "C#ppppppp#C",
+      "C#########C"
+    ],
+    [
+      ".b#######b.",
+      ".#BBBBBBB#.",
+      ".#_______#.",
+      ".#_a_k___#.",
+      ".#_______#.",
+      ".#*______#.",
+      ".b###i###b."
+    ],
+    [
+      ".bPgPgPgPb.",
+      ".PBBB*BBBP.",
+      ".g_______g.",
+      ".P_______P.",
+      ".g_______g.",
+      ".P_______P.",
+      ".bPgPjPgPb."
+    ],
+    [
+      ".bPPPPPPPb.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".bPPPPPPPb."
+    ],
+    [
+      ".bPPPPPPPb.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".bPPPPPPPb."
+    ],
+    [
+      "hhhhhhhhhhh",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      "ddddddddddd"
+    ],
+    [
+      "...........",
+      "hhhhhhhhhhh",
+      ".P_______P.",
+      ".P_______P.",
+      ".P_______P.",
+      "ddddddddddd",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "hhhhhhhhhhh",
+      ".P_______P.",
+      "ddddddddddd",
+      "...........",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "...........",
+      "ccccccccccc",
+      "...........",
+      "...........",
+      "..........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 87},
+    {"item": "minecraft:stone_bricks", "count": 23},
+    {"tag": "minecraft:logs", "count": 8},
+    {"item": "minecraft:cobblestone", "count": 7},
+    {"item": "minecraft:bookshelf", "count": 6},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:cartography_table", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1},
+    {"item": "nerocolonies:planning_table", "count": 1}
+  ],
+  "rotate": true
+}

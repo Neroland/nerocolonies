@@ -22,6 +22,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerocolonies.data.SavedDataRecovery;
 
 /**
@@ -184,16 +185,16 @@ public final class ColonyStores extends SavedData {
 
         static final Codec<Row> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Colony.UUID_CODEC.fieldOf("colony").forGetter(Row::colony),
-                ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("storage", List.of())
+                LenientCodecs.list(ItemStack.OPTIONAL_CODEC, "stored item").optionalFieldOf("storage", List.of())
                         .forGetter(Row::storage),
-                ItemStack.OPTIONAL_CODEC.listOf().optionalFieldOf("exports", List.of())
+                LenientCodecs.list(ItemStack.OPTIONAL_CODEC, "export item").optionalFieldOf("exports", List.of())
                         .forGetter(Row::exports)
         ).apply(instance, Row::new));
     }
 
     private static Codec<ColonyStores> codec() {
         return RecordCodecBuilder.create(instance -> instance.group(
-                Row.CODEC.listOf().optionalFieldOf("stores", List.of()).forGetter(ColonyStores::rows)
+                LenientCodecs.list(Row.CODEC, "colony store").optionalFieldOf("stores", List.of()).forGetter(ColonyStores::rows)
         ).apply(instance, ColonyStores::fromRows));
     }
 

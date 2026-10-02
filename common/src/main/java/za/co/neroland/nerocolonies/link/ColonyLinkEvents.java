@@ -1,5 +1,6 @@
 package za.co.neroland.nerocolonies.link;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,41 +18,60 @@ import za.co.neroland.nerolandcore.link.NeroLinkRegistry;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.colony.Colony;
+import za.co.neroland.nerocolonies.colony.ColonyLife;
+import za.co.neroland.nerocolonies.colony.ColonyNeeds;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
+import za.co.neroland.nerocolonies.lifecycle.ServerStateReset;
 
 /**
- * The live half of the link module: the four things worth waking a companion client for, plus the
- * two things worth interrupting a player for.
+ * The live half of the link module: the member-scoped things worth waking a companion client for,
+ * one broadcast, plus the few things worth interrupting a player for.
  *
  * <h2>Events</h2>
  *
  * <ul>
  *   <li><b>{@code life_support}</b> — one of <em>your</em> colonies moved between {@code OK},
- *       {@code DEGRADED} and {@code FAILED}. Published with {@link LinkEvent#forPlayer} to the
- *       colony's owner, so the bridge routes it to that player's sessions and nobody else's.</li>
+ *       {@code DEGRADED} and {@code FAILED}. Published with {@link LinkEvent#forPlayer} to each of
+ *       the colony's members (owner and access list), so the bridge routes it to those players'
+ *       sessions and nobody else's.</li>
  *   <li><b>{@code morale}</b> — one of your colonies crossed the work-stop threshold, in either
  *       direction.</li>
  *   <li><b>{@code food}</b> — one of your colonies ran out of rations, or started eating again.</li>
  *   <li><b>{@code exports}</b> — one of your colonies' export buffers filled up (which stops export
  *       production) or was drained.</li>
+ *   <li><b>{@code construction}</b> — one of your colonies finished building a structure.</li>
+ *   <li><b>{@code stage}</b> — one of your colonies reached a new growth stage.</li>
+ *   <li><b>{@code neran_born}</b> — a Neran was born; carries the new population.</li>
+ *   <li><b>{@code needs}</b> — the needs list started, or stopped, holding something the colony
+ *       cannot get without help; carries how many, never what a player holds.</li>
+ *   <li><b>{@code enemy}</b> — enemies are inside the claim; carries a count, never who.</li>
+ *   <li><b>{@code cache}</b> — the Gratitude Cache was stocked, or is full.</li>
+ *   <li><b>{@code guards}</b> — the colony's guards engaged a target.</li>
  *   <li><b>{@code colony_state}</b> — a colony's life support changed. <b>Broadcast</b>, because a
  *       colony is a place, not a person.</li>
  * </ul>
  *
+ * <p>The last six member-scoped topics arrived with schema version 2 and are published by the code
+ * that detects them, through {@link #colonyEvent}; {@code needs} is detected here, by
+ * {@link #needsCheck}.
+ *
  * <h2>Alerts</h2>
  *
- * <p>Two, and deliberately only two — an alert survives in Core's store until it is acknowledged, so
- * it is reserved for things a player would genuinely want to be told about while the game is closed:
+ * <p>Few, and deliberately few — an alert survives in Core's store until it is acknowledged, so it
+ * is reserved for things a player would genuinely want to be told about while the game is closed:
  *
  * <ul>
- *   <li><b>life support has failed</b> — raised for the colony's owner alone;</li>
- *   <li><b>morale collapsed and work has stopped</b> — likewise.</li>
+ *   <li><b>life support has failed</b> — raised for each member of the colony;</li>
+ *   <li><b>morale collapsed and work has stopped</b> — likewise;</li>
+ *   <li><b>enemies are inside the claim</b>;</li>
+ *   <li><b>the Gratitude Cache is full</b>;</li>
+ *   <li><b>the colony needs help</b> — its needs list holds something it cannot get alone.</li>
  * </ul>
  *
- * <p>Both are <b>rate-limited per colony</b> ({@value #ALERT_COOLDOWN_MS} ms), so a generator
- * flapping between powered and unpowered cannot turn a companion client into an alarm clock. The
- * alert id is one per colony per kind, so a re-raise replaces rather than stacks.
+ * <p>All are <b>rate-limited per colony per kind</b> ({@value #ALERT_COOLDOWN_MS} ms), so a
+ * generator flapping between powered and unpowered cannot turn a companion client into an alarm
+ * clock. The alert id is one per colony per kind, so a re-raise replaces rather than stacks.
  *
  * <h2>Scope and privacy (POPIA/GDPR)</h2>
  *
@@ -60,14 +80,16 @@ import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
  * no member count and no position. That is the same rule Core's {@code ThresholdEvents} contract
  * imposes on {@code nerocolonies:oxygen}, applied to the same information.
  *
- * <p>An owner-scoped event, by contrast, is going to exactly the person whose colony it is, so it may
- * name the colony they named. An alert's {@code text} is a plain string by Core's contract and
- * therefore must never contain <em>another</em> player's data — neither of these two ever mentions a
- * player at all.
+ * <p>A member-scoped event, by contrast, goes only to the people who can already see the colony in
+ * their snapshots, so it may name the colony. Default names identify nobody ({@code "Colony N"}),
+ * and erasure replaces the name of any colony the erased player owned. An alert's {@code text} is a
+ * plain string by Core's contract and therefore must never contain <em>another</em> player's data —
+ * none of these ever mentions a player at all: a colony name, a condition and at most a count.
  *
- * <p>A colony with no owner (post-erasure, under the {@code transfer_to_server} policy) raises
- * nothing and publishes no owner-scoped event: there is nobody to tell, and inventing one would be
- * the exact opposite of what the erasure request asked for.
+ * <p>The gallery's <b>sandbox colony</b> publishes nothing and raises nothing.
+ *
+ * <p>A colony with no owner (post-erasure, under the {@code transfer_to_server} policy) still tells
+ * its remaining access-list members, and nobody else. With no members it publishes nothing.
  *
  * <p><b>Nothing here may throw at its caller.</b> Every publisher is wrapped: a link failure must
  * never disturb a colony tick.
@@ -81,6 +103,12 @@ public final class ColonyLinkEvents {
 
     /** {@code colonyId + kind → when it was last raised}. Session state; cleared on server stop. */
     private static final Map<String, Long> LAST_ALERT = new ConcurrentHashMap<>();
+
+    /**
+     * {@code colonyId → how many of its needs wanted help last cycle}. Session state; cleared on
+     * server stop. A count about a colony — nothing player-shaped.
+     */
+    private static final Map<UUID, Integer> LAST_NEEDS = new ConcurrentHashMap<>();
 
     private ColonyLinkEvents() {
     }
@@ -97,21 +125,22 @@ public final class ColonyLinkEvents {
         // Intentionally empty — see the javadoc.
     }
 
-    /** Drops the rate-limiter state. Called from the server-stopped hook. */
+    /** Drops the rate-limiter and needs-watch state. Called from the server-stopped hook. */
     public static void reset() {
         LAST_ALERT.clear();
+        LAST_NEEDS.clear();
     }
 
     // --- life_support ----------------------------------------------------------
 
     /**
-     * Publishes a life-support transition: owner-scoped detail, plus one broadcast that says only
+     * Publishes a life-support transition: member-scoped detail, plus one broadcast that says only
      * that a colony somewhere changed state.
      *
      * @param state the state the colony has just moved <em>to</em>
      */
     public static void lifeSupportChanged(ServerLevel level, Colony colony, LifeSupport.State state) {
-        if (!enabled()) {
+        if (!enabled() || sandbox(colony)) {
             return;
         }
         try {
@@ -120,7 +149,7 @@ public final class ColonyLinkEvents {
             payload.addProperty("life_support_ok", colony.lifeSupportOk());
             payload.addProperty("oxygen_generators", LifeSupport.generatorCount(colony.colonyId()));
             payload.addProperty("population", colony.population());
-            forOwner(colony, ColonyLinkModule.TOPIC_LIFE_SUPPORT, payload);
+            forMembers(colony, ColonyLinkModule.TOPIC_LIFE_SUPPORT, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_LIFE_SUPPORT, e);
         }
@@ -148,7 +177,7 @@ public final class ColonyLinkEvents {
 
     /** Publishes a work-stop crossing, and raises the alert when work has just stopped. */
     public static void workStopChanged(ServerLevel level, Colony colony, boolean stopped) {
-        if (!enabled()) {
+        if (!enabled() || sandbox(colony)) {
             return;
         }
         try {
@@ -156,7 +185,7 @@ public final class ColonyLinkEvents {
             payload.addProperty("morale", Math.round(colony.morale()));
             payload.addProperty("work_stopped", stopped);
             payload.addProperty("threshold", NeroColoniesConfig.MORALE_WORK_STOP_THRESHOLD.get());
-            forOwner(colony, ColonyLinkModule.TOPIC_MORALE, payload);
+            forMembers(colony, ColonyLinkModule.TOPIC_MORALE, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_MORALE, e);
         }
@@ -170,7 +199,7 @@ public final class ColonyLinkEvents {
 
     /** Publishes a starvation crossing. No alert: an empty larder is a slow problem, not an urgent one. */
     public static void foodChanged(ServerLevel level, Colony colony, boolean starving) {
-        if (!enabled()) {
+        if (!enabled() || sandbox(colony)) {
             return;
         }
         try {
@@ -178,7 +207,7 @@ public final class ColonyLinkEvents {
             payload.addProperty("starving", starving);
             payload.addProperty("food_stock", colony.foodStock());
             payload.addProperty("population", colony.population());
-            forOwner(colony, ColonyLinkModule.TOPIC_FOOD, payload);
+            forMembers(colony, ColonyLinkModule.TOPIC_FOOD, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_FOOD, e);
         }
@@ -188,13 +217,13 @@ public final class ColonyLinkEvents {
 
     /** Publishes an export-buffer fill crossing. No alert: nothing is lost, production simply pauses. */
     public static void exportBufferChanged(ServerLevel level, Colony colony, boolean full) {
-        if (!enabled()) {
+        if (!enabled() || sandbox(colony)) {
             return;
         }
         try {
             JsonObject payload = colonyPayload(colony);
             payload.addProperty("buffer_full", full);
-            forOwner(colony, ColonyLinkModule.TOPIC_EXPORTS, payload);
+            forMembers(colony, ColonyLinkModule.TOPIC_EXPORTS, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_EXPORTS, e);
         }
@@ -203,7 +232,7 @@ public final class ColonyLinkEvents {
     // --- construction ------------------------------------------------------------
 
     /**
-     * Publishes a finished structure. Owner-scoped and no alert: a colony building itself a habitat
+     * Publishes a finished structure. Member-scoped and no alert: a colony building itself a habitat
      * is good news, and good news does not survive in an alert store until somebody dismisses it.
      *
      * <p>Deliberately <b>not</b> broadcast. The equivalent broadcast would have to carry a colony id
@@ -215,7 +244,7 @@ public final class ColonyLinkEvents {
      * @param built     how many structures the colony has now built for itself
      */
     public static void structureCompleted(Colony colony, Identifier blueprint, int built) {
-        if (!enabled()) {
+        if (!enabled() || sandbox(colony)) {
             return;
         }
         try {
@@ -224,9 +253,100 @@ public final class ColonyLinkEvents {
             payload.addProperty("structures_built", built);
             payload.addProperty("population", colony.population());
             payload.addProperty("housing_capacity", colony.housingCapacity());
-            forOwner(colony, ColonyLinkModule.TOPIC_CONSTRUCTION, payload);
+            forMembers(colony, ColonyLinkModule.TOPIC_CONSTRUCTION, payload);
         } catch (RuntimeException e) {
             warn(ColonyLinkModule.TOPIC_CONSTRUCTION, e);
+        }
+    }
+
+    // --- living-colony events (schema 2) ------------------------------------------
+
+    /**
+     * Publishes a member-scoped event: the standard colony fields plus {@code extra}. Never carries a
+     * player name or id — callers put counts and states in {@code extra}, nothing else. Sandbox
+     * (gallery) colonies publish nothing.
+     */
+    public static void colonyEvent(Colony colony, String topic, JsonObject extra) {
+        if (!enabled() || sandbox(colony)) {
+            return;
+        }
+        try {
+            JsonObject payload = colonyPayload(colony);
+            if (extra != null) {
+                for (String key : extra.keySet()) {
+                    payload.add(key, extra.get(key));
+                }
+            }
+            forMembers(colony, topic, payload);
+        } catch (RuntimeException e) {
+            warn(topic, e);
+        }
+    }
+
+    /**
+     * Raises a rate-limited alert for every member of a colony. {@code text} must name no player.
+     */
+    public static void colonyAlert(MinecraftServer server, Colony colony, String kind, boolean critical,
+            String text) {
+        if (!enabled() || sandbox(colony)) {
+            return;
+        }
+        raise(server, colony, kind, critical ? LinkAlert.Severity.CRITICAL : LinkAlert.Severity.WARN, text);
+    }
+
+    private static boolean sandbox(Colony colony) {
+        try {
+            return ColonyLife.isSandbox(ServerStateReset.currentServer(), colony.colonyId());
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    // --- needs -------------------------------------------------------------------
+
+    /**
+     * Watches a colony's needs list for the moment it starts wanting help. Called once per colony
+     * cycle.
+     *
+     * <p>A need "wants help" when nothing in the colony gathers it — a Starter Works material, a food
+     * shortfall, a tool nobody makes. The count of those is remembered per colony; when it goes from
+     * none to some, a {@code needs} event is published and one warning alert is raised, and when it
+     * returns to none the event is published again with {@code critical: 0} and no alert. Changes
+     * between two non-zero counts publish nothing: this is a crossing, not a ticker.
+     *
+     * <p>The payload is two counts, and the alert text is a colony name and a count. Neither says
+     * what any player holds or who could help.
+     */
+    public static void needsCheck(ServerLevel level, Colony colony) {
+        if (!enabled() || sandbox(colony)) {
+            return;
+        }
+        try {
+            List<ColonyNeeds.Need> needs = ColonyNeeds.derive(level, colony);
+            int critical = 0;
+            for (ColonyNeeds.Need need : needs) {
+                if (need.etaSoloMinutes() < 0) {
+                    critical++;
+                }
+            }
+            Integer previous = LAST_NEEDS.put(colony.colonyId(), critical);
+            boolean was = previous != null && previous > 0;
+            boolean is = critical > 0;
+            if (was == is) {
+                return;
+            }
+            JsonObject extra = new JsonObject();
+            extra.addProperty("critical", critical);
+            extra.addProperty("total", needs.size());
+            colonyEvent(colony, ColonyLinkModule.TOPIC_NEEDS, extra);
+            if (is) {
+                raise(level.getServer(), colony, "needs", LinkAlert.Severity.WARN,
+                        colony.name() + " needs your help: " + critical
+                                + (critical == 1 ? " need" : " needs")
+                                + " cannot be met without you.");
+            }
+        } catch (RuntimeException e) {
+            warn(ColonyLinkModule.TOPIC_NEEDS, e);
         }
     }
 
@@ -240,7 +360,7 @@ public final class ColonyLinkEvents {
         }
     }
 
-    /** The fields every owner-scoped colony payload starts with. */
+    /** The fields every member-scoped colony payload starts with. */
     private static JsonObject colonyPayload(Colony colony) {
         JsonObject payload = new JsonObject();
         payload.addProperty("schema_version", ColonyLinkModule.SCHEMA_VERSION);
@@ -251,12 +371,25 @@ public final class ColonyLinkEvents {
         return payload;
     }
 
-    /** Publishes to the colony's owner, or to nobody at all if the colony has none. */
-    private static void forOwner(Colony colony, String topic, JsonObject payload) {
-        if (!colony.hasOwner()) {
-            return;
+    /**
+     * Publishes to every member of the colony — its owner and its access list — exactly the people
+     * whose link snapshots already show it. Members used to see the colony in snapshots but never
+     * hear about it changing.
+     */
+    private static void forMembers(Colony colony, String topic, JsonObject payload) {
+        for (UUID member : members(colony)) {
+            publish(LinkEvent.forPlayer(ColonyLinkModule.MODULE_ID, topic, member, payload));
         }
-        publish(LinkEvent.forPlayer(ColonyLinkModule.MODULE_ID, topic, colony.ownerId(), payload));
+    }
+
+    /** Owner (if any) then access-list members, without duplicates. */
+    private static java.util.Set<UUID> members(Colony colony) {
+        java.util.Set<UUID> out = new java.util.LinkedHashSet<>();
+        if (colony.hasOwner()) {
+            out.add(colony.ownerId());
+        }
+        out.addAll(colony.accessList());
+        return out;
     }
 
     /**
@@ -265,7 +398,11 @@ public final class ColonyLinkEvents {
      */
     private static void raise(MinecraftServer server, Colony colony, String kind,
             LinkAlert.Severity severity, String text) {
-        if (server == null || !colony.hasOwner()) {
+        if (server == null) {
+            return;
+        }
+        java.util.Set<UUID> recipients = members(colony);
+        if (recipients.isEmpty()) {
             return;
         }
         String key = colony.colonyId() + "/" + kind;
@@ -275,13 +412,14 @@ public final class ColonyLinkEvents {
             return;
         }
         LAST_ALERT.put(key, now);
-        UUID owner = colony.ownerId();
-        try {
-            LinkAlerts.get(server).raise(server, owner,
-                    LinkAlert.raise(kind + "." + colony.colonyId(), ColonyLinkModule.MODULE_ID,
-                            severity, text));
-        } catch (RuntimeException e) {
-            warn("alerts", e);
+        for (UUID recipient : recipients) {
+            try {
+                LinkAlerts.get(server).raise(server, recipient,
+                        LinkAlert.raise(kind + "." + colony.colonyId(), ColonyLinkModule.MODULE_ID,
+                                severity, text));
+            } catch (RuntimeException e) {
+                warn("alerts", e);
+            }
         }
     }
 

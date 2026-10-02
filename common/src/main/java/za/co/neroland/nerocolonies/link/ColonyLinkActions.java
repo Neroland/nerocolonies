@@ -19,23 +19,31 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.block.entity.JobStationBlockEntity;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyLife;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.JobBoard;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.network.ColonySync;
 
 /**
- * The write half of the link module, and a deliberately small one: two actions,
- * {@code toggle_export} and {@code acknowledge_alert}.
+ * The write half of the link module, and a deliberately small one: four actions,
+ * {@code toggle_export}, {@code acknowledge_alert}, {@code prioritise_need} and
+ * {@code toggle_cache_sharing}.
  *
- * <h2>Why these two and no others</h2>
+ * <h2>Why these and no others</h2>
  *
  * <p>Everything else a companion client might want to do to a colony — founding one, dissolving one,
  * researching a node, spending its stock, selling its goods, changing who may use it — either moves
  * items, spends resources or changes who has access to a place. Doing any of those from a phone would
  * let a player alter the world, and other people's standing in it, without being in it. Flipping
  * where a job's output goes changes no quantity of anything and is reversible with the same tap,
- * which is what makes it the one safe write; acknowledging your own alert touches nothing but your
- * own notification list.
+ * which is what makes it a safe write; acknowledging your own alert touches nothing but your own
+ * notification list.
+ *
+ * <p>The two schema 2 actions are settings of the same kind. {@code prioritise_need} tells the
+ * colony's own gatherers which shortfall to work on first — it moves nothing and spends nothing, and
+ * the same tap clears it. {@code toggle_cache_sharing} is the owner's own switch for whether allies
+ * may open the Gratitude Cache; it adds nobody to the colony and removes nobody from it.
  *
  * <p><b>{@code set_job_priority} is deliberately absent.</b> The 0.1.0 job board has no priority
  * model at all — slots are allocated first-fit in a stable position order — so an action by that name
@@ -59,8 +67,17 @@ import za.co.neroland.nerocolonies.network.ColonySync;
  *       and two permission paths are one too many;</li>
  *   <li>the named job must be one this colony actually has a station for, and the station's chunk
  *       must be loaded — a routing switch lives on the block, and no chunk is loaded to reach one
- *       ({@link LinkActionResult.Error#VALIDATION}).</li>
+ *       ({@link LinkActionResult.Error#VALIDATION});</li>
+ *   <li>{@code prioritise_need} and {@code toggle_cache_sharing} re-derive the caller's <b>role</b>
+ *       on every call from the colony's own stored role lists
+ *       ({@link ColonyPermissions#roleOf}) and ask the one rule table
+ *       ({@link ColonyPermissions#allows}) whether that role may do it: owner or Chief for the first,
+ *       owner only for the second. That rule is a function of a UUID and stored state — there is no
+ *       operator elevation in it — so these two work while the player is offline.</li>
  * </ol>
+ *
+ * <p>The gallery's sandbox colony is invisible to {@link ColonyLinkAccess}, so every action answers
+ * for it exactly as it does for a colony that does not exist.
  *
  * <p><b>Privacy (POPIA/GDPR).</b> No coordinates are read from or written to any store, and no result
  * names any player. A result carries a colony id, a job id and counts.
@@ -71,7 +88,9 @@ public final class ColonyLinkActions implements LinkActionHandler {
 
     private static final List<String> ACTIONS = List.of(
             ColonyLinkModule.ACTION_TOGGLE_EXPORT,
-            ColonyLinkModule.ACTION_ACKNOWLEDGE_ALERT);
+            ColonyLinkModule.ACTION_ACKNOWLEDGE_ALERT,
+            ColonyLinkModule.ACTION_PRIORITISE_NEED,
+            ColonyLinkModule.ACTION_TOGGLE_CACHE_SHARING);
 
     @Override
     public String moduleId() {
@@ -87,11 +106,14 @@ public final class ColonyLinkActions implements LinkActionHandler {
      * Honestly, per action. Acknowledging your own alert is a notification-list operation and works
      * perfectly well while you are away — that is rather the point of an alert. Flipping a job
      * station's routing is a change to the world and is refused while you are not in it; see the
-     * class notes for why that is a permission argument rather than a taste one.
+     * class notes for why that is a permission argument rather than a taste one. Prioritising a need
+     * and sharing the cache are colony settings checked against stored roles, so they work offline.
      */
     @Override
     public boolean allowOffline(String actionId) {
-        return ColonyLinkModule.ACTION_ACKNOWLEDGE_ALERT.equals(actionId);
+        return ColonyLinkModule.ACTION_ACKNOWLEDGE_ALERT.equals(actionId)
+                || ColonyLinkModule.ACTION_PRIORITISE_NEED.equals(actionId)
+                || ColonyLinkModule.ACTION_TOGGLE_CACHE_SHARING.equals(actionId);
     }
 
     @Override
@@ -114,6 +136,12 @@ public final class ColonyLinkActions implements LinkActionHandler {
             }
             if (ColonyLinkModule.ACTION_ACKNOWLEDGE_ALERT.equals(actionId)) {
                 return acknowledgeAlert(server, playerId, params);
+            }
+            if (ColonyLinkModule.ACTION_PRIORITISE_NEED.equals(actionId)) {
+                return prioritiseNeed(server, playerId, params);
+            }
+            if (ColonyLinkModule.ACTION_TOGGLE_CACHE_SHARING.equals(actionId)) {
+                return toggleCacheSharing(server, playerId, params);
             }
             return LinkActionResult.error(LinkActionResult.Error.VALIDATION,
                     "NeroColonies does not know the action '" + actionId + "'.");
@@ -232,6 +260,100 @@ public final class ColonyLinkActions implements LinkActionHandler {
         result.addProperty("schema_version", ColonyLinkModule.SCHEMA_VERSION);
         result.addProperty("alert", alertId);
         result.addProperty("acked", true);
+        return LinkActionResult.ok(result);
+    }
+
+    // --- prioritise_need -------------------------------------------------------
+
+    /**
+     * Sets, or clears, the one need a colony's gatherers work on first.
+     *
+     * <p>{@code item} is an item id as the {@code needs} section reports it; an empty string clears
+     * the priority. A {@code #tag} need cannot be prioritised — the colony prioritises one item, and
+     * a tag is not one — so it is refused as a validation error rather than quietly ignored.
+     *
+     * <p>Owner or Chief. The role is read from the colony's stored role lists on every call; nothing
+     * a client says about its own rank is believed.
+     */
+    private static LinkActionResult prioritiseNeed(MinecraftServer server, UUID playerId,
+            JsonObject params) {
+        Colony colony = ColonyLinkAccess.colonyParam(server, playerId, params);
+        if (colony == null) {
+            return LinkActionResult.error(LinkActionResult.Error.NOT_OWNER,
+                    "You do not have access to a colony with that id.");
+        }
+        ColonyPermissions.Role role = ColonyLinkAccess.roleOf(server, colony, playerId);
+        if (!ColonyPermissions.allows(role, ColonyPermissions.Action.PLAN, false)) {
+            return LinkActionResult.error(LinkActionResult.Error.NOT_OWNER,
+                    "Only the colony's owner or a Chief can prioritise a need.");
+        }
+        if (params == null || !params.has("item")) {
+            return LinkActionResult.error(LinkActionResult.Error.VALIDATION,
+                    "The 'item' parameter must be an item id, or empty to clear the priority.");
+        }
+        String rawItem = ColonyLinkAccess.string(params, "item");
+        Identifier item = null;
+        if (rawItem != null && rawItem.startsWith("#")) {
+            return LinkActionResult.error(LinkActionResult.Error.VALIDATION,
+                    "A tag need cannot be prioritised; pick a need for a single item.");
+        }
+        if (rawItem != null) {
+            item = Identifier.tryParse(rawItem);
+            if (item == null) {
+                return LinkActionResult.error(LinkActionResult.Error.VALIDATION,
+                        "The 'item' parameter must be an item id, for example 'minecraft:oak_log'.");
+            }
+        }
+        ColonyLife store = ColonyLife.get(server);
+        store.life(colony.colonyId()).setPriorityNeed(item);
+        store.touch();
+        ColonySync.refresh(server, colony.colonyId());
+
+        JsonObject result = new JsonObject();
+        result.addProperty("schema_version", ColonyLinkModule.SCHEMA_VERSION);
+        result.addProperty("colony", colony.colonyId().toString());
+        result.addProperty("item", item == null ? "" : item.toString());
+        result.addProperty("prioritised", item != null);
+        return LinkActionResult.ok(result);
+    }
+
+    // --- toggle_cache_sharing --------------------------------------------------
+
+    /**
+     * Shares the Gratitude Cache with the colony's allies, or stops sharing it.
+     *
+     * <p>{@code shared} may be supplied to set the switch explicitly; omitted, it flips, so a
+     * repeated tap toggles. Owner only — the cache is the colony's thank-you to its owner, and who
+     * else may open it is the owner's call alone.
+     */
+    private static LinkActionResult toggleCacheSharing(MinecraftServer server, UUID playerId,
+            JsonObject params) {
+        Colony colony = ColonyLinkAccess.colonyParam(server, playerId, params);
+        if (colony == null) {
+            return LinkActionResult.error(LinkActionResult.Error.NOT_OWNER,
+                    "You do not have access to a colony with that id.");
+        }
+        ColonyPermissions.Role role = ColonyLinkAccess.roleOf(server, colony, playerId);
+        if (!ColonyPermissions.allows(role, ColonyPermissions.Action.OWNER_SETTINGS, false)) {
+            return LinkActionResult.error(LinkActionResult.Error.NOT_OWNER,
+                    "Only the colony's owner can change who the Gratitude Cache is shared with.");
+        }
+        Boolean requested = ColonyLinkAccess.bool(params, "shared");
+        if (requested == null && params != null && params.has("shared")) {
+            return LinkActionResult.error(LinkActionResult.Error.VALIDATION,
+                    "The 'shared' parameter must be true or false.");
+        }
+        ColonyLife store = ColonyLife.get(server);
+        ColonyLife.Life life = store.life(colony.colonyId());
+        boolean shared = requested != null ? requested : !life.cacheShared();
+        life.setCacheShared(shared);
+        store.touch();
+        ColonySync.refresh(server, colony.colonyId());
+
+        JsonObject result = new JsonObject();
+        result.addProperty("schema_version", ColonyLinkModule.SCHEMA_VERSION);
+        result.addProperty("colony", colony.colonyId().toString());
+        result.addProperty("shared_with_allies", shared);
         return LinkActionResult.ok(result);
     }
 }

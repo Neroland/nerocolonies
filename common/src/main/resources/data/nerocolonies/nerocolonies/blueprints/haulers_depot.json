@@ -1,0 +1,117 @@
+{
+  "name": "blueprint.nerocolonies.haulers_depot",
+  "category": "storage",
+  "stage": "settled",
+  "priority": 31,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:hauler"],
+  "capacity": {"housing": 0, "storage": 54, "jobs": 2},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "P": "minecraft:oak_planks",
+    "Y": "minecraft:hay_block[axis=y]",
+    "_": "minecraft:air",
+    "a": "minecraft:oak_log[axis=y]",
+    "b": "minecraft:oak_log[axis=z]",
+    "c": "minecraft:oak_stairs[facing=north,half=bottom]",
+    "d": "minecraft:oak_stairs[facing=south,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "nerocolonies:colony_depot",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCCCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCCCCCCCCCC"
+    ],
+    [
+      ".aCCCCCCCa.",
+      ".Cbb_h_YYC.",
+      ".Cbb___YYC.",
+      ".C_______C.",
+      ".C*_____*C.",
+      ".C_______C.",
+      ".aCC___CCa."
+    ],
+    [
+      ".apgpgpgpa.",
+      ".pb______p.",
+      ".g_______g.",
+      ".p_______p.",
+      ".g_______g.",
+      ".p_______p.",
+      ".apg___gpa."
+    ],
+    [
+      ".apppppppa.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".app___ppa."
+    ],
+    [
+      ".apppppppa.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".apppppppa."
+    ],
+    [
+      "ddddddddddd",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      "ccccccccccc"
+    ],
+    [
+      "...........",
+      "ddddddddddd",
+      ".p_______p.",
+      ".p_______p.",
+      ".p_______p.",
+      "ccccccccccc",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "ddddddddddd",
+      ".p_______p.",
+      "ccccccccccc",
+      "...........",
+      "..........."
+    ],
+    [
+      "...........",
+      "...........",
+      "...........",
+      "PPPPPPPPPPP",
+      "...........",
+      "...........",
+      "..........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 85},
+    {"item": "minecraft:cobblestone", "count": 29},
+    {"tag": "minecraft:logs", "count": 10},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "minecraft:hay_block", "count": 2},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "nerocolonies:colony_depot", "count": 1}
+  ],
+  "rotate": true
+}

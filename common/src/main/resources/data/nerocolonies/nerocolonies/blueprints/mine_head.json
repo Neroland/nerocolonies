@@ -1,0 +1,97 @@
+{
+  "name": "blueprint.nerocolonies.mine_head",
+  "category": "industry",
+  "stage": "founding",
+  "priority": 4,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:miner"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "^": "minecraft:lantern[hanging=true]",
+    "_": "minecraft:air",
+    "a": "minecraft:cobblestone_wall",
+    "b": "minecraft:gravel",
+    "c": "minecraft:ladder[facing=south]",
+    "d": "minecraft:rail[shape=north_south]",
+    "h": "minecraft:spruce_log[axis=x]",
+    "i": "minecraft:spruce_log[axis=y]",
+    "j": "minecraft:spruce_log[axis=z]"
+  },
+  "layers": [
+    [
+      "CCCCCCC",
+      "CCCCCCC",
+      "CCCCCCC",
+      "CCCbCCC",
+      "CCCCCCC",
+      "CCCCCCC",
+      "CCCCCCC"
+    ],
+    [
+      "aaaaaaa",
+      "a__C__a",
+      "a_ici_a",
+      ".__d__.",
+      "._idi_.",
+      ".*_d_*.",
+      ".._d_.."
+    ],
+    [
+      ".......",
+      ".__C__.",
+      "._ici_.",
+      "._____.",
+      "._i_i_.",
+      "._____.",
+      ".._._.."
+    ],
+    [
+      ".......",
+      ".__C__.",
+      "._ici_.",
+      "._____.",
+      "._i_i_.",
+      "._____.",
+      "......."
+    ],
+    [
+      ".......",
+      ".__C__.",
+      "._ici_.",
+      "._____.",
+      "._i_i_.",
+      "._____.",
+      "......."
+    ],
+    [
+      ".......",
+      ".......",
+      "..i.i..",
+      "...^...",
+      "..i.i..",
+      ".......",
+      "......."
+    ],
+    [
+      ".......",
+      ".......",
+      "..hhh..",
+      "..jhj..",
+      "..hhh..",
+      ".......",
+      "......."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:cobblestone", "count": 29},
+    {"tag": "minecraft:logs", "count": 14},
+    {"item": "minecraft:lantern", "count": 3},
+    {"item": "minecraft:ladder", "count": 2},
+    {"item": "minecraft:rail", "count": 2},
+    {"item": "minecraft:gravel", "count": 1}
+  ],
+  "rotate": true
+}

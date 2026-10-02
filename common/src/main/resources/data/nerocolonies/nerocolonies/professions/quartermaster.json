@@ -1,0 +1,12 @@
+{
+  "name": "profession.nerocolonies.quartermaster",
+  "behaviour": "nerocolonies:quartermaster",
+  "stations": [],
+  "priority": 55,
+  "per_building": 1,
+  "max_per_colony": 2,
+  "xp_per_level": 100,
+  "max_level": 5,
+  "work_radius": 10,
+  "outputs": []
+}

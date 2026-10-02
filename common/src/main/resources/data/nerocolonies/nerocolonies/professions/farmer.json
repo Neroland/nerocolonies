@@ -1,0 +1,34 @@
+{
+  "name": "profession.nerocolonies.farmer",
+  "behaviour": "nerocolonies:farmer",
+  "tool": "minecraft:iron_hoe",
+  "stations": [
+    "nerocolonies:farm_station",
+    "nerocolonies:hydroponics_station"
+  ],
+  "priority": 10,
+  "per_building": 2,
+  "max_per_colony": 8,
+  "xp_per_level": 100,
+  "max_level": 5,
+  "work_radius": 10,
+  "outputs": [
+    {
+      "item": "minecraft:wheat",
+      "count": 1
+    },
+    {
+      "item": "minecraft:potato",
+      "count": 1
+    },
+    {
+      "item": "minecraft:carrot",
+      "count": 1
+    },
+    {
+      "item": "minecraft:wheat_seeds",
+      "count": 1
+    }
+  ],
+  "output_chance": 0.5
+}

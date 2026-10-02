@@ -1,0 +1,141 @@
+{
+  "name": "blueprint.nerocolonies.toolsmiths_forge",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:toolsmith"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "_": "minecraft:air",
+    "a": "minecraft:anvil[facing=north]",
+    "b": "minecraft:blast_furnace[facing=south,lit=false]",
+    "c": "minecraft:grindstone[face=floor,facing=south]",
+    "d": "minecraft:iron_bars",
+    "h": "minecraft:smithing_table",
+    "i": "minecraft:spruce_log[axis=y]",
+    "j": "minecraft:stone_brick_stairs[facing=north,half=bottom]",
+    "k": "minecraft:stone_brick_stairs[facing=south,half=bottom]",
+    "l": "nerocolonies:fabricator_station",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCCCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCCCCCCCCCC"
+    ],
+    [
+      ".iCCCCCCCi.",
+      ".C*c_b_h_C.",
+      ".C_______C.",
+      ".C_______C.",
+      ".Ca_____lC.",
+      ".C_______C.",
+      ".iCC___CCi."
+    ],
+    [
+      ".i#d#C#d#i.",
+      ".#_______#.",
+      ".d_______d.",
+      ".#_______#.",
+      ".d_______d.",
+      ".#_______#.",
+      ".i#d___d#i."
+    ],
+    [
+      ".i###C###i.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".i##___##i."
+    ],
+    [
+      ".i###C###i.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".i#######i."
+    ],
+    [
+      "kkkkkCkkkkk",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      "jjjjjjjjjjj"
+    ],
+    [
+      ".....C.....",
+      "kkkkkkkkkkk",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      "jjjjjjjjjjj",
+      "..........."
+    ],
+    [
+      ".....C.....",
+      "...........",
+      "kkkkkkkkkkk",
+      ".#_______#.",
+      "jjjjjjjjjjj",
+      "...........",
+      "..........."
+    ],
+    [
+      ".....C.....",
+      "...........",
+      "...........",
+      "###########",
+      "...........",
+      "...........",
+      "..........."
+    ],
+    [
+      ".....C.....",
+      "...........",
+      "...........",
+      "...........",
+      "...........",
+      "...........",
+      "..........."
+    ],
+    [
+      ".....C.....",
+      "...........",
+      "...........",
+      "...........",
+      "...........",
+      "...........",
+      "..........."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:stone_bricks", "count": 68},
+    {"item": "minecraft:cobblestone", "count": 33},
+    {"tag": "minecraft:planks", "count": 16},
+    {"tag": "minecraft:logs", "count": 8},
+    {"tag": "c:ingots/iron", "count": 4},
+    {"item": "minecraft:anvil", "count": 1},
+    {"item": "minecraft:blast_furnace", "count": 1},
+    {"item": "minecraft:grindstone", "count": 1},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "minecraft:smithing_table", "count": 1},
+    {"item": "nerocolonies:fabricator_station", "count": 1}
+  ],
+  "rotate": true
+}

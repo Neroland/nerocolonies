@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.colony.JobBoard;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
+import za.co.neroland.nerocolonies.colony.Population;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.link.ColonyLinkEvents;
 import za.co.neroland.nerocolonies.network.ColonySync;
@@ -66,6 +67,11 @@ public final class ServerStateReset {
      */
     public static void serverStopped() {
         JobBoard.reset();
+        Population.clearCaches();
+        za.co.neroland.nerocolonies.colony.ColonyBuildings.clearCaches();
+        za.co.neroland.nerocolonies.colony.ColonyDefence.reset();
+        za.co.neroland.nerocolonies.colony.ColonyPlanner.reset();
+        za.co.neroland.nerocolonies.colony.GratitudeCache.reset();
         LifeSupport.reset();
         ColonySync.forgetServer();
         ColonyDefinitions.forgetServer();

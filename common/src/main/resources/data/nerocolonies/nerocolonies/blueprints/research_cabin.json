@@ -1,23 +1,72 @@
 {
   "name": "blueprint.nerocolonies.research_cabin",
   "category": "industry",
+  "stage": "settled",
   "priority": 50,
   "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:researcher"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
   "palette": {
-    "#": "minecraft:smooth_stone",
+    "*": "minecraft:lantern[hanging=false]",
+    "B": "minecraft:bookshelf",
     "G": "minecraft:glass",
-    "R": "nerocolonies:research_station"
+    "S": "minecraft:smooth_stone",
+    "_": "minecraft:air",
+    "a": "minecraft:birch_door[facing=south,half=lower,hinge=left,open=false]",
+    "b": "minecraft:birch_door[facing=south,half=upper,hinge=left,open=false]",
+    "c": "minecraft:smooth_stone_slab[type=bottom]",
+    "d": "nerocolonies:research_station"
   },
   "layers": [
-    [ "####", "####", "####", "####" ],
-    [ "####", "#R.#", "#..#", "##.#" ],
-    [ "#GG#", "#..#", "#..#", "##.#" ],
-    [ "####", "####", "####", "####" ]
+    [
+      "SSSSSS",
+      "SSSSSS",
+      "SSSSSS",
+      "SSSSSS",
+      "SSSSSS",
+      "SSSSSS"
+    ],
+    [
+      "SSSSSS",
+      "Sd__BS",
+      "S____S",
+      "S___*S",
+      "S____S",
+      "SSSaSS"
+    ],
+    [
+      "SGGSGS",
+      "S____S",
+      "G____G",
+      "S____S",
+      "S____S",
+      "SSSbSS"
+    ],
+    [
+      "SGGGGS",
+      "S____S",
+      "S____S",
+      "S____S",
+      "S____S",
+      "SSSSSS"
+    ],
+    [
+      "cccccc",
+      "cccccc",
+      "cccccc",
+      "cccccc",
+      "cccccc",
+      "cccccc"
+    ]
   ],
   "materials": [
-    { "item": "minecraft:smooth_stone", "count": 32 },
-    { "item": "minecraft:iron_ingot", "count": 8 },
-    { "item": "minecraft:glass", "count": 4 },
-    { "item": "minecraft:redstone", "count": 4 }
-  ]
+    {"item": "minecraft:smooth_stone", "count": 55},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "minecraft:birch_door", "count": 1},
+    {"item": "minecraft:bookshelf", "count": 1},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "nerocolonies:research_station", "count": 1}
+  ],
+  "rotate": true
 }

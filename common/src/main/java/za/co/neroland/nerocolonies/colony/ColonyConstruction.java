@@ -14,48 +14,37 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 
 import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerocolonies.data.SavedDataRecovery;
 
 /**
- * What each colony has built for itself, and what it is building now.
+ * The durable half of colony construction: what each colony is building, where, how far along, what
+ * it has finished, and what its owner or Chiefs have asked for.
  *
- * <h2>Why this is its own saved data</h2>
+ * <p>A side store because {@link Colony} is at the sixteen-field codec ceiling. Keyed by colony id
+ * and nothing else.
  *
- * <p>{@link Colony} is already at the sixteen-field {@code RecordCodecBuilder} ceiling, and it is a
- * small value copied on every morale tick — a build queue has no business riding along on that. So
- * construction state lives here, in its own {@link SavedData} keyed by colony id, exactly as the
- * colony's goods live in {@link ColonyStores}. The colony record links to a plan by nothing at all:
- * the id is the join.
+ * <ul>
+ *   <li><b>The active build</b> — blueprint, minimum corner, rotation, cursor, credit, supplied,
+ *       and whether it is an upgrade of a standing structure.</li>
+ *   <li><b>Structures</b> — every finished building: blueprint, corner, rotation, level. This is
+ *       what makes upgrades, land-clearing protection, building anchors (where Nerans eat, meet and
+ *       work) and the link module's building list possible.</li>
+ *   <li><b>Plans</b> — buildings placed by hand with the Colony Planner. They jump the autonomous
+ *       queue, oldest first.</li>
+ * </ul>
  *
- * <p>The consequence, and it is the same one {@link ColonyStores} carries: <b>dissolving a colony
- * must call {@link #forget}</b>, or its plan outlives it. Every dissolve path does.
- *
- * <h2>What is persisted, and what is not</h2>
- *
- * <p>Persisted: how many of each blueprint the colony has finished, and — if a structure is part
- * built — which blueprint it is, where its corner is, how far down the build order the cursor has
- * got, how much fabrication credit is banked, and whether its materials were paid for. That is
- * everything needed to resume a half-built structure after a restart, which matters because a
- * structure takes minutes of colony ticks and a player will absolutely log out in the middle of one.
- *
- * <p>Not persisted: the site search cursor, which lives in the beacon's session state
- * ({@code Construction.State}). A restarted search costs one bounded sweep and nothing else.
- *
- * <h2>Privacy (POPIA/GDPR)</h2>
- *
- * <p>Nothing here is player-shaped. A plan is keyed by colony id — a place, not a person — and holds
- * blueprint ids, a block position and counters, so it is out of scope for an erasure request in the
- * same way a colony's goods are.
+ * <p><b>Privacy (POPIA/GDPR):</b> nothing player-shaped. A plan does not record who placed it.
  */
 public final class ColonyConstruction extends SavedData {
 
-    /** Stable, non-identifying label used for the storage file and recovery logs. */
     public static final String NAME = NeroColoniesCommon.MOD_ID + ":construction";
 
     public static final Identifier ID =
@@ -64,48 +53,45 @@ public final class ColonyConstruction extends SavedData {
     public static final SavedDataType<ColonyConstruction> TYPE =
             new SavedDataType<>(ID, ColonyConstruction::new, codec(), null);
 
+    /** Hard cap on finished structures remembered per colony (a bound on stored data). */
+    public static final int MAX_STRUCTURES = 512;
+
+    /** Hard cap on queued hand-placed plans per colony. */
+    public static final int MAX_PLANS = 16;
+
     private final Map<UUID, Plan> byColony = new LinkedHashMap<>();
 
     public ColonyConstruction() {
     }
 
-    /** The one construction index, on the overworld so it is loaded whenever any colony is. */
     public static ColonyConstruction get(MinecraftServer server) {
         return SavedDataRecovery.get(server.overworld(), TYPE, ColonyConstruction::new, NAME);
     }
 
     // --- access -------------------------------------------------------------
 
-    /** This colony's plan, created empty on first use. */
+    /** The colony's plan, created on first use. */
     public Plan plan(UUID colonyId) {
         return this.byColony.computeIfAbsent(colonyId, key -> new Plan());
     }
 
-    /** This colony's plan, or {@code null} if it has never built anything. */
+    /** The colony's plan if it has one, without creating it. */
     @Nullable
     public Plan peek(@Nullable UUID colonyId) {
         return colonyId == null ? null : this.byColony.get(colonyId);
     }
 
-    /** Forgets a colony's construction record entirely. Called when the colony is dissolved. */
     public void forget(UUID colonyId) {
         if (this.byColony.remove(colonyId) != null) {
             this.setDirty();
         }
     }
 
-    /** How many colonies currently hold a plan (a diagnostic count, never an identity). */
     public int size() {
         return this.byColony.size();
     }
 
-    /**
-     * Drops every plan whose colony no longer exists. Run from the retention sweep, so a colony that
-     * disappeared without going through a dissolve path — an erasure under the {@code dissolve}
-     * policy, a hand-edited save — cannot leave its build record behind forever.
-     *
-     * @return how many plans were dropped (a count, never an identity)
-     */
+    /** Drops plans for colonies not in {@code liveColonies}. */
     public int retainOnly(Set<UUID> liveColonies) {
         int before = this.byColony.size();
         this.byColony.keySet().removeIf(id -> !liveColonies.contains(id));
@@ -116,17 +102,51 @@ public final class ColonyConstruction extends SavedData {
         return dropped;
     }
 
-    /** Marks the index dirty. Called by the planner after any write. */
     public void touch() {
         this.setDirty();
     }
 
+    // --- records ------------------------------------------------------------
+
+    /** A finished building. */
+    public record Structure(Identifier blueprint, BlockPos origin, Rotation rotation, int level) {
+
+        static final Codec<Structure> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Identifier.CODEC.fieldOf("blueprint").forGetter(Structure::blueprint),
+                BlockPos.CODEC.fieldOf("origin").forGetter(Structure::origin),
+                Rotation.CODEC.optionalFieldOf("rotation", Rotation.NONE).forGetter(Structure::rotation),
+                Codec.INT.optionalFieldOf("level", 1).forGetter(Structure::level)
+        ).apply(instance, Structure::new));
+
+        public Structure {
+            origin = origin.immutable();
+            rotation = rotation == null ? Rotation.NONE : rotation;
+            level = Math.max(1, level);
+        }
+    }
+
+    /** A building placed by hand, waiting its turn. */
+    public record Planned(Identifier blueprint, BlockPos origin, Rotation rotation) {
+
+        static final Codec<Planned> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Identifier.CODEC.fieldOf("blueprint").forGetter(Planned::blueprint),
+                BlockPos.CODEC.fieldOf("origin").forGetter(Planned::origin),
+                Rotation.CODEC.optionalFieldOf("rotation", Rotation.NONE).forGetter(Planned::rotation)
+        ).apply(instance, Planned::new));
+
+        public Planned {
+            origin = origin.immutable();
+            rotation = rotation == null ? Rotation.NONE : rotation;
+        }
+    }
+
     // --- one colony's plan --------------------------------------------------
 
-    /** One colony's build record: what it has finished, and the structure it is part way through. */
     public static final class Plan {
 
         private final Map<Identifier, Integer> built = new LinkedHashMap<>();
+        private final List<Structure> structures = new ArrayList<>();
+        private final List<Planned> queue = new ArrayList<>();
 
         @Nullable
         private Identifier active;
@@ -134,58 +154,69 @@ public final class ColonyConstruction extends SavedData {
         @Nullable
         private BlockPos origin;
 
+        private Rotation rotation = Rotation.NONE;
         private int cursor;
         private int total;
         private double credit;
         private boolean supplied;
 
-        /** How many of this blueprint the colony has completed. */
+        /** Index into {@link #structures} of the building being upgraded, or -1. */
+        private int upgrading = -1;
+
         public int builtCount(Identifier blueprint) {
             return this.built.getOrDefault(blueprint, 0);
         }
 
-        /** How many structures the colony has completed in total, over every blueprint. */
         public int totalBuilt() {
-            int total = 0;
+            int sum = 0;
             for (int count : this.built.values()) {
-                total += count;
+                sum += count;
             }
-            return total;
+            return sum;
         }
 
-        /** The blueprint currently under construction, or {@code null} when the colony is idle. */
         @Nullable
         public Identifier active() {
             return this.active;
         }
 
-        /** The minimum corner of the structure under construction, or {@code null} when idle. */
         @Nullable
         public BlockPos origin() {
             return this.origin;
         }
 
-        /** How far down the build order the cursor has reached. */
+        public Rotation rotation() {
+            return this.rotation;
+        }
+
         public int cursor() {
             return this.cursor;
         }
 
-        /** How many cells the current build order has in total. */
         public int total() {
             return this.total;
         }
 
-        /** Banked fabrication credit, in blocks. */
         public double credit() {
             return this.credit;
         }
 
-        /** Whether the current structure's materials have been paid out of colony storage. */
         public boolean supplied() {
             return this.supplied;
         }
 
-        /** Progress through the current structure, 0..100. Zero when nothing is being built. */
+        /** Whether the active build replaces a standing structure (an upgrade). */
+        public boolean isUpgrade() {
+            return this.upgrading >= 0;
+        }
+
+        /** The structure being upgraded, or null. */
+        @Nullable
+        public Structure upgradeTarget() {
+            return this.upgrading >= 0 && this.upgrading < this.structures.size()
+                    ? this.structures.get(this.upgrading) : null;
+        }
+
         public int progressPercent() {
             if (this.active == null || this.total <= 0) {
                 return 0;
@@ -193,32 +224,61 @@ public final class ColonyConstruction extends SavedData {
             return (int) Math.clamp(this.cursor * 100L / this.total, 0L, 100L);
         }
 
-        // --- mutation (planner only) ----------------------------------------
+        /** Every finished structure, oldest first. */
+        public List<Structure> structures() {
+            return List.copyOf(this.structures);
+        }
 
-        /** Begins a structure. The credit carries over so a finished build does not waste it. */
-        void begin(Identifier blueprint, BlockPos corner, int cells) {
+        /** Hand-placed plans waiting their turn, oldest first. */
+        public List<Planned> queue() {
+            return List.copyOf(this.queue);
+        }
+
+        // --- mutation (construction and planner only) -----------------------
+
+        void begin(Identifier blueprint, BlockPos corner, Rotation turn, int cells) {
             this.active = blueprint;
             this.origin = corner.immutable();
+            this.rotation = turn == null ? Rotation.NONE : turn;
             this.cursor = 0;
             this.total = Math.max(0, cells);
             this.supplied = false;
+            this.upgrading = -1;
         }
 
-        /** Records a completed structure and clears the site. */
-        void complete() {
-            if (this.active != null) {
+        void beginUpgrade(int structureIndex, Identifier blueprint, int cells) {
+            Structure target = this.structures.get(structureIndex);
+            begin(blueprint, target.origin(), target.rotation(), cells);
+            this.upgrading = structureIndex;
+        }
+
+        /**
+         * Records the active build as finished. An upgrade replaces its structure's entry (same
+         * corner, next level); a new build appends one.
+         */
+        void complete(int level) {
+            if (this.active != null && this.origin != null) {
                 this.built.merge(this.active, 1, Integer::sum);
+                Structure done = new Structure(this.active, this.origin, this.rotation, level);
+                if (this.upgrading >= 0 && this.upgrading < this.structures.size()) {
+                    Structure old = this.structures.get(this.upgrading);
+                    this.built.computeIfPresent(old.blueprint(), (k, v) -> v > 1 ? v - 1 : null);
+                    this.structures.set(this.upgrading, done);
+                } else if (this.structures.size() < MAX_STRUCTURES) {
+                    this.structures.add(done);
+                }
             }
             abandon();
         }
 
-        /** Clears the site without counting it (the site became invalid, or building was disabled). */
         void abandon() {
             this.active = null;
             this.origin = null;
+            this.rotation = Rotation.NONE;
             this.cursor = 0;
             this.total = 0;
             this.supplied = false;
+            this.upgrading = -1;
         }
 
         void advanceCursor(int cells) {
@@ -237,15 +297,46 @@ public final class ColonyConstruction extends SavedData {
             this.supplied = true;
         }
 
-        /** Whether this plan holds nothing worth writing to disk. */
+        /** Adds a hand-placed plan. Returns false when the queue is full. */
+        public boolean enqueue(Planned planned) {
+            if (this.queue.size() >= MAX_PLANS) {
+                return false;
+            }
+            this.queue.add(planned);
+            return true;
+        }
+
+        /** Removes and returns the oldest plan, or null. */
+        @Nullable
+        Planned pollPlanned() {
+            return this.queue.isEmpty() ? null : this.queue.remove(0);
+        }
+
+        /** Removes a plan by index; returns whether one was removed. */
+        public boolean cancelPlanned(int index) {
+            if (index < 0 || index >= this.queue.size()) {
+                return false;
+            }
+            this.queue.remove(index);
+            return true;
+        }
+
+        /** Registers a structure built outside the build loop (the gallery, a migration). */
+        public void recordStructure(Structure structure) {
+            if (this.structures.size() < MAX_STRUCTURES) {
+                this.structures.add(structure);
+                this.built.merge(structure.blueprint(), 1, Integer::sum);
+            }
+        }
+
         boolean isEmpty() {
-            return this.active == null && this.built.isEmpty() && this.credit <= 0.0D;
+            return this.active == null && this.built.isEmpty() && this.credit <= 0.0D
+                    && this.structures.isEmpty() && this.queue.isEmpty();
         }
     }
 
     // --- persistence --------------------------------------------------------
 
-    /** One completed-structure tally. A list of pairs, because a map key here is a resource id. */
     private record Tally(Identifier blueprint, int count) {
 
         static final Codec<Tally> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -254,25 +345,32 @@ public final class ColonyConstruction extends SavedData {
         ).apply(instance, Tally::new));
     }
 
-    /** One colony's row. Every field past the colony id is optional, so an old file still reads. */
     private record Row(UUID colony, List<Tally> built, Optional<Identifier> active,
-            Optional<BlockPos> origin, int cursor, int total, double credit, boolean supplied) {
+            Optional<BlockPos> origin, int cursor, int total, double credit, boolean supplied,
+            Rotation rotation, int upgrading, List<Structure> structures, List<Planned> queue) {
 
         static final Codec<Row> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Colony.UUID_CODEC.fieldOf("colony").forGetter(Row::colony),
-                Tally.CODEC.listOf().optionalFieldOf("built", List.of()).forGetter(Row::built),
+                LenientCodecs.list(Tally.CODEC, "build tally").optionalFieldOf("built", List.of())
+                        .forGetter(Row::built),
                 Identifier.CODEC.optionalFieldOf("active").forGetter(Row::active),
                 BlockPos.CODEC.optionalFieldOf("origin").forGetter(Row::origin),
                 Codec.INT.optionalFieldOf("cursor", 0).forGetter(Row::cursor),
                 Codec.INT.optionalFieldOf("total", 0).forGetter(Row::total),
                 Codec.DOUBLE.optionalFieldOf("credit", 0.0D).forGetter(Row::credit),
-                Codec.BOOL.optionalFieldOf("supplied", false).forGetter(Row::supplied)
+                Codec.BOOL.optionalFieldOf("supplied", false).forGetter(Row::supplied),
+                Rotation.CODEC.optionalFieldOf("rotation", Rotation.NONE).forGetter(Row::rotation),
+                Codec.INT.optionalFieldOf("upgrading", -1).forGetter(Row::upgrading),
+                LenientCodecs.list(Structure.CODEC, "structure").optionalFieldOf("structures", List.of())
+                        .forGetter(Row::structures),
+                LenientCodecs.list(Planned.CODEC, "planned build").optionalFieldOf("queue", List.of())
+                        .forGetter(Row::queue)
         ).apply(instance, Row::new));
     }
 
     private static Codec<ColonyConstruction> codec() {
         return RecordCodecBuilder.create(instance -> instance.group(
-                Row.CODEC.listOf().optionalFieldOf("plans", List.of())
+                LenientCodecs.list(Row.CODEC, "build plan").optionalFieldOf("plans", List.of())
                         .forGetter(ColonyConstruction::rows)
         ).apply(instance, ColonyConstruction::fromRows));
     }
@@ -287,7 +385,8 @@ public final class ColonyConstruction extends SavedData {
             plan.built.forEach((blueprint, count) -> tallies.add(new Tally(blueprint, count)));
             out.add(new Row(colony, tallies, Optional.ofNullable(plan.active),
                     Optional.ofNullable(plan.origin), plan.cursor, plan.total, plan.credit,
-                    plan.supplied));
+                    plan.supplied, plan.rotation, plan.upgrading, List.copyOf(plan.structures),
+                    List.copyOf(plan.queue)));
         });
         return out;
     }
@@ -301,14 +400,26 @@ public final class ColonyConstruction extends SavedData {
                     plan.built.merge(tally.blueprint(), tally.count(), Integer::sum);
                 }
             }
+            for (Structure structure : row.structures()) {
+                if (plan.structures.size() < MAX_STRUCTURES) {
+                    plan.structures.add(structure);
+                }
+            }
+            for (Planned planned : row.queue()) {
+                if (plan.queue.size() < MAX_PLANS) {
+                    plan.queue.add(planned);
+                }
+            }
             // A row that names an active blueprint but no origin (a hand-edited file, or a partial
             // decode) is treated as idle rather than as a build with nowhere to put itself.
             if (row.active().isPresent() && row.origin().isPresent() && row.total() > 0) {
                 plan.active = row.active().get();
                 plan.origin = row.origin().get().immutable();
+                plan.rotation = row.rotation();
                 plan.total = row.total();
                 plan.cursor = Math.clamp(row.cursor(), 0, row.total());
                 plan.supplied = row.supplied();
+                plan.upgrading = row.upgrading() < plan.structures.size() ? row.upgrading() : -1;
             }
             plan.credit = Math.max(0.0D, row.credit());
         }

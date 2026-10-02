@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
+import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerocolonies.data.SavedDataRecovery;
 
 /**
@@ -73,8 +74,6 @@ public final class ColonyState extends SavedData {
     public static final SavedDataType<ColonyState> TYPE =
             new SavedDataType<>(ID, ColonyState::new, codec(), null);
 
-    private static final long MILLIS_PER_DAY = 86_400_000L;
-
     /**
      * The server whose retention sweep has already run, so the lazy check in {@link #get} fires at
      * most once per server instance rather than on every call. Written on the server thread;
@@ -101,6 +100,19 @@ public final class ColonyState extends SavedData {
     private final Map<Long, UUID> byChunk = new LinkedHashMap<>();
     private final Map<Long, UUID> outpostByChunk = new LinkedHashMap<>();
 
+    /**
+     * Whether the one-time pass that renames colonies still carrying a founder's player name has
+     * run for this world. Persisted so a player who later deliberately names a colony after
+     * themselves is not renamed on every restart.
+     */
+    private boolean namesMigrated;
+
+    /** Wall-clock time of the next access-log retention pass on a long-running server. */
+    private static volatile long nextLogSweepMillis;
+
+    /** Interval between access-log retention passes while the server runs. */
+    private static final long LOG_SWEEP_INTERVAL_MILLIS = 3_600_000L;
+
     public ColonyState() {
     }
 
@@ -126,10 +138,86 @@ public final class ColonyState extends SavedData {
         ColonyState state = SavedDataRecovery.get(server.overworld(), TYPE, ColonyState::new, NAME);
         if (prunedFor != server) {
             prunedFor = server; // set first: the sweep must never re-enter itself
+            nextLogSweepMillis = System.currentTimeMillis() + LOG_SWEEP_INTERVAL_MILLIS;
             state.sweep(server);
+            state.migrateNames(server);
+        } else if (System.currentTimeMillis() >= nextLogSweepMillis) {
+            // Retention is a promise about how long rows live, so it cannot wait for a restart.
+            nextLogSweepMillis = System.currentTimeMillis() + LOG_SWEEP_INTERVAL_MILLIS;
+            state.purgeExpiredLogRows();
         }
         return state;
     }
+
+    /** Drops access-log rows older than {@code accessLogRetentionDays}. Returns the count. */
+    public int purgeExpiredLogRows() {
+        int days = NeroColoniesConfig.ACCESS_LOG_RETENTION_DAYS.get();
+        long nowSeconds = System.currentTimeMillis() / 1000L;
+        int removed = purgeLogRows(entry -> entry.expired(nowSeconds, days));
+        if (removed > 0) {
+            this.setDirty();
+            NeroColoniesCommon.LOGGER.debug("[NeroColonies] Retention: {} access-log row(s) expired.",
+                    removed);
+        }
+        return removed;
+    }
+
+    /**
+     * A name for a new or anonymised colony that identifies nobody: {@code "Colony N"} with the
+     * smallest {@code N} no other colony uses.
+     */
+    public String nextNeutralName() {
+        Set<String> taken = new java.util.HashSet<>();
+        for (Colony colony : this.byId.values()) {
+            taken.add(colony.name());
+        }
+        for (int n = 1; ; n++) {
+            String candidate = Colony.DEFAULT_NAME + " " + n;
+            if (!taken.contains(candidate)) {
+                return candidate;
+            }
+        }
+    }
+
+    /**
+     * One-time pass for worlds created before 0.3: colonies used to be named
+     * {@code "<founder's player name>'s Colony"}. Any colony whose name still matches its current
+     * owner's cached profile name in that pattern, and any server-owned colony (the owner was
+     * erased) still in that pattern, gets a neutral name. Counts are logged, names never.
+     */
+    void migrateNames(MinecraftServer server) {
+        if (this.namesMigrated) {
+            return;
+        }
+        int renamed = 0;
+        for (Colony colony : List.copyOf(this.byId.values())) {
+            if (!colony.name().endsWith(LEGACY_NAME_SUFFIX)) {
+                continue;
+            }
+            boolean legacy;
+            if (!colony.hasOwner()) {
+                legacy = true;
+            } else {
+                legacy = server.services().nameToIdCache().get(colony.ownerId())
+                        .map(profile -> Colony.sanitiseName(profile.name() + LEGACY_NAME_SUFFIX)
+                                .equals(colony.name()))
+                        .orElse(false);
+            }
+            if (legacy) {
+                put(colony.withName(nextNeutralName()));
+                renamed++;
+            }
+        }
+        this.namesMigrated = true;
+        this.setDirty();
+        if (renamed > 0) {
+            NeroColoniesCommon.LOGGER.info(
+                    "[NeroColonies] Renamed {} colony name(s) that contained a player name.", renamed);
+        }
+    }
+
+    /** The suffix the pre-0.3 default colony name appended to the founder's player name. */
+    private static final String LEGACY_NAME_SUFFIX = "'s Colony";
 
     // --- queries ------------------------------------------------------------
 
@@ -219,22 +307,6 @@ public final class ColonyState extends SavedData {
     /** Every outpost, in insertion order. */
     public Collection<Outpost> allOutposts() {
         return List.copyOf(this.outposts.values());
-    }
-
-    /** The outposts parented to one colony, skipping ids whose record has gone. */
-    public List<Outpost> outpostsOf(UUID colonyId) {
-        Colony colony = colony(colonyId);
-        if (colony == null || colony.outpostIds().isEmpty()) {
-            return List.of();
-        }
-        List<Outpost> out = new ArrayList<>(colony.outpostIds().size());
-        for (UUID id : colony.outpostIds()) {
-            Outpost outpost = this.outposts.get(id);
-            if (outpost != null) {
-                out.add(outpost);
-            }
-        }
-        return out;
     }
 
     /**
@@ -392,7 +464,9 @@ public final class ColonyState extends SavedData {
                     toDissolve.add(colony.colonyId());
                     continue;
                 }
-                updated = updated.withOwner(Colony.SERVER_OWNER);
+                // The colony outlives its owner, but nothing it carries may still point at them: a
+                // name the owner chose can contain their name, so it is replaced too.
+                updated = updated.withOwner(Colony.SERVER_OWNER).withName(nextNeutralName());
             }
             if (updated.accessList().contains(player)) {
                 access++;
@@ -440,6 +514,8 @@ public final class ColonyState extends SavedData {
                 // The build record goes the same way, for the same reason: it is keyed by a colony id
                 // that no longer resolves to anything.
                 ColonyConstruction.get(server).forget(colony.colonyId());
+                ColonyRoles.get(server).forget(colony.colonyId());
+                ColonyLife.get(server).forget(colony.colonyId());
                 orphans++;
             }
         }
@@ -464,6 +540,8 @@ public final class ColonyState extends SavedData {
         // Build records are keyed by colony id, so any plan whose colony has gone (dissolved, erased
         // under the dissolve policy, or swept above) is dead weight. One pass, once per server.
         ColonyConstruction.get(server).retainOnly(java.util.Set.copyOf(this.byId.keySet()));
+        ColonyRoles.get(server).retainOnly(java.util.Set.copyOf(this.byId.keySet()));
+        ColonyLife.get(server).retainOnly(java.util.Set.copyOf(this.byId.keySet()));
 
         if (expiredRows > 0 || orphans > 0 || orphanedOutposts > 0) {
             // Counts only — never which colonies or which players (POPIA/GDPR).
@@ -507,11 +585,6 @@ public final class ColonyState extends SavedData {
         });
         root.add("access_log", rows);
         return root;
-    }
-
-    /** Milliseconds-per-day, exposed so later stages share one definition of "a day". */
-    public static long millisPerDay() {
-        return MILLIS_PER_DAY;
     }
 
     // --- internals ----------------------------------------------------------
@@ -585,18 +658,20 @@ public final class ColonyState extends SavedData {
     private record LogRows(UUID colony, List<AccessLog.Entry> rows) {
         static final Codec<LogRows> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Colony.UUID_CODEC.fieldOf("colony").forGetter(LogRows::colony),
-                AccessLog.Entry.CODEC.listOf().optionalFieldOf("rows", List.of()).forGetter(LogRows::rows)
+                LenientCodecs.list(AccessLog.Entry.CODEC, "access-log row").optionalFieldOf("rows", List.of()).forGetter(LogRows::rows)
         ).apply(instance, LogRows::new));
     }
 
     private static Codec<ColonyState> codec() {
         return RecordCodecBuilder.create(instance -> instance.group(
-                Colony.CODEC.listOf().optionalFieldOf("colonies", List.of())
+                LenientCodecs.list(Colony.CODEC, "colony").optionalFieldOf("colonies", List.of())
                         .forGetter(ColonyState::colonyList),
-                LogRows.CODEC.listOf().optionalFieldOf("access_log", List.of())
+                LenientCodecs.list(LogRows.CODEC, "access-log group").optionalFieldOf("access_log", List.of())
                         .forGetter(ColonyState::logRows),
-                Outpost.CODEC.listOf().optionalFieldOf("outposts", List.of())
-                        .forGetter(ColonyState::outpostList)
+                LenientCodecs.list(Outpost.CODEC, "outpost").optionalFieldOf("outposts", List.of())
+                        .forGetter(ColonyState::outpostList),
+                Codec.BOOL.optionalFieldOf("names_migrated", false)
+                        .forGetter(state -> state.namesMigrated)
         ).apply(instance, ColonyState::fromParts));
     }
 
@@ -615,8 +690,9 @@ public final class ColonyState extends SavedData {
     }
 
     private static ColonyState fromParts(List<Colony> colonies, List<LogRows> log,
-            List<Outpost> outposts) {
+            List<Outpost> outposts, boolean namesMigrated) {
         ColonyState state = new ColonyState();
+        state.namesMigrated = namesMigrated;
         for (Colony colony : colonies) {
             state.byId.put(colony.colonyId(), colony);
         }

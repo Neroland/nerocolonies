@@ -8,10 +8,10 @@ Four station blocks ship with the mod:
 
 | Block | Shipped job | Needs research |
 | --- | --- | --- |
-| `nerocolonies:farm_station` | `nerocolonies:farm` — 1 wheat seed → 2 wheat, 200 ticks, 1 colonist | — |
-| `nerocolonies:hydroponics_station` | `nerocolonies:hydroponics` — 1 wheat seed → 3 carrots, 240 ticks, 1 colonist | `nerocolonies:life_support/hydroponics` |
-| `nerocolonies:refinery_station` | `nerocolonies:refine` — 1 raw iron → 1 iron ingot, 300 ticks, 2 colonists | `nerocolonies:industry/refining` |
-| `nerocolonies:fabricator_station` | `nerocolonies:fabricate` — 1 iron ingot + 2 redstone → 1 repeater, 400 ticks, 2 colonists, exports | `nerocolonies:industry/fabrication` |
+| `nerocolonies:farm_station` | `nerocolonies:farm` — 1 wheat seed → 2 wheat, 200 ticks, 1 Neran | — |
+| `nerocolonies:hydroponics_station` | `nerocolonies:hydroponics` — 1 wheat seed → 3 carrots, 240 ticks, 1 Neran | `nerocolonies:life_support/hydroponics` |
+| `nerocolonies:refinery_station` | `nerocolonies:refine` — 1 raw iron → 1 iron ingot, 300 ticks, 2 Nerans | `nerocolonies:industry/refining` |
+| `nerocolonies:fabricator_station` | `nerocolonies:fabricate` — 1 iron ingot + 2 redstone → 1 repeater, 400 ticks, 2 Nerans, exports | `nerocolonies:industry/fabrication` |
 
 A station **holds no recipe and no inventory of its own**. It has two upgrade slots, an energy
 buffer, and nothing else. Its recipe comes from the datapack job definitions that name its *block
@@ -56,7 +56,7 @@ Each cycle, every active station advances by:
 progress += elapsed ticks
           x jobBaseRateMultiplier   // server-wide scalar, default 1.0
           x morale multiplier       // moraleMinMultiplier..1.0 from colony morale
-          x workers                 // assigned colonists (1 for an unstaffed job)
+          x workers                 // assigned Nerans (1 for an unstaffed job)
           x speed multiplier        // SPEED modules on the station
           x power factor;           // 1.0 powered, 0.35 unpowered
 ```
@@ -75,7 +75,7 @@ inputs, and the all-or-nothing input consumption is what stops a job that has tw
 inputs from destroying them every cycle.
 
 A station is reported as **blocked** when it is short of inputs, has nowhere to put its output,
-needs colonists it does not have, or sits below its job's own `morale_floor`.
+needs Nerans it does not have, or sits below its job's own `morale_floor`.
 
 ## Job slots
 
@@ -93,15 +93,26 @@ one is told *why* it is idle rather than left looking at a silent machine.
 
 ## Staffing
 
-Colonists are handed to the active stations first-fit, in the same stable order. A colonist assigned
-to a station walks to it; a colonist left over has its assignment cleared, so a colonist whose
-station was broken stops walking to a hole in the ground.
+Nerans are handed to the active stations first-fit, in the same stable order. Who may staff a
+station depends on trade:
+
+- an adult with **no trade** may staff any station;
+- a Neran **with a trade** may staff only the station blocks its trade lists — with the shipped
+  trades, Farmers the farm and hydroponics stations, Miners the refinery station, Builders and
+  Toolsmiths the fabricator station;
+- children staff nothing.
+
+A Neran assigned to a station walks to it. An adult with no trade that no station needed has its
+assignment cleared, so a Neran whose station was broken stops walking to a hole in the ground; a
+Neran with a trade keeps the workplace its trade gave it. See
+[Nerans and professions](Nerans-and-Professions.md#trades).
 
 A job with `colonists: 0` is fully automated and runs on one notional worker. A job that asks for
-hands and has none does nothing and reports itself blocked.
+hands and has none does nothing and reports itself blocked. As most of a grown colony's adults hold
+trades, a station whose block no trade lists can find itself short of hands.
 
 **Outpost stations are staffed on paper** from the parent's roster, capped at
-`outpostColonistCap`. An outpost may be half a kilometre from its colony, and marching colonists
+`outpostColonistCap`. An outpost may be half a kilometre from its colony, and marching Nerans
 across that gap every cycle would be a pathfinding bill with nothing to show for it. A remote work
 site being staffed nominally is the honest simplification.
 
@@ -210,4 +221,5 @@ Full field-by-field schemas are in [Content format](Content-Format.md).
 - [Content format](Content-Format.md) — writing your own jobs and research
 - [Exports & outposts](Exports-and-Outposts.md) — what the export flag routes into
 - [Colony basics](Colony-Basics.md) — morale, and the colony cycle jobs run on
+- [Nerans and professions](Nerans-and-Professions.md) — trades, and which stations each may staff
 - [Config](Config.md) — `jobSlotsPerColony`, `jobBaseRateMultiplier`, `colonyTickBudgetMs`

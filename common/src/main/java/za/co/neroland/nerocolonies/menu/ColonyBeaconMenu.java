@@ -188,6 +188,16 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         return this.data.get(ColonyBeaconBlockEntity.DATA_BUILD_SUPPLIED) != 0;
     }
 
+    /** {@code Population.GrowthStatus} ordinal: whether arrivals are coming, and if not why. */
+    public int growthStatus() {
+        return this.data.get(ColonyBeaconBlockEntity.DATA_GROWTH_STATUS);
+    }
+
+    /** {@code Construction.IdleReason} ordinal: what the build loop is doing. */
+    public int buildStatus() {
+        return this.data.get(ColonyBeaconBlockEntity.DATA_BUILD_STATUS);
+    }
+
     // --- vanilla plumbing ---------------------------------------------------
 
     @Override

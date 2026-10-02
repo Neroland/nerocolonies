@@ -62,6 +62,26 @@ dependencies {
     }
 }
 
+// Shared plain-JVM tests for the pure helpers (back-off state, day cycle, lenient codecs, growth
+// maths). `common` is source-only and spliced into each loader node, so it cannot run tests itself;
+// the NeoForge nodes own execution (`:neoforge:<mc>:test`, also part of `build`). Model tests only:
+// no server or client is started.
+sourceSets.test.java.srcDir "${rootProject.projectDir}/common/src/test/java"
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    // Minecraft's logging writes logs/latest.log into the working directory; keep it under build/.
+    def runDir = layout.buildDirectory.dir('test-run').get().asFile
+    workingDir = runDir
+    doFirst { runDir.mkdirs() }
+}
+
 // Expand neoforge.mods.toml from src/main/templates into a generated resources dir
 // (same pattern as the repo-root build). The template is NOT under src/main/resources,
 // so the IDE never copies a RAW (token-laden) mods.toml into bin/main;
@@ -122,6 +142,10 @@ neoForge {
             }
         }
     }
+
+    // The tests touch BlockPos/Identifier/codecs, so the test source set needs the same
+    // de-obfuscated Minecraft classes the main source set compiles against.
+    addModdingDependenciesTo sourceSets.test
 
     mods {
         "${rootProject.mod_id}" {

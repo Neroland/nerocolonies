@@ -1,0 +1,73 @@
+{
+  "name": "blueprint.nerocolonies.gratitude_cache_pavilion",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 42,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:quartermaster"],
+  "roles": ["gratitude_cache"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 1},
+  "palette": {
+    "I": "minecraft:quartz_pillar[axis=y]",
+    "U": "minecraft:cut_copper",
+    "^": "minecraft:lantern[hanging=true]",
+    "_": "minecraft:air",
+    "a": "minecraft:cut_copper_slab[type=bottom]",
+    "b": "minecraft:flower_pot",
+    "c": "minecraft:smooth_quartz",
+    "d": "nerocolonies:gratitude_cache"
+  },
+  "layers": [
+    [
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc"
+    ],
+    [
+      "Ib_bI",
+      "_____",
+      "__d__",
+      "_____",
+      "I___I"
+    ],
+    [
+      "I___I",
+      "_____",
+      "_____",
+      "_____",
+      "I___I"
+    ],
+    [
+      "I___I",
+      "_____",
+      "__^__",
+      "_____",
+      "I___I"
+    ],
+    [
+      "aaaaa",
+      "aUUUa",
+      "aUUUa",
+      "aUUUa",
+      "aaaaa"
+    ],
+    [
+      ".....",
+      ".aaa.",
+      ".aaa.",
+      ".aaa.",
+      "....."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:quartz_block", "count": 17},
+    {"tag": "c:ingots/copper", "count": 16},
+    {"item": "minecraft:flower_pot", "count": 2},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "nerocolonies:gratitude_cache", "count": 1}
+  ],
+  "rotate": true
+}

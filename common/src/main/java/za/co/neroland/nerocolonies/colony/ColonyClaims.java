@@ -14,10 +14,12 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 
 /**
- * The claim and permission rules. Core has no claim layer, so this is NeroColonies' own — and it is
- * deliberately the whole model: an owner UUID, an access list, and an operator override. Capture,
- * contest and faction interaction are explicitly out of scope for 0.1.0 (NeroFactions will extend
- * the colony record when it exists).
+ * The claim rules: where a colony or an outpost may be founded, who may dissolve one, and who may
+ * build inside one. Core has no claim layer, so this is NeroColonies' own. <em>What a player may do
+ * to a colony</em> is decided in one place, {@link ColonyPermissions}, from the colony's roles
+ * (Owner, Chief, Ally, Enemy) and the operator override; the access question here simply asks it.
+ * Capture, contest and faction interaction are explicitly out of scope (NeroFactions will extend the
+ * colony record when it exists).
  *
  * <p>Everything here is <b>server-side</b>. Nothing in this class is reachable from a client path,
  * and nothing it returns names a player: placement failures are translated messages, and permission
@@ -37,14 +39,18 @@ public final class ColonyClaims {
     }
 
     /**
-     * May this player act on this colony? Owner, access-list member, or operator. This is the single
-     * predicate every gated interaction (GUI, job assignment, export toggle, link action) calls.
+     * May this player act on this colony at all? Owner, Chief, Ally, or operator — and never an
+     * Enemy, even if stale data left them on a list.
+     *
+     * <p>This is {@link ColonyPermissions#can} for {@link ColonyPermissions.Action#INTERACT}, kept
+     * under its old name because it is public API ({@link ColonyApi#canAccess}) and because "may they
+     * build here?" and "is this colony one of theirs?" still ask exactly this. Anything that needs
+     * more than plain membership — planning, managing members, owner settings — asks
+     * {@link ColonyPermissions} for that action instead. Server-side: it answers {@code false} for a
+     * player who is not in a server level.
      */
     public static boolean canAccess(@Nullable Player player, @Nullable Colony colony) {
-        if (player == null || colony == null) {
-            return false;
-        }
-        return colony.isMember(player.getUUID()) || isGamemaster(player);
+        return ColonyPermissions.can(player, colony, ColonyPermissions.Action.INTERACT);
     }
 
     /**
@@ -226,6 +232,26 @@ public final class ColonyClaims {
         int dx = Math.abs(pos.getX() - existing.beaconPos().getX());
         int dz = Math.abs(pos.getZ() - existing.beaconPos().getZ());
         return dx <= reach && dz <= reach;
+    }
+
+    /**
+     * Caps a grown claim so it never touches another colony's claim in the same dimension. The base
+     * radius (config plus RANGE modules) is always kept; only the growth on top of it is trimmed.
+     */
+    public static int clampGrowth(MinecraftServer server, Colony colony, int base, int wanted) {
+        if (wanted <= base) {
+            return wanted;
+        }
+        int allowed = wanted;
+        for (Colony other : ColonyState.get(server).colonies()) {
+            if (other.colonyId().equals(colony.colonyId()) || !other.dimension().equals(colony.dimension())) {
+                continue;
+            }
+            int dx = Math.abs(other.beaconPos().getX() - colony.beaconPos().getX());
+            int dz = Math.abs(other.beaconPos().getZ() - colony.beaconPos().getZ());
+            allowed = Math.min(allowed, Math.max(dx, dz) - other.claimRadius() - 1);
+        }
+        return Math.max(base, allowed);
     }
 
     /** The configured base claim radius plus whatever RANGE upgrade modules add. */

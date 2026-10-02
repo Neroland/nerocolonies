@@ -17,6 +17,7 @@ import za.co.neroland.nerolandcore.upgrade.UpgradeType;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.item.ColonyBeaconItem;
 import za.co.neroland.nerocolonies.item.ColonyBlockItem;
+import za.co.neroland.nerocolonies.item.ColonyPlannerItem;
 import za.co.neroland.nerocolonies.item.ColonyUpgradeItem;
 
 /**
@@ -66,6 +67,21 @@ public final class NeroColoniesItems {
             blockItem("refinery_station", NeroColoniesBlocks.REFINERY_STATION);
     public static final RegistryEntry<BlockItem> FABRICATOR_STATION =
             blockItem("fabricator_station", NeroColoniesBlocks.FABRICATOR_STATION);
+
+    public static final RegistryEntry<BlockItem> NEEDS_BOARD =
+            describedBlockItem("needs_board", NeroColoniesBlocks.NEEDS_BOARD);
+    public static final RegistryEntry<BlockItem> GRATITUDE_CACHE =
+            describedBlockItem("gratitude_cache", NeroColoniesBlocks.GRATITUDE_CACHE);
+    public static final RegistryEntry<BlockItem> PLANNING_TABLE =
+            describedBlockItem("planning_table", NeroColoniesBlocks.PLANNING_TABLE);
+
+    /** Places buildings by hand: pick, turn, preview, confirm. */
+    public static final RegistryEntry<Item> COLONY_PLANNER = register("colony_planner",
+            key -> new ColonyPlannerItem(new Item.Properties().setId(key).stacksTo(1)));
+
+    /** A keepsake the Quartermaster sometimes leaves in the Gratitude Cache. Does nothing. */
+    public static final RegistryEntry<Item> THANK_YOU_NOTE = register("thank_you_note",
+            key -> new Item(new Item.Properties().setId(key).stacksTo(16)));
 
     public static final RegistryEntry<Item> SPEED_MODULE = upgrade("speed_module", UpgradeType.SPEED);
     public static final RegistryEntry<Item> EFFICIENCY_MODULE =

@@ -10,11 +10,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.colony.Colony;
+import za.co.neroland.nerocolonies.colony.ColonyLife;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.lifecycle.ServerStateReset;
 
@@ -29,10 +32,14 @@ import za.co.neroland.nerocolonies.lifecycle.ServerStateReset;
  *
  * <h2>The visibility rule, in exactly one place</h2>
  *
- * <p>{@link #coloniesOf} is the whole of it: a request sees the colonies its own UUID owns or is on
- * the access list of, in the store's own order, and nothing else. Snapshots, actions and events all
- * route through it, so there is one line to read to know what a companion client can reach — and one
- * line to change if that ever needs to be narrower.
+ * <p>{@link #coloniesOf} is the whole of it: a request sees the colonies its own UUID owns, or is an
+ * Ally or a Chief of, in the store's own order, and nothing else. Somebody a colony has marked as an
+ * Enemy sees nothing of it, and neither does a stranger. Snapshots and actions both route through
+ * it, so there is one line to read to know what a companion client can reach — and one line to
+ * change if that ever needs to be narrower.
+ *
+ * <p>The gallery's <b>sandbox colony</b> is not a colony anybody plays, so it is filtered out here
+ * too and therefore appears in no section and answers no action.
  *
  * <p>Note what it does <b>not</b> do: it never widens for an operator. An operator's powers are a
  * property of a live command source, not of a UUID arriving over a bridge, and a link module that
@@ -63,8 +70,9 @@ final class ColonyLinkAccess {
     }
 
     /**
-     * The colonies this player may see: the ones they own, plus the ones they are on the access list
-     * of. Never anybody else's, and never widened for permission level — see the class notes.
+     * The colonies this player may see: the ones they own, plus the ones they are an Ally or a Chief
+     * of. Never anybody else's, never the sandbox colony, and never widened for permission level —
+     * see the class notes.
      */
     static List<Colony> coloniesOf(MinecraftServer server, UUID playerId) {
         if (playerId == null) {
@@ -74,11 +82,29 @@ final class ColonyLinkAccess {
         List<Colony> out = new ArrayList<>();
         for (UUID id : state.memberOf(playerId)) {
             Colony colony = state.colony(id);
-            if (colony != null) {
+            if (colony == null || ColonyLife.isSandbox(server, id)) {
+                continue;
+            }
+            if (roleOf(server, colony, playerId).member()) {
                 out.add(colony);
             }
         }
         return out;
+    }
+
+    /**
+     * What this player is to this colony, from the colony's own stored role lists and nothing else:
+     * no operator elevation, and no live player needed. It is the only role a payload ever spells
+     * out, and it is always the requester's own.
+     */
+    static ColonyPermissions.Role roleOf(MinecraftServer server, Colony colony, UUID playerId) {
+        return ColonyPermissions.roleOf(server, colony, playerId);
+    }
+
+    /** The level a colony stands in, or {@code null} if that dimension is not available. */
+    @Nullable
+    static ServerLevel levelOf(MinecraftServer server, Colony colony) {
+        return server.getLevel(colony.dimension());
     }
 
     /**

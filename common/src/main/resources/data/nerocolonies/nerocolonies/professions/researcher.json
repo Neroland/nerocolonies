@@ -1,0 +1,23 @@
+{
+  "name": "profession.nerocolonies.researcher",
+  "behaviour": "nerocolonies:researcher",
+  "tool": "minecraft:book",
+  "stations": [],
+  "priority": 50,
+  "per_building": 2,
+  "max_per_colony": 8,
+  "xp_per_level": 100,
+  "max_level": 5,
+  "work_radius": 10,
+  "outputs": [
+    {
+      "item": "minecraft:redstone",
+      "count": 1
+    },
+    {
+      "item": "minecraft:glass",
+      "count": 1
+    }
+  ],
+  "output_chance": 0.1
+}

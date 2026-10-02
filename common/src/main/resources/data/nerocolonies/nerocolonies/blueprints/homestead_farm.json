@@ -1,0 +1,64 @@
+{
+  "name": "blueprint.nerocolonies.homestead_farm",
+  "category": "farm",
+  "stage": "founding",
+  "priority": 2,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:farmer"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "F": "minecraft:farmland[moisture=7]",
+    "W": "minecraft:water",
+    "_": "minecraft:air",
+    "a": "minecraft:oak_log[axis=y]",
+    "b": "nerocolonies:farm_station",
+    "f": "minecraft:oak_fence"
+  },
+  "layers": [
+    [
+      "CCCCCCCCC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CFFFWFFFC",
+      "CCCCCCCCC"
+    ],
+    [
+      "afffffffa",
+      "f_______f",
+      "f_______f",
+      "f_______f",
+      "b_______f",
+      "f_______f",
+      "f_______f",
+      "f_______f",
+      "ffff_ffff"
+    ],
+    [
+      "*.......*",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "...._...."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:dirt", "count": 19},
+    {"item": "minecraft:cobblestone", "count": 15},
+    {"tag": "minecraft:planks", "count": 13},
+    {"item": "minecraft:lantern", "count": 2},
+    {"tag": "minecraft:logs", "count": 1},
+    {"item": "nerocolonies:farm_station", "count": 1}
+  ],
+  "rotate": true
+}

@@ -21,18 +21,17 @@ other Nero mod uses. When it is active, it sends:
 - **Handled failures** the mod chose to report anyway, so an error that was survived is still
   visible as a defect.
 - **Fatal log lines** that name NeroColonies without carrying a throwable — scrubbed and truncated.
-- A small amount of **timing data** on a 5% sample (the colony tick, the housing sweep), to catch
-  performance regressions. Timing and an operation name, nothing else.
-- **Breadcrumbs** — a short trail of what the mod was doing before an error. These are non-personal
-  by construction and are scrubbed like every other payload; player names, UUIDs and colony
-  ownership are never put into one.
+- An anonymous, per-launch **session marker**, used only for crash-free-rate statistics.
+
+No breadcrumbs and no performance timing are collected. Every text field is scrubbed of
+home-directory paths and of anything shaped like a UUID before it is sent.
 
 ## What it never sends
 
 - **No player names, UUIDs, IP addresses, chat or coordinates.** `sendDefaultPii` is off, the Sentry
   user object is cleared on every event, and the machine's hostname is never attached.
-- **No colony data.** Not owner UUIDs, not access lists, not access-log rows, not colony names, not
-  beacon positions.
+- **No colony data.** Not owner UUIDs, not access lists, not Chief or Enemy lists, not access-log
+  rows, not colony names, not beacon positions.
 - **No world data.** Not your seed, your save name or your dimension list.
 - **No file paths from your machine** — your OS account name is scrubbed out of any path, and stack
   frames have their absolute paths stripped, before an event leaves.

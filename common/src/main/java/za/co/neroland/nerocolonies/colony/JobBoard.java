@@ -360,9 +360,8 @@ public final class JobBoard {
     private static void assignWorkers(ServerLevel level, Colony colony,
             Map<Identifier, JobDefinition> jobs, List<Station> live) {
         List<ColonistEntity> roster = Population.colonistsOf(level, colony);
+        java.util.Set<ColonistEntity> staffed = new java.util.HashSet<>();
         int outpostCap = Math.max(0, NeroColoniesConfig.OUTPOST_COLONIST_CAP.get());
-        int cursor = 0;
-
         for (Station station : live) {
             JobDefinition job = station.jobId == null ? null : jobs.get(station.jobId);
             if (job == null || !station.active) {
@@ -383,18 +382,40 @@ public final class JobBoard {
             }
             int taken = 0;
             BlockPos pos = BlockPos.of(station.packedPos);
-            while (taken < wanted && cursor < roster.size()) {
-                ColonistEntity colonist = roster.get(cursor++);
+            for (ColonistEntity colonist : roster) {
+                if (taken >= wanted) {
+                    break;
+                }
+                if (staffed.contains(colonist) || !mayStaff(colonist, job)) {
+                    continue;
+                }
                 colonist.setJobStationPos(pos);
                 colonist.setJobId(station.jobId);
+                staffed.add(colonist);
                 taken++;
             }
             station.assigned = taken;
         }
-        for (int i = cursor; i < roster.size(); i++) {
-            roster.get(i).setJobStationPos(null);
-            roster.get(i).setJobId(null);
+        // Tradeless adults the board did not need stop walking to a station; tradespeople keep the
+        // workplace their trade gave them this cycle.
+        for (ColonistEntity colonist : roster) {
+            if (!staffed.contains(colonist) && colonist.professionId() == null) {
+                colonist.setJobStationPos(null);
+                colonist.setJobId(null);
+            }
         }
+    }
+
+    /**
+     * Who may work a station: an adult with no trade (anyone can push buttons), or a tradesperson
+     * whose trade lists this station's block.
+     */
+    private static boolean mayStaff(ColonistEntity colonist, JobDefinition job) {
+        if (colonist.isChildNeran()) {
+            return false;
+        }
+        za.co.neroland.nerocolonies.content.ProfessionDefinition trade = colonist.profession();
+        return trade == null || trade.stations().contains(job.station());
     }
 
     /** Advances every active station and completes whatever crafts it has earned. */

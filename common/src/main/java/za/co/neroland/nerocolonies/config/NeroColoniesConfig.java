@@ -33,7 +33,7 @@ public final class NeroColoniesConfig {
             "telemetryEnabled", true, false,
             "send anonymous, NeroColonies-only crash reports (Sentry, EU servers) - stack trace, "
                     + "mod/MC/loader/OS/Java versions, your other installed mods, this mod's config, "
-                    + "recent in-game actions, anonymous stability/timing; no IP, username, UUID, world "
+                    + "an anonymous per-launch session marker; no IP, username, UUID, world "
                     + "data, colony ownership or chat; file paths scrubbed of your account name. "
                     + "false = opt out of all of it. See PRIVACY.md");
 
@@ -60,8 +60,9 @@ public final class NeroColoniesConfig {
     // --- Population and performance (server-authoritative) ------------------
 
     public static final ConfigValue<Integer> COLONISTS_PER_COLONY = SCHEMA.intRange(
-            "colonistsPerColony", 24, 0, 256, true,
-            "Population cap per colony. Housing capacity can never raise the roster above this.");
+            "colonistsPerColony", 48, 0, 256, true,
+            "Population cap per colony. Housing capacity can never raise the roster above this. "
+                    + "The default leaves room for the Metropolis stage thresholds.");
 
     public static final ConfigValue<Integer> FOUNDER_COLONIST_COUNT = SCHEMA.intRange(
             "founderColonistCount", 2, 0, 8, true,
@@ -86,8 +87,20 @@ public final class NeroColoniesConfig {
 
     public static final ConfigValue<Integer> AI_ACTIVE_RADIUS = SCHEMA.intRange(
             "aiActiveRadius", 64, 0, 512, true,
-            "Distance from an owner or access-list member within which colonist AI runs at full rate. "
-                    + "Beyond it the goal selector runs at a quarter rate and pathfinding is suspended.");
+            "Distance from an owner or access-list member within which Neran AI runs at full rate. "
+                    + "Beyond it Nerans start new walks far less often, but a walk already under way "
+                    + "always finishes. Production carries on regardless.");
+
+    public static final ConfigValue<Boolean> FIXED_TIME_IS_DAY = SCHEMA.bool(
+            "fixedTimeIsDay", true, true,
+            "In dimensions with a fixed time of day (no day/night cycle), whether Nerans keep a "
+                    + "working day (true) or stay home as if it were always night (false).");
+
+    public static final ConfigValue<Boolean> DEBUG_FAST_GROWTH = SCHEMA.bool(
+            "debugFastGrowth", false, true,
+            "TESTING ONLY - leave false. Compresses colony timings for runtime verification: colony "
+                    + "cycles and housing sweeps run five times as often and construction places four "
+                    + "times as many blocks per cycle.");
 
     public static final ConfigValue<Integer> HOUSING_SCAN_INTERVAL_TICKS = SCHEMA.intRange(
             "housingScanIntervalTicks", 600, 100, 24000, true,
@@ -102,7 +115,8 @@ public final class NeroColoniesConfig {
 
     public static final ConfigValue<Double> CATCH_UP_EFFICIENCY = SCHEMA.doubleRange(
             "catchUpEfficiency", 0.5D, 0.0D, 1.0D, true,
-            "Multiplier applied to production and consumption during offline catch-up. Below 1.0 so "
+            "Multiplier applied to consumption, life support and construction credit during offline "
+                    + "catch-up (job stations do not produce while unloaded). Below 1.0 so "
                     + "there is no incentive to chunk-load a planet for free yield.");
 
     // --- Life support and food (server-authoritative) -----------------------
@@ -210,8 +224,8 @@ public final class NeroColoniesConfig {
 
     public static final ConfigValue<Integer> MAX_AUTO_STRUCTURES = SCHEMA.intRange(
             "maxAutoStructures", 12, 0, 128, true,
-            "Total structures one colony may build for itself. Each blueprint also carries its own "
-                    + "smaller cap; this is the ceiling over all of them.");
+            "Structures a Settled colony may build for itself; each stage after Settled adds the same "
+                    + "again. Each blueprint also carries its own smaller cap.");
 
     // --- Outposts (server-authoritative) ------------------------------------
 
@@ -270,6 +284,105 @@ public final class NeroColoniesConfig {
             "Whether the NeroLink companion module is registered. Snapshots are per-player scoped and "
                     + "never enumerate other players.");
 
+    // --- Living colony: stages, growth, breeding (server-authoritative) ----------
+
+    public static final ConfigValue<Integer> STAGE_GROWING_POPULATION = SCHEMA.intRange(
+            "stageGrowingPopulation", 6, 1, 1000, true,
+            "Nerans a Settled colony needs (with stageGrowingStructures) to become Growing.");
+
+    public static final ConfigValue<Integer> STAGE_GROWING_STRUCTURES = SCHEMA.intRange(
+            "stageGrowingStructures", 6, 1, 1000, true,
+            "Finished structures a Settled colony needs (with stageGrowingPopulation) to become Growing.");
+
+    public static final ConfigValue<Integer> STAGE_THRIVING_POPULATION = SCHEMA.intRange(
+            "stageThrivingPopulation", 16, 1, 1000, true,
+            "Nerans needed to become Thriving (unlocks the extravagant buildings).");
+
+    public static final ConfigValue<Integer> STAGE_THRIVING_STRUCTURES = SCHEMA.intRange(
+            "stageThrivingStructures", 14, 1, 1000, true,
+            "Finished structures needed to become Thriving.");
+
+    public static final ConfigValue<Integer> STAGE_METROPOLIS_POPULATION = SCHEMA.intRange(
+            "stageMetropolisPopulation", 32, 1, 1000, true,
+            "Nerans needed to become a Metropolis (unlocks the showpieces).");
+
+    public static final ConfigValue<Integer> STAGE_METROPOLIS_STRUCTURES = SCHEMA.intRange(
+            "stageMetropolisStructures", 24, 1, 1000, true,
+            "Finished structures needed to become a Metropolis.");
+
+    public static final ConfigValue<Double> GROWTH_MAX_BUILD_MULTIPLIER = SCHEMA.doubleRange(
+            "growthMaxBuildMultiplier", 3.0D, 1.0D, 20.0D, true,
+            "Ceiling of the construction-speed curve. A new colony builds at 1x; a large one approaches "
+                    + "this. See the Progression wiki page for the formula.");
+
+    public static final ConfigValue<Integer> GROWTH_MAX_CLAIM_BONUS = SCHEMA.intRange(
+            "growthMaxClaimBonus", 32, 0, 512, true,
+            "Ceiling of the claim-radius bonus a colony earns as it grows, in blocks.");
+
+    public static final ConfigValue<Boolean> BREEDING_ENABLED = SCHEMA.bool(
+            "breedingEnabled", true, true,
+            "Whether Growing colonies with spare food and beds have children. Arrivals continue either way.");
+
+    public static final ConfigValue<Double> BREEDING_BASE_CHANCE = SCHEMA.doubleRange(
+            "breedingBaseChance", 0.08D, 0.0D, 1.0D, true,
+            "Base chance per colony cycle of a birth when conditions allow; scaled up by colony size.");
+
+    public static final ConfigValue<Integer> BREEDING_SURPLUS_CYCLES = SCHEMA.intRange(
+            "breedingSurplusCycles", 10, 1, 1000, true,
+            "Cycles of food for the whole colony that must be in store before a birth is possible.");
+
+    public static final ConfigValue<Integer> IMMIGRATION_INTERVAL_CYCLES = SCHEMA.intRange(
+            "immigrationIntervalCycles", 6, 1, 1000, true,
+            "Once a colony is Growing (and breeding is on), a newcomer arrives only every this many "
+                    + "cycles, so free beds go mostly to children. 1 = an arrival every cycle, as before "
+                    + "Growing.");
+
+    public static final ConfigValue<Double> BREEDING_MORALE_FLOOR = SCHEMA.doubleRange(
+            "breedingMoraleFloor", 50.0D, 0.0D, 100.0D, true,
+            "Morale a colony needs before children are born.");
+
+    public static final ConfigValue<Integer> CHILD_GROWTH_DAYS = SCHEMA.intRange(
+            "childGrowthDays", 2, 0, 100, true,
+            "In-game days a child Neran takes to grow up and pick a trade. 0 = grown at once.");
+
+    // --- Living colony: buildings and land (server-authoritative) ----------------
+
+    public static final ConfigValue<Integer> MAX_BLUEPRINT_FOOTPRINT = SCHEMA.intRange(
+            "maxBlueprintFootprint", 32, 4, 48, true,
+            "Largest footprint (either axis) the colony will build. Bigger blueprints are skipped.");
+
+    public static final ConfigValue<Integer> MAX_BLUEPRINT_HEIGHT = SCHEMA.intRange(
+            "maxBlueprintHeight", 40, 4, 64, true,
+            "Tallest blueprint the colony will build. Taller ones are skipped.");
+
+    public static final ConfigValue<Boolean> LAND_CLEARING_ENABLED = SCHEMA.bool(
+            "landClearingEnabled", true, true,
+            "Whether Nerans clear natural blocks (tag nerocolonies:clearable) from a building site. "
+                    + "Drops go to colony storage. Never touches nerocolonies:protected or other structures.");
+
+    public static final ConfigValue<Integer> MAX_CONCURRENT_PLANS = SCHEMA.intRange(
+            "maxConcurrentPlans", 4, 0, 16, true,
+            "How many hand-placed building plans a colony may have queued at once.");
+
+    // --- Living colony: defence and gratitude (server-authoritative) -------------
+
+    public static final ConfigValue<Boolean> GUARDS_ATTACK_ENEMY_PLAYERS = SCHEMA.bool(
+            "guardsAttackEnemyPlayers", true, true,
+            "Whether guards and guardian animals attack players on the colony's Enemy list. Hostile "
+                    + "mobs are always fair game.");
+
+    public static final ConfigValue<Integer> GUARD_PURSUIT_MARGIN = SCHEMA.intRange(
+            "guardPursuitMargin", 16, 0, 128, true,
+            "How far beyond the claim edge guards will chase a target.");
+
+    public static final ConfigValue<Integer> CACHE_STOCK_INTERVAL_CYCLES = SCHEMA.intRange(
+            "cacheStockIntervalCycles", 36, 1, 10000, true,
+            "Colony cycles between Gratitude Cache rolls by the Quartermaster.");
+
+    public static final ConfigValue<Boolean> NERAN_NAMES_ENABLED = SCHEMA.bool(
+            "neranNamesEnabled", true, true,
+            "Whether new Nerans get a generated display name from the language file's name pool.");
+
     private NeroColoniesConfig() {
     }
 
@@ -279,6 +392,30 @@ public final class NeroColoniesConfig {
      */
     public static boolean isTelemetryEnabled() {
         return TELEMETRY.get();
+    }
+
+    /** Divisor applied to cycle intervals when {@code debugFastGrowth} is on. */
+    private static final int FAST_GROWTH_DIVISOR = 5;
+
+    /** Multiplier applied to construction throughput when {@code debugFastGrowth} is on. */
+    private static final int FAST_GROWTH_BUILD_FACTOR = 4;
+
+    /** The colony cycle interval in ticks, compressed when {@code debugFastGrowth} is on. */
+    public static int colonyTickInterval() {
+        int interval = Math.max(1, COLONY_TICK_INTERVAL_TICKS.get());
+        return DEBUG_FAST_GROWTH.get() ? Math.max(1, interval / FAST_GROWTH_DIVISOR) : interval;
+    }
+
+    /** The housing rescan interval in ticks, compressed when {@code debugFastGrowth} is on. */
+    public static int housingScanInterval() {
+        int interval = Math.max(1, HOUSING_SCAN_INTERVAL_TICKS.get());
+        return DEBUG_FAST_GROWTH.get() ? Math.max(1, interval / FAST_GROWTH_DIVISOR) : interval;
+    }
+
+    /** Blocks placed per supplied construction cycle, multiplied when {@code debugFastGrowth} is on. */
+    public static int constructionBlocksPerCycle() {
+        int blocks = Math.max(0, CONSTRUCTION_BLOCKS_PER_CYCLE.get());
+        return DEBUG_FAST_GROWTH.get() ? blocks * FAST_GROWTH_BUILD_FACTOR : blocks;
     }
 
     /** True when the erasure policy is to dissolve owned colonies rather than transfer them. */

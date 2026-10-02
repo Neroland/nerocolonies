@@ -4,7 +4,6 @@ import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +23,7 @@ import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 
 import za.co.neroland.nerocolonies.block.entity.ColonyDepotBlockEntity;
 import za.co.neroland.nerocolonies.colony.Colony;
-import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
@@ -82,9 +81,8 @@ public class ColonyDepotBlock extends BaseEntityBlock {
         }
         if (depot.colonyId() != null) {
             Colony colony = ColonyState.get(serverPlayer.level().getServer()).colony(depot.colonyId());
-            if (colony != null && !ColonyClaims.canAccess(serverPlayer, colony)) {
-                serverPlayer.sendSystemMessage(
-                        Component.translatable("message.nerocolonies.claim.no_access"));
+            if (colony != null
+                    && !ColonyPermissions.check(serverPlayer, colony, ColonyPermissions.Action.INTERACT)) {
                 return InteractionResult.SUCCESS;
             }
         }

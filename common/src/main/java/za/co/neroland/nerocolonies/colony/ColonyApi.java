@@ -57,12 +57,15 @@ public final class ColonyApi {
         return ownedBy(ColonyState.get(server).colony(colonyId), player);
     }
 
-    /** Whether {@code player} may act on {@code colony} (owner, member, or operator). */
+    /**
+     * Whether {@code player} may act on {@code colony}: its owner, a Chief, an Ally, or an operator —
+     * never somebody the colony has marked as an Enemy. Decided by {@link ColonyPermissions}.
+     */
     public static boolean canAccess(@Nullable Player player, @Nullable Colony colony) {
         return ColonyClaims.canAccess(player, colony);
     }
 
-    /** Whether {@code player} may act on the colony with this id. */
+    /** Whether {@code player} may act on the colony with this id; see {@link #canAccess(Player, Colony)}. */
     public static boolean canAccess(@Nullable Player player, MinecraftServer server, UUID colonyId) {
         return ColonyClaims.canAccess(player, ColonyState.get(server).colony(colonyId));
     }

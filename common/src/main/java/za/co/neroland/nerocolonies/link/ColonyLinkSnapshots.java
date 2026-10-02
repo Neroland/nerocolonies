@@ -46,23 +46,27 @@ import za.co.neroland.nerocolonies.content.ResearchNode;
  *   <li>{@code exports} — buffer fill, its worth, and each colony's unlocked manifest.</li>
  * </ul>
  *
+ * <p>Schema version 2 added six more, built by {@link ColonyLinkSections}: {@code summary},
+ * {@code needs}, {@code buildings}, {@code professions}, {@code roles} and {@code cache}. The five
+ * above are unchanged, so a client written against version 1 keeps working.
+ *
  * <p>Any other section name yields an empty object, as Core's contract prescribes. Every section
  * accepts an optional {@code colony} parameter to narrow to one of them.
  *
  * <h2>Privacy (POPIA/GDPR)</h2>
  *
  * <p>{@link ColonyLinkAccess#coloniesOf} is the whole visibility rule and it runs first in every
- * section: a request sees its own UUID's colonies and nothing else. Within those, membership is
- * reported as a <b>count</b> — no UUID, no name, no roster — because a client told who is on a
- * colony's access list has been told where those people play.
+ * section: a request sees the colonies its own UUID owns or is an Ally or Chief of, and nothing
+ * else. Within those, membership is reported as a <b>count</b> — no UUID, no name, no roster —
+ * because a client told who is on a colony's access list has been told where those people play.
  *
  * <p>Positions: a colony's own beacon is reported (it is the requesting player's own base, and it is
  * what lets an app tell two colonies apart on a map). Job stations, housing and generators are
  * reported as counts and stable indexes, never as coordinates.
  *
- * <p><b>Read-only and bounded.</b> Nothing here mutates anything, no section loads a chunk, and the
- * per-colony work is proportional to that colony's own station count. The bridge governs how often it
- * is called and caches the result.
+ * <p><b>Read-only and bounded.</b> Nothing here changes a colony, no section loads a chunk, and the
+ * per-colony work is proportional to that colony's own station, building and Neran count. The bridge
+ * governs how often it is called and caches the result.
  *
  * <p>Server thread only.
  */
@@ -73,7 +77,13 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
             ColonyLinkModule.SECTION_COLONISTS,
             ColonyLinkModule.SECTION_JOBS,
             ColonyLinkModule.SECTION_RESEARCH,
-            ColonyLinkModule.SECTION_EXPORTS);
+            ColonyLinkModule.SECTION_EXPORTS,
+            ColonyLinkModule.SECTION_SUMMARY,
+            ColonyLinkModule.SECTION_NEEDS,
+            ColonyLinkModule.SECTION_BUILDINGS,
+            ColonyLinkModule.SECTION_PROFESSIONS,
+            ColonyLinkModule.SECTION_ROLES,
+            ColonyLinkModule.SECTION_CACHE);
 
     @Override
     public String moduleId() {
@@ -107,6 +117,14 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
                 case ColonyLinkModule.SECTION_JOBS -> jobs(server, playerId, colonies);
                 case ColonyLinkModule.SECTION_RESEARCH -> research(server, playerId, colonies);
                 case ColonyLinkModule.SECTION_EXPORTS -> exports(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_SUMMARY -> ColonyLinkSections.summary(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_NEEDS -> ColonyLinkSections.needs(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_BUILDINGS ->
+                        ColonyLinkSections.buildings(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_PROFESSIONS ->
+                        ColonyLinkSections.professions(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_ROLES -> ColonyLinkSections.roles(server, playerId, colonies);
+                case ColonyLinkModule.SECTION_CACHE -> ColonyLinkSections.cache(server, playerId, colonies);
                 // Unknown section: nothing to say.
                 default -> new JsonObject();
             };
@@ -345,8 +363,8 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
 
     // --- helpers --------------------------------------------------------------
 
-    /** The three fields every colony row starts with: which colony, what it is called, whose it is. */
-    private static JsonObject identity(Colony colony, UUID playerId) {
+    /** The four fields every colony row starts with: which colony, what it is called, whose it is. */
+    static JsonObject identity(Colony colony, UUID playerId) {
         JsonObject row = new JsonObject();
         row.addProperty("id", colony.colonyId().toString());
         row.addProperty("name", colony.name());
@@ -356,7 +374,7 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
         return row;
     }
 
-    private static JsonObject envelope(MinecraftServer server, UUID playerId) {
+    static JsonObject envelope(MinecraftServer server, UUID playerId) {
         JsonObject root = new JsonObject();
         root.addProperty("schema_version", ColonyLinkModule.SCHEMA_VERSION);
         root.addProperty("player_online", ColonyLinkAccess.isOnline(server, playerId));

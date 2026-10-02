@@ -9,12 +9,9 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 
-import io.sentry.Breadcrumb;
-import io.sentry.ITransaction;
 import io.sentry.Sentry;
 import io.sentry.SentryEvent;
 import io.sentry.SentryLevel;
-import io.sentry.SpanStatus;
 import io.sentry.protocol.Message;
 import io.sentry.protocol.SentryException;
 import io.sentry.protocol.SentryStackFrame;
@@ -84,6 +81,10 @@ public final class NeroColoniesTelemetry {
     private static final Pattern USER_PATH =
             Pattern.compile("(?i)(?:[A-Z]:)?[/\\\\](?:Users|home)[/\\\\][^/\\\\\\s:;,'\"]+");
 
+    /** UUID-shaped strings (a player or colony id in an exception message). */
+    private static final Pattern UUID_TEXT = Pattern.compile(
+            "(?i)\\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\b");
+
     private static volatile boolean active;
     private static final AtomicInteger eventsSent = new AtomicInteger();
     private static final Set<String> seenFingerprints = ConcurrentHashMap.newKeySet();
@@ -121,23 +122,6 @@ public final class NeroColoniesTelemetry {
         start();
     }
 
-    /**
-     * Fires a single synthetic Sentry event to confirm end-to-end reporting on a real (production)
-     * jar. The exception originates in NeroColonies code so it passes the package-only
-     * {@code beforeSend} filter; the per-session de-dup means repeat calls in one session collapse
-     * to one event (restart to test again).
-     *
-     * @return {@code true} if telemetry is active and the event was dispatched
-     */
-    public static boolean sendTestEvent(String origin) {
-        if (!active) {
-            return false;
-        }
-        capture(new IllegalStateException(
-                "NeroColonies Sentry test (" + origin + ") — synthetic event, safe to ignore"));
-        return true;
-    }
-
     private static synchronized void start() {
         if (active) {
             return;
@@ -157,9 +141,9 @@ public final class NeroColoniesTelemetry {
             // Release health: session lifecycle managed manually (started below, ended on JVM
             // shutdown). The session id is random per launch and is NOT linked across sessions.
             options.setEnableAutoSessionTracking(false);
-            // Performance: sample a small fraction of traced operations (colony tick, housing scan).
-            // Timing data only — no personal data in a transaction.
-            options.setTracesSampleRate(0.05D);
+            // No performance tracing: nothing in this mod opens a transaction, and a transaction would
+            // bypass beforeSend's scrubbing.
+            options.setTracesSampleRate(0.0D);
             options.setBeforeSend((event, hint) -> filterAndScrub(event));
         });
         Sentry.configureScope(scope -> {
@@ -213,53 +197,6 @@ public final class NeroColoniesTelemetry {
         NeroColoniesCommon.LOGGER.info(
                 "[NeroColonies] Telemetry enabled (anonymous error reports, EU servers; opt out via "
                         + "telemetryEnabled=false in config/nerocolonies.properties).");
-    }
-
-    /**
-     * Drops a lightweight, non-identifying breadcrumb onto the current scope — a trail of what the
-     * mod was doing (colony tick ran, housing rescanned) that rides along with the next error report.
-     * No-op when telemetry is off. The message is scrubbed of OS-account paths exactly like every
-     * other payload, and must never be given player names, UUIDs or colony ownership values.
-     */
-    public static void breadcrumb(String category, String message) {
-        if (!active) {
-            return;
-        }
-        Breadcrumb crumb = new Breadcrumb();
-        crumb.setType("default");
-        crumb.setCategory(category);
-        crumb.setLevel(SentryLevel.INFO);
-        crumb.setMessage(scrub(message));
-        Sentry.addBreadcrumb(crumb);
-    }
-
-    /**
-     * Times a unit of work as a sampled Sentry transaction (performance tracing). Returns the body's
-     * value. When telemetry is off the body simply runs untraced, so call sites stay branch-free.
-     * Only timing + operation name are recorded — never personal data.
-     */
-    public static <T> T trace(String operation, String name, java.util.function.Supplier<T> body) {
-        if (!active) {
-            return body.get();
-        }
-        ITransaction tx = Sentry.startTransaction(name, operation);
-        try {
-            return body.get();
-        } catch (RuntimeException | Error e) {
-            tx.setThrowable(e);
-            tx.setStatus(SpanStatus.INTERNAL_ERROR);
-            throw e;
-        } finally {
-            tx.finish();
-        }
-    }
-
-    /** {@link #trace(String, String, java.util.function.Supplier)} for a body with no return value. */
-    public static void trace(String operation, String name, Runnable body) {
-        trace(operation, name, () -> {
-            body.run();
-            return null;
-        });
     }
 
     /**
@@ -454,8 +391,15 @@ public final class NeroColoniesTelemetry {
         return sb.toString();
     }
 
-    /** Replaces home-directory paths (which contain the OS account name) with a neutral marker. */
+    /**
+     * Replaces home-directory paths (which contain the OS account name) and UUID-shaped strings
+     * (which could be a player id) with neutral markers.
+     */
     static String scrub(String text) {
-        return USER_PATH.matcher(text).replaceAll("/~");
+        if (text == null) {
+            return null;
+        }
+        String noPaths = USER_PATH.matcher(text).replaceAll("/~");
+        return UUID_TEXT.matcher(noPaths).replaceAll("<uuid>");
     }
 }

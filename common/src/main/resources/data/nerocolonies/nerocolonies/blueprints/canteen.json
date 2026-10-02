@@ -1,0 +1,135 @@
+{
+  "name": "blueprint.nerocolonies.canteen",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 40,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:cook"],
+  "roles": ["eat"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "P": "minecraft:oak_planks",
+    "_": "minecraft:air",
+    "a": "minecraft:crafting_table",
+    "b": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "c": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "d": "minecraft:oak_log[axis=y]",
+    "f": "minecraft:oak_fence",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:oak_pressure_plate",
+    "i": "minecraft:oak_stairs[facing=east,half=bottom]",
+    "j": "minecraft:oak_stairs[facing=west,half=bottom]",
+    "k": "minecraft:smoker[facing=south,lit=false]",
+    "l": "minecraft:spruce_stairs[facing=north,half=bottom]",
+    "m": "minecraft:spruce_stairs[facing=south,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "C###########C",
+      "C#ppppppppp#C",
+      "C#ppppppppp#C",
+      "C#ppppppppp#C",
+      "C#ppppppppp#C",
+      "C#ppppppppp#C",
+      "C###########C"
+    ],
+    [
+      ".d########Cd.",
+      ".#____ka___#.",
+      ".#_________#.",
+      ".#_jfi_jfi_#.",
+      ".#_________#.",
+      ".#*_______*#.",
+      ".d####b####d."
+    ],
+    [
+      ".dPgPgPgPgCd.",
+      ".P_________P.",
+      ".g_________g.",
+      ".P__h___h__P.",
+      ".g_________g.",
+      ".P_________P.",
+      ".dPPgPcPgPPd."
+    ],
+    [
+      ".dPPPPPPPPCd.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".dPPPPPPPPPd."
+    ],
+    [
+      ".dPPPPPPPPCd.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".dPPPPPPPPPd."
+    ],
+    [
+      "mmmmmmmmmmCmm",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      "lllllllllllll"
+    ],
+    [
+      "..........C..",
+      "mmmmmmmmmmmmm",
+      ".P_________P.",
+      ".P_________P.",
+      ".P_________P.",
+      "lllllllllllll",
+      "............."
+    ],
+    [
+      "..........C..",
+      ".............",
+      "mmmmmmmmmmmmm",
+      ".P_________P.",
+      "lllllllllllll",
+      ".............",
+      "............."
+    ],
+    [
+      "..........C..",
+      ".............",
+      ".............",
+      "ppppppppppppp",
+      ".............",
+      ".............",
+      "............."
+    ],
+    [
+      "..........C..",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      ".............",
+      "............."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 104},
+    {"item": "minecraft:stone_bricks", "count": 27},
+    {"item": "minecraft:cobblestone", "count": 11},
+    {"tag": "minecraft:logs", "count": 8},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:crafting_table", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1},
+    {"item": "minecraft:smoker", "count": 1}
+  ],
+  "rotate": true
+}

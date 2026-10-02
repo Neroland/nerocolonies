@@ -24,7 +24,7 @@ import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 
 import za.co.neroland.nerocolonies.block.entity.OxygenGeneratorBlockEntity;
 import za.co.neroland.nerocolonies.colony.Colony;
-import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
@@ -80,10 +80,8 @@ public class OxygenGeneratorBlock extends BaseEntityBlock {
         if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
             Colony colony = ColonyState.get(serverLevel.getServer())
                     .colonyAt(serverLevel.dimension(), pos);
-            if (colony != null && !ColonyClaims.canAccess(serverPlayer, colony)) {
-                serverPlayer.sendSystemMessage(
-                        net.minecraft.network.chat.Component.translatable(
-                                "message.nerocolonies.claim.no_access"));
+            if (colony != null
+                    && !ColonyPermissions.check(serverPlayer, colony, ColonyPermissions.Action.INTERACT)) {
                 return InteractionResult.SUCCESS;
             }
         }

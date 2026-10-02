@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "nerocolonies:block/planning_table",
+    "particle": "nerocolonies:block/planning_table"
+  }
+}

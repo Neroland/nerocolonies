@@ -15,6 +15,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.data.LenientCodecs;
+
 /**
  * One colony, as stored. Immutable: every change produces a new record which
  * {@link ColonyState#put(Colony)} swaps in, so there is no way to mutate a colony without the index
@@ -67,7 +70,7 @@ public record Colony(
     private static final double MIN_MORALE = 0.0D;
     private static final double MAX_MORALE = 100.0D;
 
-    /** UUIDs are stored as strings; a malformed one fails its own field instead of the whole file. */
+    /** UUIDs are stored as strings. Inside a {@link LenientCodecs} list a malformed one is skipped. */
     public static final Codec<UUID> UUID_CODEC = Codec.STRING.comapFlatMap(
             text -> {
                 try {
@@ -78,10 +81,10 @@ public record Colony(
             },
             UUID::toString);
 
-    public static final Codec<Set<UUID>> UUID_SET_CODEC = UUID_CODEC.listOf()
+    public static final Codec<Set<UUID>> UUID_SET_CODEC = LenientCodecs.list(UUID_CODEC, "player or outpost id")
             .xmap(list -> (Set<UUID>) new LinkedHashSet<>(list), List::copyOf);
 
-    public static final Codec<Set<String>> STRING_SET_CODEC = Codec.STRING.listOf()
+    public static final Codec<Set<String>> STRING_SET_CODEC = LenientCodecs.list(Codec.STRING, "research node")
             .xmap(list -> (Set<String>) new LinkedHashSet<>(list), List::copyOf);
 
     public static final MapCodec<Colony> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -90,7 +93,7 @@ public record Colony(
             ResourceKey.codec(Registries.DIMENSION).fieldOf("dimension").forGetter(Colony::dimension),
             BlockPos.CODEC.fieldOf("beacon").forGetter(Colony::beaconPos),
             Codec.INT.optionalFieldOf("claim_radius", 48).forGetter(Colony::claimRadius),
-            UUID_CODEC.optionalFieldOf("owner", SERVER_OWNER).forGetter(Colony::ownerId),
+            UUID_CODEC.lenientOptionalFieldOf("owner", SERVER_OWNER).forGetter(Colony::ownerId),
             UUID_SET_CODEC.optionalFieldOf("access", Set.of()).forGetter(Colony::accessList),
             Codec.LONG.optionalFieldOf("created_at", 0L).forGetter(Colony::createdAt),
             Codec.LONG.optionalFieldOf("last_tick", 0L).forGetter(Colony::lastTick),
@@ -161,10 +164,22 @@ public record Colony(
             return Set.of();
         }
         LinkedHashSet<UUID> copy = new LinkedHashSet<>();
+        int dropped = 0;
         for (UUID id : source) {
-            if (id != null && copy.size() < MAX_ACCESS_LIST) {
-                copy.add(id);
+            if (id == null) {
+                continue;
             }
+            if (copy.size() < MAX_ACCESS_LIST) {
+                copy.add(id);
+            } else {
+                dropped++;
+            }
+        }
+        if (dropped > 0) {
+            // A count only: the dropped entries are player-shaped.
+            NeroColoniesCommon.LOGGER.warn(
+                    "[NeroColonies] A colony list exceeded its cap of {}; {} entr{} dropped.",
+                    MAX_ACCESS_LIST, dropped, dropped == 1 ? "y was" : "ies were");
         }
         return Set.copyOf(copy);
     }

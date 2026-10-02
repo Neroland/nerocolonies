@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "minecraft:paper",
+    "minecraft:compass",
+    "minecraft:copper_ingot"
+  ],
+  "result": {
+    "id": "nerocolonies:colony_planner",
+    "count": 1
+  }
+}

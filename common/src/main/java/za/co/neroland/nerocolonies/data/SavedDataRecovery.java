@@ -1,10 +1,17 @@
 package za.co.neroland.nerocolonies.data;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.function.Supplier;
 
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.LevelResource;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.telemetry.NeroColoniesTelemetry;
@@ -76,6 +83,11 @@ public final class SavedDataRecovery {
         if (fresh == null) {
             throw new IllegalStateException("SavedData fallback supplier returned null for " + name);
         }
+        // Keep the unreadable file before the fresh instance overwrites it at the next save: it is
+        // the only copy of every colony on the server, and an operator may be able to repair it.
+        if (failure != null) {
+            backUp(level, type, name);
+        }
         try {
             level.getDataStorage().set(type, fresh);
             fresh.setDirty();
@@ -92,5 +104,30 @@ public final class SavedDataRecovery {
             NeroColoniesTelemetry.captureHandledException(failure, "saved_data_recovery", name);
         }
         return fresh;
+    }
+
+    /**
+     * Copies the store's {@code .dat} file to {@code <name>.dat.corrupt-<epoch seconds>} beside it.
+     * Best-effort: a missing file or an I/O failure is logged (no path, which could carry an account
+     * name) and recovery carries on.
+     */
+    private static void backUp(ServerLevel level, SavedDataType<?> type, String name) {
+        try {
+            Path folder = DimensionType.getStorageFolder(level.dimension(),
+                    level.getServer().getWorldPath(LevelResource.ROOT)).resolve("data");
+            Identifier id = type.id();
+            Path file = folder.resolve(id.getNamespace()).resolve(id.getPath() + ".dat");
+            if (!Files.isRegularFile(file)) {
+                return;
+            }
+            Path backup = file.resolveSibling(file.getFileName() + ".corrupt-"
+                    + (System.currentTimeMillis() / 1000L));
+            Files.copy(file, backup, StandardCopyOption.COPY_ATTRIBUTES);
+            NeroColoniesCommon.LOGGER.warn(
+                    "[NeroColonies] Kept a copy of the unreadable '{}' file beside it (.corrupt-*).", name);
+        } catch (IOException | RuntimeException e) {
+            NeroColoniesCommon.LOGGER.warn(
+                    "[NeroColonies] Could not back up the unreadable '{}' file before recovery.", name);
+        }
     }
 }

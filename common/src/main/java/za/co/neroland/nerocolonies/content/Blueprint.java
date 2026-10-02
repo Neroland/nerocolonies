@@ -12,52 +12,62 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+
+import org.jetbrains.annotations.Nullable;
+
+import za.co.neroland.nerocolonies.colony.ColonyStage;
 
 /**
- * One structure a colony can build for itself, loaded from
- * {@code data/<ns>/nerocolonies/blueprints/<path>.json}.
+ * One structure a colony can build, loaded from {@code data/<ns>/nerocolonies/blueprints/<path>.json}.
  *
- * <h2>The format, and why it is this format</h2>
+ * <h2>The format</h2>
  *
  * <pre>{@code
  * {
- *   "name": "blueprint.nerocolonies.habitat_pod",
+ *   "name": "blueprint.nerocolonies.neran_cottage",
  *   "category": "housing",
+ *   "stage": "settled",
  *   "priority": 10,
  *   "max": 6,
+ *   "level": 1,
+ *   "upgrade_to": "nerocolonies:neran_cottage_2",
+ *   "unlocks": [ "nerocolonies:farmer" ],
+ *   "roles": [ "sleep" ],
+ *   "capacity": { "housing": 2, "storage": 0, "jobs": 0 },
  *   "research": "nerocolonies:habitation/shelter",
- *   "palette": { "#": "minecraft:iron_block", "H": "nerocolonies:habitat_pod" },
- *   "layers": [
- *     [ "###", "#H#", "###" ],
- *     [ "###", "#.#", "###" ]
- *   ],
- *   "materials": [
- *     { "item": "nerocolonies:habitat_pod", "count": 1 },
- *     { "tag": "c:ingots/iron", "count": 8 }
- *   ]
+ *   "palette": {
+ *     "#": "minecraft:oak_planks",
+ *     "S": "minecraft:oak_stairs[facing=north,half=bottom]",
+ *     "_": "minecraft:air"
+ *   },
+ *   "layers": [ [ "###", "#_#", "###" ], [ "S_S", "___", "###" ] ],
+ *   "materials": [ { "tag": "minecraft:planks", "count": 24 } ],
+ *   "rotate": true
  * }
  * }</pre>
  *
- * <p>A character grid rather than a structure NBT, on purpose. A blueprint is meant to be written by
- * hand in a text editor by somebody who has never opened a structure block: {@code layers} is a list
- * of horizontal slices <b>bottom-up</b>, each slice a list of rows running north→south (+Z), each row
- * a string running west→east (+X). {@code palette} maps a character to a block id;
- * <b>any character not in the palette is a hole</b> — nothing is placed and whatever is there is left
- * alone — which is what {@code '.'} and {@code ' '} conventionally mean in the shipped content.
+ * <p>{@code layers} is a list of horizontal slices <b>bottom-up</b>, each a list of rows running
+ * north→south (+Z), each row a string running west→east (+X). {@code palette} maps one character to a
+ * <b>block-state string</b> (a bare id still works). Any character not in the palette is a hole:
+ * nothing is placed and whatever is there is left alone. A character mapped to
+ * {@code minecraft:air} is a <b>clear</b> cell: natural blocks there (see the
+ * {@code nerocolonies:clearable} tag) are cleared before building, so an interior is actually open.
  *
- * <p>Every row is padded to the widest row in the blueprint, so a ragged grid is a shape rather than
- * an error. Blocks are placed in their {@link Block#defaultBlockState()}: a blueprint describes a
- * layout, not block states, which is the whole reason it stays hand-authorable.
+ * <p>Instead of {@code palette}/{@code layers}, a blueprint may name a vanilla structure file with
+ * {@code "structure": "<ns>:<path>"} ({@code data/<ns>/structure/<path>.nbt}). The structure's
+ * blocks become the grid at load time, air included as clear cells, so large builds can be made
+ * with a structure block and still go up a few blocks at a time.
  *
- * <h2>Materials</h2>
+ * <p>{@code rotate} lets the planner turn the building so its front (the +Z, south face, where
+ * doors conventionally go) faces the beacon. Block states turn with it.
  *
- * <p>{@code materials} reuses {@link ItemTarget}, so a blueprint can ask for a tag
- * ({@code c:ingots/iron}) and be satisfied by any mod's iron. The list is what a player <em>may</em>
- * supply to build at full speed — it is never a hard requirement (see {@code colony/Construction}),
- * so a blueprint naming an item from an uninstalled mod is a slow build, not a broken colony.
+ * <p>{@code stage} is the colony stage the blueprint needs. Blueprints at {@code founding} are the
+ * <b>Starter Works</b>: while the colony is founding they build only from player-supplied materials.
  *
  * <p><b>Privacy (POPIA/GDPR):</b> nothing here is player-shaped. A blueprint is content.
  */
@@ -68,67 +78,72 @@ public record Blueprint(
         int priority,
         int max,
         Optional<Identifier> research,
-        Map<Character, Identifier> palette,
+        Map<Character, String> palette,
         List<String> layout,
         List<ItemTarget> materials,
         int width,
         int depth,
-        int height) {
+        int height,
+        ColonyStage stage,
+        Optional<Identifier> upgradeTo,
+        int level,
+        List<Identifier> unlocks,
+        Capacity capacity,
+        List<String> roles,
+        Optional<Identifier> structure,
+        boolean rotate) {
 
-    /** Stands in until the loader stamps the file-derived id on. */
     public static final Identifier UNNAMED =
             Identifier.fromNamespaceAndPath("nerocolonies", "unnamed_blueprint");
 
-    /** Hard cap on a blueprint's footprint in each horizontal direction. */
-    public static final int MAX_EXTENT = 16;
+    /** Format ceiling on footprint, either axis. Servers cap autonomous builds lower by config. */
+    public static final int MAX_EXTENT = 48;
 
-    /** Hard cap on a blueprint's height. */
-    public static final int MAX_HEIGHT = 12;
+    /** Format ceiling on height. */
+    public static final int MAX_HEIGHT = 64;
 
-    /**
-     * What a structure is for. Used for the housing-pressure rule (a colony only starts another
-     * habitat when the one it has is nearly full) and for nothing else in 0.1.0 — an unknown value
-     * decodes to {@link Category#OTHER} rather than failing, so a newer pack never bricks an older
-     * jar.
-     */
+    /** The palette value that marks a clear cell. */
+    public static final String CLEAR = "minecraft:air";
+
+    /** Broad kinds of building, used by the planner, the GUI and the link module. */
     public enum Category {
-
-        /** Raises housing capacity. Gated on the colony actually needing room. */
-        HOUSING,
-
-        /** Food production. */
-        FARM,
-
-        /** Refining, fabrication, power. */
-        INDUSTRY,
-
-        /** Colony storage access. */
-        STORAGE,
-
-        /** Oxygen and atmosphere. */
-        LIFE_SUPPORT,
-
-        /** Anything else, and the fallback for an unrecognised value. */
-        OTHER;
+        HOUSING, FARM, INDUSTRY, STORAGE, LIFE_SUPPORT, CIVIC, DEFENCE, LANDMARK, OTHER;
 
         static Category parse(String raw) {
             if (raw == null) {
                 return OTHER;
             }
             for (Category category : values()) {
-                if (category.name().equalsIgnoreCase(raw)) {
+                if (category.name().equalsIgnoreCase(raw.trim())) {
                     return category;
                 }
             }
             return OTHER;
         }
 
-        String serialised() {
+        public String serialised() {
             return name().toLowerCase(Locale.ROOT);
         }
     }
 
-    /** A single-character key. Longer strings are a decode error rather than a silent truncation. */
+    /** What a finished building offers, for display. Housing is still measured by the sweep. */
+    public record Capacity(int housing, int storage, int jobs) {
+
+        public static final Capacity NONE = new Capacity(0, 0, 0);
+
+        public static final Codec<Capacity> CODEC = RecordCodecBuilder.create(inst -> inst.group(
+                Codec.INT.optionalFieldOf("housing", 0).forGetter(Capacity::housing),
+                Codec.INT.optionalFieldOf("storage", 0).forGetter(Capacity::storage),
+                Codec.INT.optionalFieldOf("jobs", 0).forGetter(Capacity::jobs)
+        ).apply(inst, Capacity::new));
+
+        public Capacity {
+            housing = Math.max(0, housing);
+            storage = Math.max(0, storage);
+            jobs = Math.max(0, jobs);
+        }
+    }
+
     private static final Codec<Character> CHARACTER_CODEC = Codec.STRING.comapFlatMap(
             text -> text.length() == 1
                     ? DataResult.success(text.charAt(0))
@@ -138,10 +153,14 @@ public record Blueprint(
     private static final Codec<Category> CATEGORY_CODEC = Codec.STRING
             .xmap(Category::parse, Category::serialised);
 
-    /** The on-disk shape, before the layout is normalised. */
+    private static final Codec<ColonyStage> STAGE_CODEC = Codec.STRING
+            .xmap(ColonyStage::parse, ColonyStage::key);
+
     private record Raw(String name, Category category, int priority, int max,
-            Optional<Identifier> research, Map<Character, Identifier> palette,
-            List<List<String>> layers, List<ItemTarget> materials) {
+            Optional<Identifier> research, Map<Character, String> palette,
+            List<List<String>> layers, List<ItemTarget> materials, ColonyStage stage,
+            Optional<Identifier> upgradeTo, int level, List<Identifier> unlocks, Capacity capacity,
+            List<String> roles, Optional<Identifier> structure, boolean rotate) {
     }
 
     private static final Codec<Raw> RAW_CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -150,32 +169,56 @@ public record Blueprint(
             Codec.INT.optionalFieldOf("priority", 100).forGetter(Raw::priority),
             Codec.INT.optionalFieldOf("max", 4).forGetter(Raw::max),
             Identifier.CODEC.optionalFieldOf("research").forGetter(Raw::research),
-            Codec.unboundedMap(CHARACTER_CODEC, Identifier.CODEC).fieldOf("palette")
+            Codec.unboundedMap(CHARACTER_CODEC, Codec.STRING).optionalFieldOf("palette", Map.of())
                     .forGetter(Raw::palette),
-            Codec.STRING.listOf().listOf().fieldOf("layers").forGetter(Raw::layers),
+            Codec.STRING.listOf().listOf().optionalFieldOf("layers", List.of()).forGetter(Raw::layers),
             ItemTarget.CODEC.listOf().optionalFieldOf("materials", List.of())
-                    .forGetter(Raw::materials)
+                    .forGetter(Raw::materials),
+            STAGE_CODEC.optionalFieldOf("stage", ColonyStage.SETTLED).forGetter(Raw::stage),
+            Identifier.CODEC.optionalFieldOf("upgrade_to").forGetter(Raw::upgradeTo),
+            Codec.INT.optionalFieldOf("level", 1).forGetter(Raw::level),
+            Identifier.CODEC.listOf().optionalFieldOf("unlocks", List.of()).forGetter(Raw::unlocks),
+            Capacity.CODEC.optionalFieldOf("capacity", Capacity.NONE).forGetter(Raw::capacity),
+            Codec.STRING.listOf().optionalFieldOf("roles", List.of()).forGetter(Raw::roles),
+            Identifier.CODEC.optionalFieldOf("structure").forGetter(Raw::structure),
+            Codec.BOOL.optionalFieldOf("rotate", true).forGetter(Raw::rotate)
     ).apply(inst, Raw::new));
 
     public static final Codec<Blueprint> CODEC = RAW_CODEC.comapFlatMap(
             Blueprint::normalise, Blueprint::toRaw);
 
-    /**
-     * Turns the ragged authored grid into a rectangular one and works out the extents. A blueprint
-     * bigger than {@link #MAX_EXTENT} / {@link #MAX_HEIGHT}, or with no layers at all, is rejected
-     * here — the loader reports it and drops it, exactly like any other bad content.
-     */
     private static DataResult<Blueprint> normalise(Raw raw) {
         if (raw.layers().isEmpty()) {
+            if (raw.structure().isEmpty()) {
+                return DataResult.error(() -> "a blueprint needs layers or a structure");
+            }
+            // The grid arrives from the structure file once the resource manager is in reach.
+            return DataResult.success(fromRaw(raw, Map.of(), List.of(), 0, 0, 0));
+        }
+        return grid(raw.palette(), raw.layers()).map(g -> fromRaw(raw, g.palette(), g.layout(),
+                g.width(), g.depth(), g.height()));
+    }
+
+    /** A validated, padded character grid. */
+    public record Grid(Map<Character, String> palette, List<String> layout, int width, int depth,
+            int height) {
+    }
+
+    /**
+     * Pads and validates a palette + layer list into a {@link Grid}. Shared by JSON blueprints and the
+     * structure-file converter, so both obey the same ceilings.
+     */
+    public static DataResult<Grid> grid(Map<Character, String> palette, List<List<String>> layers) {
+        if (layers.isEmpty()) {
             return DataResult.error(() -> "a blueprint needs at least one layer");
         }
-        int height = raw.layers().size();
+        int height = layers.size();
         if (height > MAX_HEIGHT) {
             return DataResult.error(() -> "a blueprint may be at most " + MAX_HEIGHT + " layers tall");
         }
         int depth = 0;
         int width = 0;
-        for (List<String> layer : raw.layers()) {
+        for (List<String> layer : layers) {
             depth = Math.max(depth, layer.size());
             for (String row : layer) {
                 width = Math.max(width, row.length());
@@ -188,19 +231,22 @@ public record Blueprint(
             return DataResult.error(
                     () -> "a blueprint may be at most " + MAX_EXTENT + " blocks in each direction");
         }
-
-        // One flat list of height*depth padded rows, so a cell lookup is arithmetic rather than three
-        // bounds checks. Missing rows become blanks: a ragged grid is a shape, not an error.
         List<String> flat = new ArrayList<>(height * depth);
-        for (List<String> layer : raw.layers()) {
+        for (List<String> layer : layers) {
             for (int z = 0; z < depth; z++) {
                 String row = z < layer.size() ? layer.get(z) : "";
                 flat.add(row.length() >= width ? row.substring(0, width) : pad(row, width));
             }
         }
-        return DataResult.success(new Blueprint(UNNAMED, raw.name(), raw.category(), raw.priority(),
-                raw.max(), raw.research(), Map.copyOf(raw.palette()), List.copyOf(flat),
-                List.copyOf(raw.materials()), width, depth, height));
+        return DataResult.success(new Grid(Map.copyOf(palette), List.copyOf(flat), width, depth, height));
+    }
+
+    private static Blueprint fromRaw(Raw raw, Map<Character, String> palette, List<String> layout,
+            int width, int depth, int height) {
+        return new Blueprint(UNNAMED, raw.name(), raw.category(), raw.priority(), raw.max(),
+                raw.research(), palette, layout, List.copyOf(raw.materials()), width, depth, height,
+                raw.stage(), raw.upgradeTo(), raw.level(), raw.unlocks(), raw.capacity(), raw.roles(),
+                raw.structure(), raw.rotate());
     }
 
     private static String pad(String row, int width) {
@@ -213,60 +259,119 @@ public record Blueprint(
 
     private Raw toRaw() {
         List<List<String>> layers = new ArrayList<>(this.height);
-        for (int y = 0; y < this.height; y++) {
-            layers.add(this.layout.subList(y * this.depth, (y + 1) * this.depth));
+        if (this.structure.isEmpty()) {
+            for (int y = 0; y < this.height; y++) {
+                layers.add(this.layout.subList(y * this.depth, (y + 1) * this.depth));
+            }
         }
         return new Raw(this.name, this.category, this.priority, this.max, this.research,
-                new LinkedHashMap<>(this.palette), layers, this.materials);
+                this.structure.isEmpty() ? new LinkedHashMap<>(this.palette) : Map.of(), layers,
+                this.materials, this.stage, this.upgradeTo, this.level, this.unlocks, this.capacity,
+                this.roles, this.structure, this.rotate);
     }
 
     public Blueprint {
         priority = Math.clamp(priority, 0, 10_000);
         max = Math.clamp(max, 0, 64);
+        level = Math.clamp(level, 1, 9);
+        palette = palette == null ? Map.of() : Map.copyOf(palette);
+        layout = layout == null ? List.of() : List.copyOf(layout);
+        materials = materials == null ? List.of() : List.copyOf(materials);
+        unlocks = unlocks == null ? List.of() : List.copyOf(unlocks);
+        roles = roles == null ? List.of() : List.copyOf(roles);
+        capacity = capacity == null ? Capacity.NONE : capacity;
+        stage = stage == null ? ColonyStage.SETTLED : stage;
     }
 
     public Blueprint withId(Identifier newId) {
         return new Blueprint(newId, name, category, priority, max, research, palette, layout,
-                materials, width, depth, height);
+                materials, width, depth, height, stage, upgradeTo, level, unlocks, capacity, roles,
+                structure, rotate);
     }
 
-    // --- the layout ---------------------------------------------------------
+    /** A copy with its grid replaced, used when a structure file supplies the cells. */
+    public Blueprint withGrid(Grid grid) {
+        return new Blueprint(id, name, category, priority, max, research, grid.palette(),
+                grid.layout(), materials, grid.width(), grid.depth(), grid.height(), stage, upgradeTo,
+                level, unlocks, capacity, roles, structure, rotate);
+    }
 
-    /**
-     * The block to place at a cell, or {@code null} for a hole (a character with no palette entry, or
-     * a palette entry naming a block that is not registered in this launch).
-     *
-     * @param x 0..{@link #width}-1, west→east
-     * @param y 0..{@link #height}-1, bottom-up
-     * @param z 0..{@link #depth}-1, north→south
-     */
-    public Block blockAt(int x, int y, int z) {
+    // --- facts ----------------------------------------------------------------
+
+    /** Whether this is one of the Starter Works (builds only from supplied materials while founding). */
+    public boolean starter() {
+        return this.stage == ColonyStage.FOUNDING;
+    }
+
+    /** Whether the blueprint carries a role tag such as {@code "sleep"}, {@code "eat"} or {@code "social"}. */
+    public boolean hasRole(String role) {
+        return this.roles.contains(role);
+    }
+
+    /** Whether the grid has been filled (a structure-backed blueprint before load has none). */
+    public boolean hasGrid() {
+        return this.width > 0 && this.depth > 0 && this.height > 0;
+    }
+
+    // --- the layout -----------------------------------------------------------
+
+    private String paletteText(int x, int y, int z) {
         if (x < 0 || y < 0 || z < 0 || x >= this.width || y >= this.height || z >= this.depth) {
             return null;
         }
         char key = this.layout.get(y * this.depth + z).charAt(x);
-        Identifier blockId = this.palette.get(key);
-        if (blockId == null || !BuiltInRegistries.BLOCK.containsKey(blockId)) {
-            return null;
-        }
-        return BuiltInRegistries.BLOCK.getValue(blockId);
+        return this.palette.get(key);
     }
 
     /**
-     * The cells that actually place a block, in build order: bottom layer first, then north→south,
-     * then west→east. Deterministic, so a saved cursor into this list means the same cell after a
-     * reload as it did before one.
-     *
-     * <p>Offsets are relative to the structure's minimum corner. Recomputed on demand rather than
-     * cached on the record: it is a handful of characters, and a blueprint is only planned once per
-     * structure.
+     * The block at a cell (unrotated), or {@code null} for a hole, a clear cell or an unregistered
+     * block.
      */
+    @Nullable
+    public Block blockAt(int x, int y, int z) {
+        BlockState state = stateAt(x, y, z);
+        return state == null ? null : state.getBlock();
+    }
+
+    /** The block state at a cell (unrotated), or {@code null} for a hole, clear cell or missing block. */
+    @Nullable
+    public BlockState stateAt(int x, int y, int z) {
+        String text = paletteText(x, y, z);
+        if (text == null || isClearText(text)) {
+            return null;
+        }
+        return BlockStateText.resolve(text).orElse(null);
+    }
+
+    /** The block state at a cell, turned by {@code rotation}. */
+    @Nullable
+    public BlockState stateAt(int x, int y, int z, Rotation rotation) {
+        BlockState state = stateAt(x, y, z);
+        return state == null || rotation == Rotation.NONE ? state : state.rotate(rotation);
+    }
+
+    /** Whether a cell is a clear cell (natural blocks there are removed before building). */
+    public boolean isClear(int x, int y, int z) {
+        String text = paletteText(x, y, z);
+        return text != null && isClearText(text);
+    }
+
+    private static boolean isClearText(String text) {
+        BlockStateText.Parts parts = BlockStateText.split(text);
+        if (parts == null) {
+            return false;
+        }
+        String id = parts.blockId();
+        return CLEAR.equals(id) || "air".equals(id);
+    }
+
+    /** Every cell that receives a block, bottom layer first, in unrotated blueprint coordinates. */
     public List<BlockPos> buildOrder() {
         List<BlockPos> cells = new ArrayList<>();
         for (int y = 0; y < this.height; y++) {
             for (int z = 0; z < this.depth; z++) {
                 for (int x = 0; x < this.width; x++) {
-                    if (blockAt(x, y, z) != null) {
+                    if (stateAt(x, y, z) != null) {
                         cells.add(new BlockPos(x, y, z));
                     }
                 }
@@ -275,13 +380,27 @@ public record Blueprint(
         return cells;
     }
 
-    /** How many blocks this blueprint places. Zero means it is inert and the loader drops it. */
+    /** Every clear cell, in unrotated blueprint coordinates. */
+    public List<BlockPos> clearCells() {
+        List<BlockPos> cells = new ArrayList<>();
+        for (int y = 0; y < this.height; y++) {
+            for (int z = 0; z < this.depth; z++) {
+                for (int x = 0; x < this.width; x++) {
+                    if (isClear(x, y, z)) {
+                        cells.add(new BlockPos(x, y, z));
+                    }
+                }
+            }
+        }
+        return cells;
+    }
+
     public int blockCount() {
         int count = 0;
         for (int y = 0; y < this.height; y++) {
             for (int z = 0; z < this.depth; z++) {
                 for (int x = 0; x < this.width; x++) {
-                    if (blockAt(x, y, z) != null) {
+                    if (stateAt(x, y, z) != null) {
                         count++;
                     }
                 }
@@ -290,26 +409,66 @@ public record Blueprint(
         return count;
     }
 
-    /** Every palette entry that names a block this launch does not have. Log-safe ids only. */
+    /** Block ids the palette names that are not registered in this launch. */
     public List<Identifier> missingBlocks() {
         List<Identifier> missing = new ArrayList<>();
-        for (Identifier blockId : this.palette.values()) {
-            if (!BuiltInRegistries.BLOCK.containsKey(blockId) && !missing.contains(blockId)) {
+        for (String text : this.palette.values()) {
+            if (isClearText(text)) {
+                continue;
+            }
+            Identifier blockId = BlockStateText.blockId(text);
+            if (blockId != null && BlockStateText.block(text) == null && !missing.contains(blockId)) {
                 missing.add(blockId);
             }
         }
         return missing;
     }
 
-    /**
-     * The translation key for this blueprint's display name: its own {@code name} field when it has
-     * one, otherwise one derived from the id, so a pack that omits the field still gets something
-     * translatable rather than a raw resource id on screen.
-     */
     public String nameKey() {
         if (!this.name.isBlank()) {
             return this.name;
         }
         return "blueprint." + this.id.getNamespace() + "." + this.id.getPath().replace('/', '.');
+    }
+
+    // --- rotation ---------------------------------------------------------------
+
+    /** Footprint width (X) once turned. */
+    public int width(Rotation rotation) {
+        return quarterTurn(rotation) ? this.depth : this.width;
+    }
+
+    /** Footprint depth (Z) once turned. */
+    public int depth(Rotation rotation) {
+        return quarterTurn(rotation) ? this.width : this.depth;
+    }
+
+    private static boolean quarterTurn(Rotation rotation) {
+        return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
+    }
+
+    /**
+     * Where an unrotated cell lands inside the turned footprint, as an offset from the footprint's
+     * minimum corner. Y is unchanged. Pure; unit-tested.
+     */
+    public static BlockPos rotate(BlockPos cell, int width, int depth, Rotation rotation) {
+        int x = cell.getX();
+        int z = cell.getZ();
+        return switch (rotation) {
+            case CLOCKWISE_90 -> new BlockPos(depth - 1 - z, cell.getY(), x);
+            case CLOCKWISE_180 -> new BlockPos(width - 1 - x, cell.getY(), depth - 1 - z);
+            case COUNTERCLOCKWISE_90 -> new BlockPos(z, cell.getY(), width - 1 - x);
+            default -> cell;
+        };
+    }
+
+    /** {@link #rotate(BlockPos, int, int, Rotation)} for this blueprint's own size. */
+    public BlockPos rotate(BlockPos cell, Rotation rotation) {
+        return rotate(cell, this.width, this.depth, rotation);
+    }
+
+    /** Whether a state is the plain air this format uses for clear cells. */
+    public static boolean isAir(BlockState state) {
+        return state.is(Blocks.AIR);
     }
 }

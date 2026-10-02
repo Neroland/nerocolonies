@@ -329,6 +329,46 @@ def gen_colony_depot() -> Canvas:
     return c
 
 
+def gen_needs_board() -> Canvas:
+    """A notice board: pale pinned slips on a framed panel, green tick strip along the foot."""
+    c = hull_base("needs_board")
+    c.recess(2, 2, 13, 12)
+    c.rect(3, 3, 12, 11, _mix(HULL[3], AMBER, 0.18))
+    for (x0, y0, x1, y1) in ((4, 4, 7, 6), (9, 4, 11, 7), (4, 8, 6, 10), (8, 9, 11, 10)):
+        c.rect(x0, y0, x1, y1, HAB_LIGHT)
+        c.set(x0, y0, AMBER)                 # the pin
+    c.rect(3, 13, 12, 13, deep(GREEN))
+    for x in (4, 7, 10):
+        c.set(x, 13, GREEN)
+    return c
+
+
+def gen_gratitude_cache() -> Canvas:
+    """A gift chest: amber plate, violet ribbon cross, glowing clasp."""
+    c = hull_base("gratitude_cache")
+    c.recess(2, 2, 13, 13)
+    c.rect(3, 3, 12, 12, _mix(HULL[3], AMBER, 0.35))
+    c.rect(7, 3, 8, 12, VIOLET)              # ribbon, vertical
+    c.rect(3, 7, 12, 8, VIOLET)              # ribbon, horizontal
+    c.rect(7, 7, 8, 8, glow(AMBER))          # clasp
+    for (bx, by) in ((3, 3), (12, 3), (3, 12), (12, 12)):
+        c.set(bx, by, AMBER)
+    return c
+
+
+def gen_planning_table() -> Canvas:
+    """A drafting table: cyan grid on a dark slate, one footprint outlined in amber."""
+    c = hull_base("planning_table")
+    c.recess(2, 2, 13, 13)
+    c.rect(3, 3, 12, 12, TROUGH)
+    for i in (5, 8, 11):
+        c.rect(i, 3, i, 12, deep(CYAN))
+        c.rect(3, i, 12, i, deep(CYAN))
+    c.outline(6, 6, 10, 10, AMBER)
+    c.set(8, 8, glow(CYAN))
+    return c
+
+
 def gen_research_station() -> Canvas:
     """A data screen: violet readout rows over a dark panel, with a progress rail."""
     c = hull_base("research_station")
@@ -480,6 +520,36 @@ def _module_casing(name: str, accent: Colour) -> Canvas:
     c.rect(5, 1, 10, 1, deep(accent))                 # keyed edge connector
     c.rect(6, 1, 9, 1, accent)
     c.rect(5, 14, 10, 14, H_DARK)
+    return c
+
+
+def gen_colony_planner() -> Canvas:
+    """A rolled plan: pale sheet with a cyan grid corner and an amber seal."""
+    c = Canvas(SIZE)
+    c.rect(4, 2, 11, 13, HAB_LIGHT)
+    c.outline(4, 2, 11, 13, INK)
+    for y in (5, 8, 11):
+        c.rect(5, y, 10, y, deep(CYAN))
+    for x in (7, 9):
+        c.rect(x, 3, x, 12, deep(CYAN))
+    c.outline(6, 6, 9, 9, AMBER)
+    c.rect(4, 13, 11, 13, HAB_DARK)
+    c.set(10, 3, AMBER)
+    return c
+
+
+def gen_thank_you_note() -> Canvas:
+    """A folded note with a small heart-shaped seal."""
+    c = Canvas(SIZE)
+    c.rect(3, 4, 12, 12, HAB_LIGHT)
+    c.outline(3, 4, 12, 12, INK)
+    for i in range(5):                       # the fold
+        c.set(4 + i, 5 + i, HAB_DARK)
+        c.set(11 - i, 5 + i, HAB_DARK)
+    for (hx, hy) in ((7, 9), (8, 9), (6, 8), (7, 8), (8, 8), (9, 8), (7, 10), (8, 10)):
+        c.set(hx, hy, AMBER)
+    c.set(7, 7, glow(AMBER))
+    c.set(8, 7, glow(AMBER))
     return c
 
 
@@ -659,6 +729,9 @@ BLOCK_MOTIFS = {
     "habitat_pod": gen_habitat_pod,
     "habitat_module": gen_habitat_module,
     "habitat_block": gen_habitat_block,
+    "needs_board": gen_needs_board,
+    "gratitude_cache": gen_gratitude_cache,
+    "planning_table": gen_planning_table,
 }
 
 ITEM_MOTIFS = {
@@ -666,6 +739,8 @@ ITEM_MOTIFS = {
     "efficiency_module": gen_efficiency_module,
     "range_module": gen_range_module,
     "capacity_module": gen_capacity_module,
+    "colony_planner": gen_colony_planner,
+    "thank_you_note": gen_thank_you_note,
 }
 
 ENTITY_MOTIFS = {

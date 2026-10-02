@@ -8,6 +8,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
@@ -76,6 +78,9 @@ public final class HousingScan {
         private double comfortRatio = 1.0D;
         private List<BlockPos> homes = List.of();
 
+        /** Whether at least one full cycle has closed since this state was created. */
+        private boolean committed;
+
         /** Total housing capacity found on the last completed cycle. */
         public int capacity() {
             return this.capacity;
@@ -92,6 +97,31 @@ public final class HousingScan {
         /** Positions of housing blocks found, for home assignment. Bounded and immutable. */
         public List<BlockPos> homes() {
             return this.homes;
+        }
+
+        /**
+         * Whether a full sweep has closed since the beacon loaded. Until it has, {@link #capacity()}
+         * is only the seeded value from the saved colony record and {@link #homes()} is empty, so
+         * nothing may shrink the roster or reassign homes on the strength of it.
+         */
+        public boolean committed() {
+            return this.committed;
+        }
+
+        /**
+         * Seeds the committed capacity from the persisted colony record, so the cycles that run
+         * before the first sweep closes see the colony as it was rather than as empty. Has no effect
+         * once a real sweep has committed.
+         */
+        public void seed(int savedCapacity) {
+            if (!this.committed) {
+                this.capacity = Math.max(0, savedCapacity);
+            }
+        }
+
+        /** Whether the next {@link HousingScan#tick} call will read blocks rather than count down. */
+        public boolean sliceDue() {
+            return this.countdown <= 1;
         }
 
         /** Forces the next tick to begin a fresh cycle (used after a claim radius change). */
@@ -120,7 +150,8 @@ public final class HousingScan {
             state.capacity = 0;
             state.comfortRatio = 1.0D;
             state.homes = List.of();
-            state.countdown = NeroColoniesConfig.HOUSING_SCAN_INTERVAL_TICKS.get();
+            state.committed = true;
+            state.countdown = NeroColoniesConfig.housingScanInterval();
             return true;
         }
 
@@ -152,11 +183,12 @@ public final class HousingScan {
                 ? 1.0D
                 : Math.clamp(state.runningComfort / state.runningCapacity, 0.0D, 1.0D);
         state.homes = List.copyOf(state.runningHomes);
+        state.committed = true;
         state.chunkCursor = 0;
         state.runningCapacity = 0;
         state.runningComfort = 0.0D;
         state.runningHomes.clear();
-        state.countdown = NeroColoniesConfig.HOUSING_SCAN_INTERVAL_TICKS.get();
+        state.countdown = NeroColoniesConfig.housingScanInterval();
         return true;
     }
 
@@ -192,6 +224,9 @@ public final class HousingScan {
                     if (tier == null || !unlocked(colony, tier)) {
                         continue;
                     }
+                    if (isUpperHalf(blockState)) {
+                        continue; // a two-block-tall home is one home, counted at its lower half
+                    }
                     state.runningCapacity += tier.capacity();
                     state.runningComfort += tier.comfort() * tier.capacity();
                     if (state.runningHomes.size() < MAX_HOME_POSITIONS) {
@@ -200,6 +235,12 @@ public final class HousingScan {
                 }
             }
         }
+    }
+
+    /** Whether the state is the upper half of a two-block-tall block (a door-like housing block). */
+    private static boolean isUpperHalf(BlockState blockState) {
+        return blockState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
+                && blockState.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;
     }
 
     /** Whether this colony has researched the tier (tiers with no prerequisite are always on). */

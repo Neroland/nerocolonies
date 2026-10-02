@@ -1,0 +1,13 @@
+{
+  "name": "profession.nerocolonies.guard",
+  "behaviour": "nerocolonies:guard",
+  "tool": "minecraft:iron_sword",
+  "stations": [],
+  "priority": 40,
+  "per_building": 3,
+  "max_per_colony": 8,
+  "xp_per_level": 100,
+  "max_level": 5,
+  "work_radius": 10,
+  "outputs": []
+}

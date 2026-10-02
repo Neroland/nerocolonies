@@ -62,7 +62,7 @@ public final class ColonyCatchUp {
             return colony.withLastTick(now); // catch-up disabled entirely
         }
         long window = Math.min(elapsed, cap);
-        int interval = Math.max(1, NeroColoniesConfig.COLONY_TICK_INTERVAL_TICKS.get());
+        int interval = NeroColoniesConfig.colonyTickInterval();
         int cycles = (int) Math.min(Integer.MAX_VALUE, window / interval);
         if (cycles <= 0) {
             return colony.withLastTick(now);

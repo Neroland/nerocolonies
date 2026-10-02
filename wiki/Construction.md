@@ -1,26 +1,27 @@
 # Autonomous construction
 
-A colony builds itself. You place a beacon, two founders arrive with it, and they get on with putting
-up a habitat — no build orders, no assignment screen, no clicking. Your lever is **supply**: bring the
-materials and the same structure goes up four times faster.
+A colony builds itself. You place a beacon, two founders arrive with it, you supply the four Starter
+Works, and from then on the colony picks its own buildings and puts them up a few blocks at a time —
+no build orders, no assignment screen. Your lever is **supply**: bring the materials and the same
+structure goes up four times faster.
 
-This page covers the founders, the build loop, blueprints as datapack content, and the levers an
-operator has.
+This page covers the founders, the pace of building, supply, the needs list and the levers an
+operator has. *What* a colony builds and *where* is on [Buildings](Buildings.md).
 
-## Founder colonists
+## Founders
 
-Placing a colony beacon puts `founderColonistCount` colonists (default **2**) on the ground next to
-it, immediately — not on the first colony cycle a minute and a half later. They are the seed of the
-whole loop: housing is what lets colonists arrive, and building housing is what colonists do, so
-without founders nothing can ever start.
+Placing a colony beacon puts `founderColonistCount` Nerans (default **2**) on the ground next to
+it, immediately — not on the first colony cycle. They are the seed of the whole loop: housing is what
+lets Nerans arrive, and building housing is what Nerans do, so without founders nothing can ever
+start.
 
 Founders are held on the roster **regardless of housing capacity**. That is a floor, not an
 exemption:
 
 - they still count toward `colonistsPerColony` and the server-wide `maxLoadedColonists`;
 - they get exactly the same life support, food and morale treatment as anybody else — on an airless
-  world the usual curve applies (life support fails → morale decays → work stops → colonists idle),
-  and **no colonist is ever killed or deleted for it**;
+  world the usual curve applies (life support fails → morale decays → work stops → Nerans idle),
+  and **no Neran is ever removed for it**;
 - a colony that drops below its founder count will replace them even while starving or without
   atmosphere. That exemption is deliberate: a colony with nobody left has nothing that can build the
   farm or the oxygen generator that would fix the problem, so gating the bootstrap on food and air
@@ -33,49 +34,53 @@ on its own — the colony waits for you to build the first housing by hand.
 ## The build loop
 
 Every colony cycle (`colonyTickIntervalTicks`, default 100 ticks) a colony with nothing under
-construction picks the highest-priority blueprint it is allowed to build, looks for somewhere to put
-it, and starts. Thereafter it lays `constructionBlocksPerCycle` blocks per cycle (default **2**)
-until the structure is finished, then picks the next one.
+construction chooses what to build next and where, and starts. The order of choice — your
+hand-placed plans, then upgrades, then its own pick — and the rules for a site are on
+[Buildings](Buildings.md#what-gets-built-next). Thereafter it clears the site and lays blocks, bottom
+layer first, until the structure is finished, then chooses again.
 
-Deliberately slow. A colony growing visibly over minutes reads as a colony; one that snaps into
-existence reads as a command block.
+### How fast it builds
+
+```text
+blocks per cycle = constructionBlocksPerCycle          (default 2)
+                 × the growth multiplier               (1.0 for a new colony, towards 3.0 for a large one)
+                 × (1 + 0.5 for each Builder on site)   (at most four Builders count)
+                 × 1.0 if supplied, constructionUnsuppliedFactor if not   (default 0.25)
+```
+
+- The **growth multiplier** follows the colony's population and structure count — see
+  [Progression](Progression.md#the-growth-curve).
+- A **Builder on site** is a Neran with the Builder trade standing within 8 blocks of the spot in
+  front of the building. Four of them triple the rate.
+- Fractions carry over from one cycle to the next, so an unsupplied new colony still places a block
+  every other cycle rather than none.
+- Clearing a natural block out of the way costs the same as placing one.
+
+Deliberately slow at first. A colony growing visibly over minutes reads as a colony; one that snaps
+into existence reads as a command block.
 
 ### Supplied and unsupplied
 
 At the start of every cycle, a build that has not yet been paid for looks for its blueprint's
-**materials in colony storage**. If they are all there they are consumed once and the build runs at
-full rate. If they are not, the colonists fabricate from scrap instead: the same structure, free, at
-`constructionUnsuppliedFactor` of the rate (default **0.25**).
+**materials in colony storage**. If the whole list is there it is taken, once, and the build runs at
+full rate. If it is not, the Nerans fabricate from scrap instead: the same structure, free, at
+`constructionUnsuppliedFactor` of the rate.
 
-Nothing is ever *blocked* on materials. A colony left entirely alone still grows, just slowly — a
-colony that stops dead waiting for iron is a colony you have to babysit.
+From the Settled stage on, nothing is ever *blocked* on materials. A colony left entirely alone still
+grows, just slowly — a colony that stops dead waiting for iron is a colony you have to babysit.
 
-The check runs every cycle, not only when the build starts, so **dropping materials into colony
-storage part way through speeds up the build already under way**. That is the whole player-facing
-lever.
+**The Starter Works are the exception.** While a colony is Founding, its four Starter Works are not
+fabricated from scrap: they wait for your materials. See
+[Progression](Progression.md#the-starter-works).
 
-> Materials go into **colony storage**, which you reach through a Colony Depot inside the claim, or
-> through any pipe or hopper inserting into the beacon. They do **not** go in the beacon's six supply
-> slots — those are the food intake and refuse anything that is not food.
+The check runs every cycle, not only when the build starts, so **putting materials into colony
+storage part way through speeds up the build already under way**.
 
-### Where a colony may build
+> Materials go into **colony storage**, which you reach through a Colony Depot inside the claim,
+> through a Needs Board, or through any pipe or hopper inserting into the beacon. They do **not** go
+> in the beacon's six supply slots — those are the food intake and refuse anything that is not food.
 
-| Rule | Why |
-| --- | --- |
-| Inside the claim only, re-checked per block | A claim can shrink when a `RANGE` module is pulled out |
-| Only into blocks that are *replaceable* — air, grass, snow, water | Your chest, wall or torch is **never** overwritten, and neither is another structure |
-| Loaded chunks only, never loading one | The far edge of a 97-block claim is often not loaded; the search skips it rather than paying to load it |
-| Flat ground: the footprint's highest and lowest surface may differ by at most one | Colonies level nothing and dig nothing |
-| The base must sit within 4 blocks below and the top within 12 above the beacon | Keeps a colony from terracing up a cliff, and keeps what it builds inside the band the housing sweep reads |
-| The bottom layer must have solid ground under it | No floating structures |
-
-Candidate sites are walked in **rings out from the beacon**, so a colony grows outward from its
-centre rather than filling the claim from one corner. Eight candidates are examined per cycle; a
-colony that is completely boxed in gives up for ten cycles before looking again, so a hemmed-in
-colony costs nothing.
-
-If a player builds something on a chosen site part way through, that cell is simply skipped — the
-player wins, always.
+A blueprint with no materials list always builds at full speed.
 
 ### When it stops
 
@@ -85,33 +90,31 @@ Construction pauses (never cancels, never demolishes) when:
 - morale has fallen below `moraleWorkStopThreshold` and work has stopped;
 - life support is `FAILED`;
 - `constructionRequiresColonist` is set (the default) and the colony's roster is empty;
-- the colony has reached `maxAutoStructures`, or that blueprint's own `max`.
+- the colony is Founding and the current Starter Work has not been supplied;
+- for the colony's own picks only: it has reached its structure cap, or nothing is eligible, or no
+  site fits.
+
+The beacon's Colony tab names the reason. The lines are listed on
+[Progression](Progression.md#colony-tab-why-nothing-is-being-built).
 
 **Nothing NeroColonies built is ever demolished automatically.** A half-built structure whose
-blueprint was removed from the datapack is abandoned in place, not torn down.
-
-### Housing pressure
-
-Housing blueprints are only eligible when the colony is actually short of bunks — fewer than two free
-places. That is what keeps "autonomous" from turning into "sprawls to the edge of the claim". With
-the shipped content the loop reads:
-
-1. two founders, no housing → build a Habitat Pod;
-2. capacity 2, population 2 → still no headroom → build a second pod;
-3. capacity 4, population 2 → headroom → stop building housing, build a farm plot instead;
-4. population grows to 4 → no headroom again → third pod.
+blueprint was removed from the datapack, or reshaped by a reload, is abandoned in place, not torn
+down.
 
 ### The builder
 
-One colonist the job board did not need this cycle is pointed at the site and walks over to it, so
-you can see where the colony is working. That is **all** it does.
+While something is being built, every Neran with the **Builder** trade is sent to the spot in front
+of the site. If the colony has no Builders, one adult with nothing else to do stands there instead,
+so you can still see where the colony is working.
 
-Block placement is colony-tick logic and never consults the builder: `constructionRequiresColonist`
-asks whether the colony *has* anybody, never whether anybody arrived. A colonist that cannot path to
-a site — a wall, a cliff, deep water, night time — must not be able to stall a colony's growth.
+**Nobody is ever built into a wall.** A block is never placed into a cell where any living thing is
+standing: Nerans in the way are moved to the spot in front of the site, and anyone else — a player,
+an animal — is simply waited for. Arrivals never appear inside the structure being built.
 
-Being a builder is a **role, not a personality**. It uses the `jobId` field a colonist already has,
-it is reassigned from scratch every cycle, and any colonist will do.
+Block placement is colony-cycle logic and does not wait for anybody to arrive.
+`constructionRequiresColonist` asks whether the colony *has* anybody, never whether anybody reached
+the site, so a Neran that cannot find a path cannot stall a colony's growth. Builders who do arrive
+make it faster; that is all.
 
 ### While nobody is there
 
@@ -121,112 +124,96 @@ chunk loads would be a visible stutter and a lighting-update storm at exactly th
 
 The credit is capped at four cycles' worth, so a returning player sees the build resume briskly for a
 few cycles and then settle to the normal rate. A colony never *starts* a new structure while nobody
-is there.
+is there, and an unsupplied Starter Work gains nothing.
+
+## The needs list
+
+A colony keeps a list of what it is short of. The list is never stored: it is worked out afresh each
+time anyone looks, from three things.
+
+| Source | What appears |
+| --- | --- |
+| **Construction** | The unpaid materials of the building under way — or, while Founding with nothing started, of the next Starter Work |
+| **Food** | The shortfall when the food stock is below ten cycles of what the colony eats |
+| **Tools** | One line per kind of tool that tradespeople are missing and colony storage cannot cover |
+
+A need you have prioritised comes first; after that, Starter Works materials, other construction
+materials, food, then tools.
+
+### Two estimates
+
+Every line says how much the colony has against how much it wants, and how long it will take.
+
+- **Alone** is how long the colony's own tradespeople will take to gather the rest at their present
+  rate. If no trade gathers that item the line reads `needs your help` instead. Planks, doors and
+  lanterns are in that group: Foresters bring in logs, not planks.
+- **With help** is no time at all. Hand it over and the need is met.
+
+The beacon's Needs tab adds an estimate for the whole building: `Build: alone ~40 min, helped
+~6 min`, or `Build: needs your help, then ~6 min` for a Starter Work. "Alone" is the quicker of
+gathering everything and then building at full speed, or fabricating from scrap. The estimates do not
+count Builders on site, so a staffed site finishes sooner than it says.
+
+### Where to see it
+
+- **The beacon's Needs tab** shows the colony's stage, the next milestone, up to three needs at a
+  time with a pager, and the build estimate.
+- **A Needs Board** (`nerocolonies:needs_board`) prints the list in chat when a member uses it
+  empty-handed, up to eight lines.
+- **A companion app** — see [Link module](Link-Module.md).
+
+The Needs Board is crafted from three paper, four wooden slabs and an iron ingot. The colony also
+builds one for itself in its Needs Board Pavilion.
+
+### Contributing
+
+Use a Needs Board while holding something on the list. The colony takes as much of the stack as it
+still needs, straight into colony storage, and thanks you; if it does not need the item it says so
+and takes nothing.
+
+The board stores nothing itself. A contribution is exactly the same as putting the item in a Colony
+Depot, with the convenience that it never takes more than is wanted. Food is the one need the board
+does not take: food goes in the beacon's supply slots.
+
+### Prioritising a need
+
+The owner or a Chief can put one need first. The trades that gather that item then work **half as
+fast again** until the priority is cleared or moved.
+
+- At the beacon: click the need on the Needs tab; click it again to clear it.
+- By command: `/nerocolonies colony need prioritise <colony> <item>`, or with no item to clear it.
+- From a companion app: the `prioritise_need` action.
+
+Only a single item can be prioritised. A line that stands for a tag — any logs, any planks, food —
+cannot be clicked at the beacon; with the command you can name a specific item such as
+`minecraft:oak_log` instead, whether or not it is on the list today. There is one priority per
+colony.
 
 ## Watching it happen
 
 The beacon's **Colony** tab shows one line:
 
 - `Building Habitat Pod - 34%` — supplied, running at full rate;
-- `Fabricating Habitat Pod - 34%` — unsupplied, running at `constructionUnsuppliedFactor`. Put the
-  materials in colony storage;
-- `Not building - 3 structure(s) up` — idle.
+- `Fabricating Habitat Pod - 34% (no materials)` — unsupplied, running at
+  `constructionUnsuppliedFactor`. Put the materials in colony storage;
+- `Not building - 3 structure(s) up`, followed by the reason.
 
 A completed structure also:
 
 - publishes Core's `nerocolonies:structures` threshold crossing, scoped to the **colony id** and
-  carrying the new total, so a NeroQuests objective can key off "this colony has built its third
-  structure" with no coupling to this mod;
-- pushes a `construction` event to the colony owner's companion sessions
-  ([Link module](Link-Module.md));
-- triggers an immediate housing rescan, so a finished habitat raises capacity within seconds rather
-  than at the next scheduled sweep.
+  carrying the new total, so a quest objective in another mod can key off "this colony has built its
+  third structure" with no coupling to this one;
+- pushes a `construction` event to companion sessions ([Link module](Link-Module.md));
+- triggers an immediate housing rescan, so a finished home raises capacity within seconds rather
+  than at the next scheduled sweep;
+- may advance the colony's stage on the same cycle.
 
 ## Blueprints
 
-Blueprints are plain datapack JSON at
-`data/<namespace>/nerocolonies/blueprints/<path>.json`. The id is the file's namespace plus its path
-without the extension, so a pack overrides a shipped blueprint by shipping the same id.
-
-```json
-{
-  "name": "blueprint.nerocolonies.habitat_pod",
-  "category": "housing",
-  "priority": 10,
-  "max": 6,
-  "research": "nerocolonies:habitation/shelter",
-  "palette": {
-    "#": "minecraft:smooth_stone",
-    "G": "minecraft:glass",
-    "H": "nerocolonies:habitat_pod"
-  },
-  "layers": [
-    [ "###", "###", "###" ],
-    [ "###", "#H#", "#.#" ],
-    [ "###", "#G#", "#.#" ],
-    [ "###", "###", "###" ]
-  ],
-  "materials": [
-    { "item": "minecraft:smooth_stone", "count": 16 },
-    { "item": "minecraft:iron_ingot", "count": 6 },
-    { "item": "minecraft:glass", "count": 2 }
-  ]
-}
-```
-
-| Field | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `name` | string | derived from the id | Translation key for the display name |
-| `category` | string | `other` | `housing`, `farm`, `industry`, `storage`, `life_support`, `other`. Only `housing` behaves differently (the pressure rule). An unrecognised value becomes `other` |
-| `priority` | int | `100` | Lower is built first |
-| `max` | int | `4` | How many of this structure one colony may build. `0` disables the blueprint |
-| `research` | id | — | Optional research node the colony must have unlocked |
-| `palette` | map | *required* | One character → one block id |
-| `layers` | array | *required* | The layout, see below |
-| `materials` | array | `[]` | `ItemTarget` list — `{"item": …}` or `{"tag": …}` plus `count`. An empty list always builds at full speed |
-
-### The layout
-
-`layers` is a list of horizontal slices **bottom-up**. Each slice is a list of rows running
-**north → south** (+Z); each row is a string running **west → east** (+X).
-
-A character with **no palette entry is a hole**: nothing is placed and whatever is there is left
-alone. `.` and a space are the conventions used by the shipped content, but any unmapped character
-works.
-
-Rows are padded to the widest row in the blueprint, so a ragged grid is a shape rather than an error.
-Blocks are placed in their **default block state** — a blueprint describes a layout, not block
-states, which is exactly what keeps it hand-authorable. Maximum size is 16 × 16 blocks and 12 layers.
-
-Cells are built bottom layer first, then north → south, then west → east.
-
-### Validation
-
-Bad content is **never fatal**, and the severity split matters:
-
-| Problem | Result |
-| --- | --- |
-| A palette entry naming an unregistered block | *Ignored* — those cells become holes and the rest of the structure still builds. Removing a mod from a pack leaves gaps, not a broken colony |
-| A material naming an item that is not installed | *Ignored* — the blueprint simply always builds unsupplied |
-| `research` naming a node that did not load | *Ignored* — the blueprint stays and never becomes eligible, which is more use in the report than deleting it |
-| Every cell is a hole | *Dropped* — it can never do anything |
-| No layers, an empty grid, or bigger than 16 × 16 × 12 | *Dropped* |
-
-`/nerocolonies reload-check` lists everything the last load complained about, and reports the
-blueprint count alongside jobs, research, housing and exports.
-
-## Shipped blueprints
-
-| Id | Category | Priority | Max | Puts up |
-| --- | --- | --- | --- | --- |
-| `nerocolonies:habitat_pod` | housing | 10 | 6 | A 3 × 3 stone pod around a Habitat Pod (capacity 2) |
-| `nerocolonies:farm_plot` | farm | 20 | 2 | A 5 × 5 farmland patch with a water source and a Farm Station |
-| `nerocolonies:depot_shed` | storage | 30 | 2 | A 3 × 3 shed around a Colony Depot |
-| `nerocolonies:oxygen_hut` | life_support | 40 | 1 | A glazed 3 × 3 hut around an Oxygen Generator |
-| `nerocolonies:research_cabin` | industry | 50 | 1 | A 4 × 4 cabin around a Research Station |
-
-None of them require research, so a brand-new colony can work through the whole list. The Oxygen Hut
-is useless on a breathable world and harmless there — it simply idles.
+Every building is plain datapack JSON at
+`data/<namespace>/nerocolonies/blueprints/<path>.json`. The format, its limits and how bad content is
+handled are on [Content format](Content-Format.md#blueprints). The buildings that ship with the mod
+are listed on [Buildings](Buildings.md#shipped-buildings).
 
 The stations and machines a colony builds for itself still need **power and inputs** from you. A
 colony can put up a refinery; it cannot run a cable to it.
@@ -235,25 +222,29 @@ colony can put up a refinery; it cannot run a cable to it.
 
 | Key | Default | Effect |
 | --- | --- | --- |
-| `founderColonistCount` | 2 | Colonists that arrive with a new beacon. `0` disables the bootstrap |
+| `founderColonistCount` | 2 | Nerans that arrive with a new beacon. `0` disables the bootstrap |
 | `constructionEnabled` | true | Master switch |
-| `constructionBlocksPerCycle` | 2 | Blocks placed per colony cycle at full rate |
+| `constructionBlocksPerCycle` | 2 | Blocks placed per colony cycle before the multipliers |
 | `constructionUnsuppliedFactor` | 0.25 | Rate multiplier without materials. `0` means an unsupplied colony never builds |
 | `constructionRequiresColonist` | true | Whether an empty roster stops building |
-| `maxAutoStructures` | 12 | Total structures one colony may build for itself |
+| `growthMaxBuildMultiplier` | 3.0 | Ceiling of the growth multiplier |
+| `maxAutoStructures` | 12 | Structures a Settled colony builds unprompted; multiplied at later stages |
 
 See [Config](Config.md) for the full table.
 
 ## Privacy
 
-Nothing on this page involves player data. A build plan is keyed by a **colony id** — a place, not a
-person — and holds blueprint ids, a block position and counters. The threshold channel is
-colony-scoped by contract; the companion event is owner-scoped and names no other player. See
-[Data storage](Data-Storage.md).
+Nothing on this page involves player data. A build record is keyed by a **colony id** — a place, not
+a person — and holds blueprint ids, block positions and counters. A hand-placed plan does not record
+who placed it. The threshold channel is colony-scoped by contract; the companion event names no
+player. See [Data storage](Data-Storage.md).
 
 ## See also
 
+- [Buildings](Buildings.md) — what is built, where, the Colony Planner and every shipped building
+- [Progression](Progression.md) — stages, the Starter Works and the growth curve
+- [Nerans and professions](Nerans-and-Professions.md) — the Builder trade, and what trades gather
 - [Colony basics](Colony-Basics.md) — founding, housing, population, the colony cycle
-- [Content format](Content-Format.md) — the other datapack schemas
+- [Content format](Content-Format.md) — the blueprint schema
 - [Config](Config.md) — every key named here
 - [Link module](Link-Module.md) — what a companion app sees

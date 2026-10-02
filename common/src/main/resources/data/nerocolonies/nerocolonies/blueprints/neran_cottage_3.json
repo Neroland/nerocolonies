@@ -1,0 +1,143 @@
+{
+  "name": "blueprint.nerocolonies.neran_cottage_3",
+  "category": "housing",
+  "stage": "settled",
+  "priority": 12,
+  "max": 8,
+  "level": 3,
+  "roles": ["sleep"],
+  "capacity": {"housing": 6, "storage": 0, "jobs": 0},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "H": "nerocolonies:habitat_pod",
+    "U": "minecraft:cut_copper",
+    "_": "minecraft:air",
+    "a": "minecraft:birch_planks",
+    "b": "minecraft:dark_oak_planks",
+    "c": "minecraft:dark_oak_stairs[facing=north,half=bottom]",
+    "d": "minecraft:dark_oak_stairs[facing=south,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:flower_pot",
+    "i": "minecraft:lightning_rod",
+    "j": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "k": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "l": "minecraft:spruce_log[axis=y]",
+    "m": "minecraft:spruce_slab[type=top]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CUUUUUUUC",
+      "CUpppppUC",
+      "CUpppppUC",
+      "CUpppppUC",
+      "CUpppppUC",
+      "CUpppppUC",
+      "CUUUUUUUC"
+    ],
+    [
+      ".lUUUUUl.",
+      ".UH___HU.",
+      ".U_____U.",
+      ".U_____U.",
+      ".UH___*U.",
+      ".Uh___hU.",
+      ".lUUjUUl."
+    ],
+    [
+      ".lagagal.",
+      ".a_____a.",
+      ".g_____g.",
+      ".a_____a.",
+      ".g_____g.",
+      ".a_____a.",
+      ".lgakagl."
+    ],
+    [
+      ".laaaaal.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".laaaaal."
+    ],
+    [
+      ".laaaaal.",
+      ".a_____a.",
+      ".ammmmma.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".laaaaal."
+    ],
+    [
+      ".laaaaal.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".laaaaal."
+    ],
+    [
+      "ddddddddd",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      "ccccccccc"
+    ],
+    [
+      ".........",
+      "ddddddddd",
+      ".a_____a.",
+      ".a_____a.",
+      ".a_____a.",
+      "ccccccccc",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      "ddddddddd",
+      ".a_____a.",
+      "ccccccccc",
+      ".........",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      ".........",
+      "bbbbbbbbb",
+      ".........",
+      ".........",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      ".........",
+      "....i....",
+      ".........",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 82},
+    {"tag": "c:ingots/copper", "count": 20},
+    {"tag": "minecraft:logs", "count": 9},
+    {"item": "minecraft:cobblestone", "count": 7},
+    {"item": "minecraft:glass", "count": 4},
+    {"item": "nerocolonies:habitat_pod", "count": 3},
+    {"item": "minecraft:flower_pot", "count": 2},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "minecraft:lightning_rod", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

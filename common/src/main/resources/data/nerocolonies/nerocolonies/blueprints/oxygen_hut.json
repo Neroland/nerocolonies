@@ -1,23 +1,70 @@
 {
   "name": "blueprint.nerocolonies.oxygen_hut",
   "category": "life_support",
+  "stage": "settled",
   "priority": 40,
   "max": 1,
+  "level": 1,
+  "capacity": {"housing": 0, "storage": 0, "jobs": 0},
   "palette": {
-    "#": "minecraft:smooth_stone",
     "G": "minecraft:glass",
-    "O": "nerocolonies:oxygen_generator"
+    "S": "minecraft:smooth_stone",
+    "U": "minecraft:cut_copper",
+    "_": "minecraft:air",
+    "a": "minecraft:birch_door[facing=south,half=lower,hinge=left,open=false]",
+    "b": "minecraft:birch_door[facing=south,half=upper,hinge=left,open=false]",
+    "c": "nerocolonies:oxygen_generator"
   },
   "layers": [
-    [ "###", "###", "###" ],
-    [ "#G#", "#O#", "#.#" ],
-    [ "#G#", "#G#", "#.#" ],
-    [ "###", "###", "###" ]
+    [
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS",
+      "SSSSS"
+    ],
+    [
+      "SSSSS",
+      "SU_US",
+      "S_c_S",
+      "S___S",
+      "SSaSS"
+    ],
+    [
+      "SGSGS",
+      "S___S",
+      "G___G",
+      "S___S",
+      "SSbSS"
+    ],
+    [
+      "SSSSS",
+      "S___S",
+      "S___S",
+      "S___S",
+      "SSSSS"
+    ],
+    [
+      "SSSSS",
+      "SGGGS",
+      "SGGGS",
+      "SGGGS",
+      "SSSSS"
+    ],
+    [
+      ".....",
+      ".....",
+      "..G..",
+      ".....",
+      "....."
+    ]
   ],
   "materials": [
-    { "item": "minecraft:smooth_stone", "count": 14 },
-    { "item": "minecraft:iron_ingot", "count": 12 },
-    { "item": "minecraft:glass", "count": 4 },
-    { "item": "minecraft:redstone", "count": 4 }
-  ]
+    {"item": "minecraft:smooth_stone", "count": 38},
+    {"item": "minecraft:glass", "count": 7},
+    {"tag": "c:ingots/copper", "count": 1},
+    {"item": "minecraft:birch_door", "count": 1},
+    {"item": "nerocolonies:oxygen_generator", "count": 1}
+  ],
+  "rotate": true
 }

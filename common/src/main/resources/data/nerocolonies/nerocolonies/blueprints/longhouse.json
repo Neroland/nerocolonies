@@ -1,0 +1,120 @@
+{
+  "name": "blueprint.nerocolonies.longhouse",
+  "category": "housing",
+  "stage": "growing",
+  "priority": 13,
+  "max": 4,
+  "level": 1,
+  "roles": ["sleep"],
+  "capacity": {"housing": 8, "storage": 0, "jobs": 0},
+  "research": "nerocolonies:habitation/shelter",
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "H": "nerocolonies:habitat_pod",
+    "_": "minecraft:air",
+    "a": "minecraft:crafting_table",
+    "b": "minecraft:dark_oak_planks",
+    "c": "minecraft:dark_oak_stairs[facing=north,half=bottom]",
+    "d": "minecraft:dark_oak_stairs[facing=south,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "i": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "j": "minecraft:spruce_log[axis=y]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCCCCCCCCCC",
+      "CCpppppppppppppCC",
+      "CCpppppppppppppCC",
+      "CCpppppppppppppCC",
+      "CCpppppppppppppCC",
+      "CCpppppppppppppCC",
+      "CCCCCCCCCCCCCCCCC"
+    ],
+    [
+      ".jCCCjCCCjCCCjCj.",
+      ".CH___H_a_H___HC.",
+      ".C_____________C.",
+      ".C__*_______*__C.",
+      ".C_____________C.",
+      ".C_____________C.",
+      ".jCCCjCChCCjCCCj."
+    ],
+    [
+      ".jpgpjpgpjpgpjpj.",
+      ".p_____________p.",
+      ".g_____________g.",
+      ".p_____________p.",
+      ".g_____________g.",
+      ".p_____________p.",
+      ".jpppjgpipgjpppj."
+    ],
+    [
+      ".jpppjpppjpppjpj.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".jpppjpppppjpppj."
+    ],
+    [
+      ".jpppjpppjpppjpj.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".jpppjpppppjpppj."
+    ],
+    [
+      "ddddddddddddddddd",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      "ccccccccccccccccc"
+    ],
+    [
+      ".................",
+      "ddddddddddddddddd",
+      ".p_____________p.",
+      ".p_____________p.",
+      ".p_____________p.",
+      "ccccccccccccccccc",
+      "................."
+    ],
+    [
+      ".................",
+      ".................",
+      "ddddddddddddddddd",
+      ".p_____________p.",
+      "ccccccccccccccccc",
+      ".................",
+      "................."
+    ],
+    [
+      ".................",
+      ".................",
+      ".................",
+      "bbbbbbbbbbbbbbbbb",
+      ".................",
+      ".................",
+      "................."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 129},
+    {"item": "minecraft:cobblestone", "count": 38},
+    {"tag": "minecraft:logs", "count": 17},
+    {"item": "minecraft:glass", "count": 5},
+    {"item": "nerocolonies:habitat_pod", "count": 4},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:crafting_table", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

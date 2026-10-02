@@ -1,0 +1,12 @@
+{
+  "name": "profession.nerocolonies.medic",
+  "behaviour": "nerocolonies:medic",
+  "stations": [],
+  "priority": 60,
+  "per_building": 2,
+  "max_per_colony": 8,
+  "xp_per_level": 100,
+  "max_level": 5,
+  "work_radius": 10,
+  "outputs": []
+}

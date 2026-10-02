@@ -1,0 +1,122 @@
+{
+  "name": "blueprint.nerocolonies.barracks",
+  "category": "defence",
+  "stage": "growing",
+  "priority": 50,
+  "max": 2,
+  "level": 1,
+  "unlocks": ["nerocolonies:guard"],
+  "roles": ["sleep", "guard_post"],
+  "capacity": {"housing": 4, "storage": 0, "jobs": 3},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "H": "nerocolonies:habitat_pod",
+    "_": "minecraft:air",
+    "a": "minecraft:crafting_table",
+    "b": "minecraft:iron_bars",
+    "c": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "d": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "e": "minecraft:spruce_fence",
+    "h": "minecraft:spruce_log[axis=y]",
+    "i": "minecraft:spruce_stairs[facing=north,half=bottom]",
+    "j": "minecraft:spruce_stairs[facing=south,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCCCCCC",
+      "CCpppppppppCC",
+      "CCpppppppppCC",
+      "CCpppppppppCC",
+      "CCpppppppppCC",
+      "CCpppppppppCC",
+      "CCCCCCCCCCCCC"
+    ],
+    [
+      ".hCCCCCCCCCh.",
+      ".CH_eeaee_HC.",
+      ".C_________C.",
+      ".C_________C.",
+      ".C*_______*C.",
+      ".C_________C.",
+      ".hCCCCcCCCCh."
+    ],
+    [
+      ".h#b#b#b#b#h.",
+      ".#_________#.",
+      ".b_________b.",
+      ".#_________#.",
+      ".b_________b.",
+      ".#_________#.",
+      ".h##b#d#b##h."
+    ],
+    [
+      ".h#########h.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".h#########h."
+    ],
+    [
+      ".h#########h.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".h#########h."
+    ],
+    [
+      "jjjjjjjjjjjjj",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      "iiiiiiiiiiiii"
+    ],
+    [
+      ".............",
+      "jjjjjjjjjjjjj",
+      ".#_________#.",
+      ".#_________#.",
+      ".#_________#.",
+      "iiiiiiiiiiiii",
+      "............."
+    ],
+    [
+      ".............",
+      ".............",
+      "jjjjjjjjjjjjj",
+      ".#_________#.",
+      "iiiiiiiiiiiii",
+      ".............",
+      "............."
+    ],
+    [
+      ".............",
+      ".............",
+      ".............",
+      "ppppppppppppp",
+      ".............",
+      ".............",
+      "............."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 63},
+    {"item": "minecraft:stone_bricks", "count": 41},
+    {"item": "minecraft:cobblestone", "count": 33},
+    {"tag": "minecraft:logs", "count": 8},
+    {"tag": "c:ingots/iron", "count": 5},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "nerocolonies:habitat_pod", "count": 2},
+    {"item": "minecraft:crafting_table", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

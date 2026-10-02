@@ -1,0 +1,102 @@
+{
+  "name": "blueprint.nerocolonies.watch_post",
+  "category": "defence",
+  "stage": "settled",
+  "priority": 50,
+  "max": 2,
+  "level": 1,
+  "unlocks": ["nerocolonies:guard"],
+  "roles": ["guard_post"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 1},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "^": "minecraft:lantern[hanging=true]",
+    "_": "minecraft:air",
+    "a": "minecraft:ladder[facing=south]",
+    "b": "minecraft:spruce_log[axis=y]",
+    "c": "minecraft:spruce_slab[type=bottom]",
+    "e": "minecraft:spruce_fence",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCC",
+      "CCCCC",
+      "CCCCC",
+      "CCCCC",
+      "CCCCC"
+    ],
+    [
+      "bpppb",
+      "._a_.",
+      ".___.",
+      ".*__.",
+      "b___b"
+    ],
+    [
+      "bpppb",
+      "._a_.",
+      ".___.",
+      ".___.",
+      "b___b"
+    ],
+    [
+      "bpppb",
+      "._a_.",
+      ".___.",
+      ".___.",
+      "b___b"
+    ],
+    [
+      "bpppb",
+      "._a_.",
+      ".___.",
+      ".___.",
+      "b___b"
+    ],
+    [
+      "bpppb",
+      "._a_.",
+      ".___.",
+      ".___.",
+      "b___b"
+    ],
+    [
+      "ppppp",
+      "ppapp",
+      "ppppp",
+      "ppppp",
+      "ppppp"
+    ],
+    [
+      "eeeee",
+      "e___e",
+      "e___e",
+      "e___e",
+      "eeeee"
+    ],
+    [
+      "e...e",
+      ".___.",
+      "._^_.",
+      ".___.",
+      "e...e"
+    ],
+    [
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc",
+      "ccccc"
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 38},
+    {"item": "minecraft:cobblestone", "count": 12},
+    {"tag": "minecraft:logs", "count": 9},
+    {"item": "minecraft:ladder", "count": 3},
+    {"item": "minecraft:lantern", "count": 2}
+  ],
+  "rotate": true
+}

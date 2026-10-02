@@ -38,6 +38,7 @@ import za.co.neroland.nerocolonies.block.entity.ColonyBeaconBlockEntity;
 import za.co.neroland.nerocolonies.colony.AccessLog;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
 import za.co.neroland.nerocolonies.colony.Construction;
@@ -116,16 +117,14 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         Colony colony = beacon.colony();
-        if (colony != null && !ColonyClaims.canAccess(serverPlayer, colony)) {
-            serverPlayer.sendSystemMessage(
-                    Component.translatable("message.nerocolonies.claim.no_access"));
+        if (colony != null && !ColonyPermissions.check(serverPlayer, colony, ColonyPermissions.Action.INTERACT)) {
             return InteractionResult.SUCCESS;
         }
         if (colony != null && level instanceof ServerLevel serverLevel) {
             ColonyState.get(serverLevel.getServer())
                     .log(colony.colonyId(), serverPlayer.getUUID(), AccessLog.Action.OPEN);
         }
-        // The Trade tab and the access editor draw synced state that does not fit through a menu's
+        // The Needs, Roles and Trade tabs draw synced state that does not fit through a menu's
         // 16-bit data slots, so the snapshot goes out before the menu opens.
         ColonySync.open(serverPlayer, colony, pos);
         MenuOpener.open(serverPlayer, beacon);
@@ -151,7 +150,7 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
             return;
         }
         ColonyState colonies = ColonyState.get(serverLevel.getServer());
-        Colony colony = Colony.found(UUID.randomUUID(), colonyName(player), serverLevel.dimension(), pos,
+        Colony colony = Colony.found(UUID.randomUUID(), colonies.nextNeutralName(), serverLevel.dimension(), pos,
                 NeroColoniesConfig.CLAIM_RADIUS.get(), owner, serverLevel.getGameTime());
         colonies.put(colony);
         colonies.log(colony.colonyId(), owner, AccessLog.Action.FOUND);
@@ -193,16 +192,6 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
         player.sendSystemMessage(reason);
     }
 
-    /**
-     * The default name of a newly founded colony. It uses the founder's display name, which they
-     * chose and which is already visible to every player on the server — and it is sanitised and
-     * length-capped by {@link Colony}'s constructor like any other player-supplied string. Renaming
-     * is a player-level command (Stage 10).
-     */
-    private static String colonyName(ServerPlayer player) {
-        return player.getName().getString() + "'s Colony";
-    }
-
     // --- dissolving ---------------------------------------------------------
 
     @Override
@@ -227,6 +216,8 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
                 // would duplicate them, because the store still holds the same stacks. Dropping and
                 // forgetting is one operation for exactly that reason.
                 ColonyStores.dropAndForget(level, pos, colony.colonyId());
+                // The Gratitude Cache's gifts drop too, for the same reason.
+                za.co.neroland.nerocolonies.colony.GratitudeCache.dropAll(serverLevel, pos, colony.colonyId());
                 // The build record goes with the colony too. What it already put up stays standing:
                 // NeroColonies never demolishes anything it built.
                 Construction.forget(serverLevel.getServer(), colony.colonyId());

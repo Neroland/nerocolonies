@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "nerocolonies:block/needs_board"
+    }
+  }
+}

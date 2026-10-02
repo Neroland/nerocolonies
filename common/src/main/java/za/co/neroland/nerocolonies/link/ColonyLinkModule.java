@@ -22,21 +22,24 @@ import za.co.neroland.nerocolonies.platform.Services;
  *
  * <ul>
  *   <li><b>Read</b> — {@link ColonyLinkSnapshots}, serving the {@code colonies}, {@code colonists},
- *       {@code jobs}, {@code research} and {@code exports} sections;</li>
- *   <li><b>Write</b> — {@link ColonyLinkActions}, accepting {@code toggle_export} and
- *       {@code acknowledge_alert};</li>
- *   <li><b>Live</b> — {@link ColonyLinkEvents}, publishing the four owner-scoped colony events and
- *       one broadcast onto Core's shared event bus, and raising the two alerts this mod has any
+ *       {@code jobs}, {@code research} and {@code exports} sections, and — since schema version 2 —
+ *       {@code summary}, {@code needs}, {@code buildings}, {@code professions}, {@code roles} and
+ *       {@code cache};</li>
+ *   <li><b>Write</b> — {@link ColonyLinkActions}, accepting {@code toggle_export},
+ *       {@code acknowledge_alert}, {@code prioritise_need} and {@code toggle_cache_sharing};</li>
+ *   <li><b>Live</b> — {@link ColonyLinkEvents}, publishing the member-scoped colony events and one
+ *       broadcast onto Core's shared event bus, and raising the handful of alerts this mod has any
  *       business raising.</li>
  * </ul>
  *
  * <h2>Privacy (POPIA/GDPR)</h2>
  *
  * <p><b>Own colonies only.</b> Every snapshot section is scoped to the colonies the requesting
- * {@code playerId} owns or is on the access list of, before anything leaves this mod. No other
+ * {@code playerId} owns or is an Ally or Chief of, before anything leaves this mod. No other
  * player's colonies, and — crucially — <b>no membership at all</b>: a section reports how many
  * members a colony has, never who they are, for the same reason the beacon screen does not (a client
- * told who is on a colony's access list has been told where those people play).
+ * told who is on a colony's access list has been told where those people play). The only role ever
+ * spelled out is the requester's own. The gallery's sandbox colony appears nowhere.
  *
  * <p><b>Coordinates.</b> A colony's beacon position is in the {@code colonies} section, because it is
  * the one thing a companion app needs to say "which of your bases is this" and it is the requesting
@@ -52,8 +55,9 @@ import za.co.neroland.nerocolonies.platform.Services;
  * {@code colony/ColonyState}, so a player erased through Core's {@code PlayerDataErasure} hook
  * immediately reads as belonging to nothing. See {@code PRIVACY.md} and {@code wiki/Link-Module.md}.
  *
- * <p><b>Schema version 1.</b> Bump {@link #SCHEMA_VERSION} whenever the shape of a snapshot section
- * changes, so a companion client can tell what it is parsing.
+ * <p><b>Schema version 2.</b> Bump {@link #SCHEMA_VERSION} whenever the shape of a snapshot section
+ * changes, so a companion client can tell what it is parsing. Version 2 <em>added</em> six sections
+ * and two actions and changed none of the version 1 sections, so a version 1 client keeps working.
  */
 public final class ColonyLinkModule {
 
@@ -61,7 +65,7 @@ public final class ColonyLinkModule {
     public static final String MODULE_ID = NeroColoniesCommon.MOD_ID;
 
     /** The snapshot schema revision. Bump on any change to a section's shape. */
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 
     /** Section: the colonies the requesting player owns or belongs to, with their state. */
     public static final String SECTION_COLONIES = "colonies";
@@ -78,26 +82,50 @@ public final class ColonyLinkModule {
     /** Section: the export buffer's fill, its worth, and the colony's unlocked manifest. */
     public static final String SECTION_EXPORTS = "exports";
 
+    /** Section (schema 2): stage, population, food, morale and needs at a glance, per colony. */
+    public static final String SECTION_SUMMARY = "summary";
+
+    /** Section (schema 2): what each colony is short of, why, and how long until it has it. */
+    public static final String SECTION_NEEDS = "needs";
+
+    /** Section (schema 2): finished, under-way and planned buildings. By blueprint, never position. */
+    public static final String SECTION_BUILDINGS = "buildings";
+
+    /** Section (schema 2): head-count against places, per trade. Counts, never Nerans. */
+    public static final String SECTION_PROFESSIONS = "professions";
+
+    /** Section (schema 2): your own role, and how many allies, chiefs and enemies. Counts only. */
+    public static final String SECTION_ROLES = "roles";
+
+    /** Section (schema 2): how full the Gratitude Cache is. Never what is in it. */
+    public static final String SECTION_CACHE = "cache";
+
     /** Action: route a job's output to the export buffer, or back to colony storage. */
     public static final String ACTION_TOGGLE_EXPORT = "toggle_export";
 
     /** Action: acknowledge one of your own NeroColonies alerts in Core's alert store. */
     public static final String ACTION_ACKNOWLEDGE_ALERT = "acknowledge_alert";
 
-    /** Topic: one of your colonies' life support changed state. Owner-scoped. */
+    /** Action (schema 2): ask the colony to gather one need first, or clear that. Owner or Chief. */
+    public static final String ACTION_PRIORITISE_NEED = "prioritise_need";
+
+    /** Action (schema 2): share the Gratitude Cache with allies, or stop. Owner only. */
+    public static final String ACTION_TOGGLE_CACHE_SHARING = "toggle_cache_sharing";
+
+    /** Topic: one of your colonies' life support changed state. Member-scoped (owner and access list). */
     public static final String TOPIC_LIFE_SUPPORT = "life_support";
 
-    /** Topic: one of your colonies crossed the work-stop morale threshold. Owner-scoped. */
+    /** Topic: one of your colonies crossed the work-stop morale threshold. Member-scoped (owner and access list). */
     public static final String TOPIC_MORALE = "morale";
 
-    /** Topic: one of your colonies ran out of food, or started eating again. Owner-scoped. */
+    /** Topic: one of your colonies ran out of food, or started eating again. Member-scoped (owner and access list). */
     public static final String TOPIC_FOOD = "food";
 
-    /** Topic: one of your colonies' export buffers filled up, or was drained. Owner-scoped. */
+    /** Topic: one of your colonies' export buffers filled up, or was drained. Member-scoped (owner and access list). */
     public static final String TOPIC_EXPORTS = "exports";
 
     /**
-     * Topic: one of your colonies finished building a structure for itself. Owner-scoped.
+     * Topic: one of your colonies finished building a structure for itself. Member-scoped (owner and access list).
      *
      * <p>A topic and not a section: the snapshot sections describe standing state and adding a field
      * to one would need a {@link #SCHEMA_VERSION} bump on every client. A completion is an event, it
@@ -112,6 +140,27 @@ public final class ColonyLinkModule {
      * else at all.
      */
     public static final String TOPIC_COLONY_STATE = "colony_state";
+
+    /** Topic: a colony reached a new growth stage. Member-scoped. */
+    public static final String TOPIC_STAGE = "stage";
+
+    /** Topic: a Neran was born. Member-scoped; carries the new population, never a name. */
+    public static final String TOPIC_BIRTH = "neran_born";
+
+    /**
+     * Topic: the needs list started, or stopped, holding something the colony cannot get without
+     * help (a Starter Works material, a food shortfall). Member-scoped; carries counts only.
+     */
+    public static final String TOPIC_NEEDS = "needs";
+
+    /** Topic: enemies are inside the claim. Member-scoped; carries a count only, never who. */
+    public static final String TOPIC_ENEMY = "enemy";
+
+    /** Topic: the Gratitude Cache was stocked, or is full. Member-scoped. */
+    public static final String TOPIC_CACHE = "cache";
+
+    /** Topic: the colony's guards engaged a target. Member-scoped; a count, never who. */
+    public static final String TOPIC_GUARDS = "guards";
 
     private ColonyLinkModule() {
     }
@@ -136,8 +185,10 @@ public final class ColonyLinkModule {
             }
             LinkModuleInfo info = new LinkModuleInfo(MODULE_ID, modVersion(), SCHEMA_VERSION,
                     List.of(SECTION_COLONIES, SECTION_COLONISTS, SECTION_JOBS, SECTION_RESEARCH,
-                            SECTION_EXPORTS),
-                    List.of(ACTION_TOGGLE_EXPORT, ACTION_ACKNOWLEDGE_ALERT));
+                            SECTION_EXPORTS, SECTION_SUMMARY, SECTION_NEEDS, SECTION_BUILDINGS,
+                            SECTION_PROFESSIONS, SECTION_ROLES, SECTION_CACHE),
+                    List.of(ACTION_TOGGLE_EXPORT, ACTION_ACKNOWLEDGE_ALERT, ACTION_PRIORITISE_NEED,
+                            ACTION_TOGGLE_CACHE_SHARING));
             // One provider and one handler cover the whole module; Core keys both on the module id.
             NeroLinkRegistry.registerSnapshotProvider(new ColonyLinkSnapshots(), info);
             NeroLinkRegistry.registerActionHandler(new ColonyLinkActions(), info);

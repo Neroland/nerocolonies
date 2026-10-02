@@ -2,31 +2,49 @@
 
 > Part of the Neroland sci-fi Minecraft mod ecosystem, built on **Neroland Core**.
 
-**Status:** 0.1.0 feature-complete and compile-verified across all nine cells; runtime verification is
-the remaining stage. Version `0.0.1-alpha.1`.
+**Status:** version `0.3.0-beta.1`, the first beta. All nine cells build, `ecjCheck` passes and the
+JUnit suite (146 tests) passes. It has not yet been run in a game client, so treat it as a beta.
 
 NeroColonies turns a place into a colony. You plant a **colony beacon**, it claims the ground around
-it, and everything after that belongs to the colony rather than to any one block: one shared store of
-goods, one population of interchangeable colonists, one morale figure, one research tree, one export
+it, and two founders arrive. You supply the first four buildings; after that the colony grows on its
+own. Everything belongs to the colony rather than to any one block: one shared store of goods, one
+population of **Nerans** with trades of their own, one morale figure, one research tree, one export
 buffer.
 
 ## Features
 
 - **Colony beacon and claims** — a per-player and a server-wide colony cap, minimum spacing, an
-  overlap check, and an owner plus an access list. The public query surface is **boolean-only**: an
-  owner UUID never leaves the server.
-- **Colonists** — interchangeable labour units with four fields and no schedule. They path between
-  home and workstation, and they are **never deleted as a punishment**.
-- **Housing and population** — three habitat tiers, a chunk-budgeted housing sweep that sums capacity
-  and comfort, and growth gated on food and life support. Two **founder colonists** arrive with the
-  beacon so the loop can start.
-- **Autonomous construction** — the colony builds itself from datapack **blueprints**: it picks a
-  structure, finds a flat spot inside its own claim, and lays a couple of blocks per cycle. Bring the
-  materials and it builds at full speed; leave it alone and it fabricates from scrap at a quarter
-  rate. It never overwrites an existing block, never builds outside the claim, and never demolishes
-  anything.
+  overlap check, and a claim that widens as the colony grows. The public query surface is
+  **boolean-only**: an owner UUID never leaves the server.
+- **Five stages** — Founding, Settled, Growing, Thriving and Metropolis. A Founding colony builds
+  its four **Starter Works** (a lodge, a farm, a lumber yard and a mine head) only from materials
+  you deliver. After that it builds, gathers and grows by itself, slowly at first and then faster.
+- **Nerans** — the colony's people. Each takes one of twelve data-driven **trades** (Farmer,
+  Forester, Miner, Builder, Hauler, Cook, Toolsmith, Guard, Beastkeeper, Researcher, Quartermaster,
+  Medic), earns experience in it, carries its tool and keeps a daily schedule of work, a meal, an
+  evening at the plaza and sleep. They are **never removed as a punishment**.
+- **The needs list** — the colony says what it is short of (building materials, food, tools) and
+  how long it would take to gather alone. Hand items over at a **Needs Board** to speed it up, or
+  prioritise one need.
+- **Housing and population** — a chunk-budgeted housing sweep that sums capacity and comfort,
+  arrivals gated on food and life support, and from the Growing stage **children** born when there
+  is food, a free bed and good morale; from then on newcomers arrive less often, so the colony
+  grows mostly from within. Two **founders** arrive with the beacon so the loop can start.
+- **Construction** — the colony builds itself from **51 blueprints**, from cottages and a granary
+  to a citadel, an observatory and an arcology tower. It picks a structure, finds a site inside its
+  own claim, clears the natural blocks in the way into colony storage, turns the building to face
+  the beacon and lays it a few blocks per cycle. Bring the materials and it builds at full speed;
+  leave it alone and it fabricates from scrap at a quarter rate. It never builds outside the claim
+  and never breaks a protected block or a block entity. Some buildings upgrade in place.
+- **Colony Planner** — the owner and Chiefs can place an unlocked building by hand: preview the
+  footprint, confirm, and the plan jumps the colony's own queue.
+- **Roles and defence** — an owner, **Chiefs** (may plan and manage members), **Allies** (may use
+  the colony) and **Enemies**. Guards, kennel wolves and forge golems attack hostile mobs and
+  listed Enemies inside the claim, and nobody else.
+- **Gratitude Cache** — a Quartermaster stocks a per-colony chest with gifts for the owner from
+  loot tables that improve with the colony's stage.
 - **Life support** — an oxygen generator burning Core gas and grid power, with an
-  OK → DEGRADED → FAILED state machine. Failure decays morale; it never kills a colonist. Airless
+  OK → DEGRADED → FAILED state machine. Failure decays morale; it never kills a Neran. Airless
   dimensions come from a planet mod through one adapter, and every dimension is breathable without
   one.
 - **Food and morale** — food recognised by tag family, never by hard-coded item id, and a morale
@@ -41,22 +59,29 @@ buffer.
 - **Planetary outposts** — small remote claims parented to a colony, feeding its storage.
 - **Offline catch-up** — colonies tick only while loaded; on return, elapsed time is applied at a
   reduced rate and capped, so there is no reason to chunk-load a planet for free yield.
-- **Commands** — a player tree, an operator tree, a datapack `reload-check`, and the two
-  data-protection commands.
-- **Companion app support** — five read sections and two actions through Core's link API, scoped to
-  the requesting player's own colonies.
-- **Everything is datapack-driven** — jobs, research, housing tiers, export tables and structure
-  blueprints are all JSON.
+- **Commands** — a player tree (including roles, plans and needs), an operator tree, a datapack
+  `reload-check`, the two data-protection commands, and `/nerocolonies gallery`, a creative-mode
+  showcase of every building and trade.
+- **Companion app support** — eleven read sections and four actions through Core's link API (schema
+  version 2), scoped to the colonies the requesting player owns or is a member of. People are
+  counts, never names.
+- **Everything is datapack-driven** — jobs, professions, research, housing tiers, export tables,
+  structure blueprints, the Gratitude Cache loot tables and the land-clearing block tags are all
+  data.
 
 Neroland Core is the only hard dependency. Nerospace, NeroAgriculture, NeroLogistics, NeroEconomy and
 Energized Power are optional and detected at runtime; remove them all and the mod still runs.
 
 ## Documentation
 
-- [Wiki](wiki/Home.md) — player and operator documentation
+- [Wiki](wiki/Home.md) — player and operator documentation, including
+  [Progression](wiki/Progression.md), [Nerans and Professions](wiki/Nerans-and-Professions.md),
+  [Buildings](wiki/Buildings.md), [Roles and Defence](wiki/Roles-and-Defence.md),
+  [Gratitude Cache](wiki/Gratitude-Cache.md) and [Gallery](wiki/Gallery.md)
 - [`PRIVACY.md`](PRIVACY.md) — what is stored, retention, export and erasure, telemetry opt-out
 - [`USING-CORE.md`](USING-CORE.md) — every Neroland Core API this mod consumes
-- [`CHANGELOG.md`](CHANGELOG.md) — what has shipped so far
+- [`CHANGELOG.md`](CHANGELOG.md) — what has shipped so far, with migration notes for existing worlds
+- [`CREDITS.md`](CREDITS.md) — where the building designs come from
 
 ## Build targets
 
@@ -82,6 +107,7 @@ The build is the repo root, with a flattened cross-loader structure driven by St
 ./gradlew :neoforge:26.1.2:build :neoforge:26.2:build :neoforge:26.3:build \
           :forge:26.1.2:build :forge:26.2:build :forge:26.3:build \
           :fabric:26.1.2:build :fabric:26.2:build :fabric:26.3:build   # all nine
+./gradlew :neoforge:26.2:test         # the JUnit suite
 ```
 
 See [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) for agent and contributor context.

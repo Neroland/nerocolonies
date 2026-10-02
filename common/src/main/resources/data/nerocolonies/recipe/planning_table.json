@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "minecraft:paper",
+    "T": "minecraft:crafting_table",
+    "O": "minecraft:copper_ingot"
+  },
+  "pattern": [
+    "PPP",
+    "OTO",
+    "O O"
+  ],
+  "result": {
+    "id": "nerocolonies:planning_table",
+    "count": 1
+  }
+}

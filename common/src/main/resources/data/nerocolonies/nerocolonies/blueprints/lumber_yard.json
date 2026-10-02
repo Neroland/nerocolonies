@@ -1,0 +1,75 @@
+{
+  "name": "blueprint.nerocolonies.lumber_yard",
+  "category": "industry",
+  "stage": "founding",
+  "priority": 3,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:forester"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 2},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "_": "minecraft:air",
+    "a": "minecraft:dirt",
+    "b": "minecraft:oak_log[axis=x]",
+    "c": "minecraft:oak_log[axis=y]",
+    "d": "minecraft:grass_block",
+    "f": "minecraft:oak_fence",
+    "h": "minecraft:oak_log[axis=z]",
+    "i": "minecraft:oak_sapling[stage=0]"
+  },
+  "layers": [
+    [
+      "bbbbbbbbb",
+      "hdddddddh",
+      "hdadddadh",
+      "hdddddddh",
+      "hdddddddh",
+      "hdadddddh",
+      "hdddddddh",
+      "hdddddddh",
+      "bbbbbbbbb"
+    ],
+    [
+      "fffffffff",
+      "f_______f",
+      "f_i___i_f",
+      "f_______f",
+      "f_______f",
+      "f_i____*f",
+      "f_____c_f",
+      "f____bbbf",
+      "ffff_ffff"
+    ],
+    [
+      ".........",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      ".____bb_.",
+      "...._...."
+    ],
+    [
+      ".........",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "._______.",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:dirt", "count": 23},
+    {"tag": "minecraft:logs", "count": 18},
+    {"tag": "minecraft:planks", "count": 14},
+    {"item": "minecraft:oak_sapling", "count": 3},
+    {"item": "minecraft:lantern", "count": 1}
+  ],
+  "rotate": true
+}

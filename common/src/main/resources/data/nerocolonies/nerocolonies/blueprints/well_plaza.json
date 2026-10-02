@@ -1,0 +1,91 @@
+{
+  "name": "blueprint.nerocolonies.well_plaza",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 60,
+  "max": 1,
+  "level": 1,
+  "roles": ["social"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 0},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "P": "minecraft:oak_planks",
+    "W": "minecraft:water",
+    "^": "minecraft:lantern[hanging=true]",
+    "_": "minecraft:air",
+    "a": "minecraft:cobblestone_wall",
+    "b": "minecraft:oak_log[axis=y]",
+    "c": "minecraft:oak_slab[type=bottom]",
+    "d": "minecraft:oak_stairs[facing=east,half=bottom]",
+    "f": "minecraft:oak_fence",
+    "h": "minecraft:oak_stairs[facing=north,half=bottom]",
+    "i": "minecraft:oak_stairs[facing=west,half=bottom]"
+  },
+  "layers": [
+    [
+      "C##C##C##",
+      "##C##C##C",
+      "#C##C##C#",
+      "C##CCCC##",
+      "##CCWC##C",
+      "#C#CCC#C#",
+      "C##C##C##",
+      "##C##C##C",
+      "#C##C##C#"
+    ],
+    [
+      "b_______b",
+      "____h____",
+      "_________",
+      "___aaa___",
+      "_i_a_a_d_",
+      "___aaa___",
+      "_________",
+      "_________",
+      "b_______b"
+    ],
+    [
+      "*_______*",
+      "_________",
+      "_________",
+      "___f_f___",
+      "_________",
+      "___f_f___",
+      "_________",
+      "_________",
+      "*_______*"
+    ],
+    [
+      "_________",
+      "_________",
+      "_________",
+      "___f_f___",
+      "____^____",
+      "___f_f___",
+      "_________",
+      "_________",
+      "_________"
+    ],
+    [
+      ".........",
+      ".........",
+      ".........",
+      "...ccc...",
+      "...cPc...",
+      "...ccc...",
+      ".........",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:stone_bricks", "count": 22},
+    {"item": "minecraft:cobblestone", "count": 18},
+    {"tag": "minecraft:planks", "count": 9},
+    {"item": "minecraft:lantern", "count": 5},
+    {"tag": "minecraft:logs", "count": 2}
+  ],
+  "rotate": true
+}

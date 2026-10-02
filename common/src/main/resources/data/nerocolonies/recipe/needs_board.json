@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "minecraft:paper",
+    "S": "#minecraft:wooden_slabs",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "PPP",
+    "SIS",
+    "S S"
+  ],
+  "result": {
+    "id": "nerocolonies:needs_board",
+    "count": 1
+  }
+}

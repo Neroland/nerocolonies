@@ -32,6 +32,7 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.block.entity.OutpostBeaconBlockEntity;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.Outpost;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
@@ -95,9 +96,7 @@ public class OutpostBeaconBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         Colony parent = beacon.parent();
-        if (parent != null && !ColonyClaims.canAccess(serverPlayer, parent)) {
-            serverPlayer.sendSystemMessage(
-                    Component.translatable("message.nerocolonies.claim.no_access"));
+        if (parent != null && !ColonyPermissions.check(serverPlayer, parent, ColonyPermissions.Action.INTERACT)) {
             return InteractionResult.SUCCESS;
         }
         MenuOpener.open(serverPlayer, beacon);

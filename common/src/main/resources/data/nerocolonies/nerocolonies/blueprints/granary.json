@@ -1,0 +1,116 @@
+{
+  "name": "blueprint.nerocolonies.granary",
+  "category": "storage",
+  "stage": "settled",
+  "priority": 30,
+  "max": 2,
+  "level": 1,
+  "roles": ["eat"],
+  "capacity": {"housing": 0, "storage": 27, "jobs": 0},
+  "palette": {
+    "C": "minecraft:cobblestone",
+    "Y": "minecraft:hay_block[axis=y]",
+    "_": "minecraft:air",
+    "a": "minecraft:dark_oak_log[axis=y]",
+    "b": "minecraft:dark_oak_planks",
+    "c": "minecraft:dark_oak_stairs[facing=north,half=bottom]",
+    "d": "minecraft:dark_oak_stairs[facing=south,half=bottom]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:hay_block[axis=x]",
+    "i": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "j": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCCCCCCCC"
+    ],
+    [
+      ".aCCCCCa.",
+      ".CYY_YYC.",
+      ".CY___YC.",
+      ".C_____C.",
+      ".CY___YC.",
+      ".C_____C.",
+      ".aCCiCCa."
+    ],
+    [
+      ".apppppa.",
+      ".phh__hp.",
+      ".p____hp.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".appjppa."
+    ],
+    [
+      ".appgppa.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".apppppa."
+    ],
+    [
+      ".apppppa.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".apppppa."
+    ],
+    [
+      "ddddddddd",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      "ccccccccc"
+    ],
+    [
+      ".........",
+      "ddddddddd",
+      ".p_____p.",
+      ".p_____p.",
+      ".p_____p.",
+      "ccccccccc",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      "ddddddddd",
+      ".p_____p.",
+      "ccccccccc",
+      ".........",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      ".........",
+      "bbbbbbbbb",
+      ".........",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 74},
+    {"item": "minecraft:cobblestone", "count": 26},
+    {"tag": "minecraft:logs", "count": 8},
+    {"item": "minecraft:hay_block", "count": 6},
+    {"item": "minecraft:glass", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

@@ -1,5 +1,6 @@
 package za.co.neroland.nerocolonies.network;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
@@ -16,9 +17,11 @@ import za.co.neroland.nerocolonies.block.entity.ColonyBeaconBlockEntity;
 import za.co.neroland.nerocolonies.block.entity.ColonyDepotBlockEntity;
 import za.co.neroland.nerocolonies.block.entity.JobStationBlockEntity;
 import za.co.neroland.nerocolonies.block.entity.ResearchStationBlockEntity;
-import za.co.neroland.nerocolonies.colony.AccessLog;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyClaims;
+import za.co.neroland.nerocolonies.colony.ColonyMembership;
+import za.co.neroland.nerocolonies.colony.ColonyNeeds;
+import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.Outpost;
@@ -32,26 +35,34 @@ import za.co.neroland.nerocolonies.colony.Research;
  *
  * <p>Every intent is re-derived from server state before it is acted on: the block must be loaded and
  * within reach, the colony is looked up from the block rather than taken from the packet, the op code
- * is bounded, and the permission check runs against the colony record. An intent that fails any of
- * these is dropped silently and the sender is sent a fresh snapshot — so a desynchronised client
- * corrects itself instead of retrying.
+ * is bounded, and the sender's role is worked out from the colony record by
+ * {@link ColonyPermissions} — first "may this player interact at all?", then the action the
+ * particular operation needs. An intent that fails any of these is dropped and the sender is sent a
+ * fresh snapshot — so a desynchronised client corrects itself instead of retrying.
  *
- * <h2>The access-list editor, and why it takes a name</h2>
+ * <h2>The role editor, and why it takes a name</h2>
  *
- * <p>Granting access needs to identify a player, and NeroColonies will not send an access list to a
- * client — a client told who is on a colony's list has been told where those people play. So the flow
- * runs the other way: the owner <b>types a name</b>, the server resolves it against the players it
- * can see, and the client is told a <em>count</em>. The list itself never leaves the server.
+ * <p>Changing somebody's role needs to identify a player, and no client is ever sent a UUID. So the
+ * flow runs the other way: a member-manager <b>types a name</b>, the server resolves it against the
+ * players it can see, {@link ColonyMembership} applies the same rules the commands use, and the
+ * answer is a message that says what happened <b>without naming anybody</b> — the person who typed
+ * the name already knows it, and nothing else needs to. The name is not stored and not logged.
  *
  * <p>The name is resolved against <b>online players only</b>. That is a real limitation and a
- * deliberate one for a GUI: an offline lookup means consulting the profile cache, which is a place
- * where names and UUIDs are correlated, and doing that from a packet a client can send at will is not
- * a trade this mod makes. Operators have the command path for offline members.
+ * deliberate one for a GUI: resolving a typed name for somebody offline means asking the profile
+ * cache "who is called this?", and doing that from a packet a client can send at will is not a trade
+ * this mod makes. Operators and owners have the command path, by UUID, for offline members.
+ *
+ * <p>What the editor's user sees in return is the colony's roster, which the server sends only to a
+ * viewer who may manage members; {@link ColonySnapshotPayload} describes exactly what that is.
  */
 public final class ColonyIntents {
 
     /** Squared reach for an intent, matching Core's side-config handler. */
     private static final double REACH_SQR = 64.0D;
+
+    /** Longest name the role editor will try to resolve. The screen's field is capped the same. */
+    private static final int MAX_PLAYER_NAME_CHARS = 32;
 
     private ColonyIntents() {
     }
@@ -71,7 +82,8 @@ public final class ColonyIntents {
             return;
         }
         Colony colony = resolveColony(level, pos);
-        if (colony == null || !ColonyClaims.canAccess(player, colony)) {
+        if (colony == null
+                || !ColonyPermissions.can(player, colony, ColonyPermissions.Action.INTERACT)) {
             ColonySync.sendSnapshot(player, null, pos);
             return;
         }
@@ -79,9 +91,18 @@ public final class ColonyIntents {
         switch (payload.op()) {
             case ColonyIntentPayload.OP_RESEARCH -> research(server, level, player, colony, pos,
                     payload.argument());
-            case ColonyIntentPayload.OP_ACCESS_ADD -> access(server, player, colony, payload.argument(), true);
-            case ColonyIntentPayload.OP_ACCESS_REMOVE ->
-                    access(server, player, colony, payload.argument(), false);
+            case ColonyIntentPayload.OP_ACCESS_ADD -> role(server, player, colony,
+                    ColonyIntentPayload.ROLE_ALLY, payload.argument(), true);
+            case ColonyIntentPayload.OP_ACCESS_REMOVE -> role(server, player, colony,
+                    ColonyIntentPayload.ROLE_ALLY, payload.argument(), false);
+            case ColonyIntentPayload.OP_ROLE_ADD -> roleIntent(server, player, colony, payload.argument(),
+                    true);
+            case ColonyIntentPayload.OP_ROLE_REMOVE -> roleIntent(server, player, colony,
+                    payload.argument(), false);
+            case ColonyIntentPayload.OP_PRIORITISE_NEED -> prioritise(server, player, colony,
+                    payload.argument());
+            case ColonyIntentPayload.OP_CACHE_SHARE -> cacheShare(server, player, colony,
+                    payload.argument());
             case ColonyIntentPayload.OP_SELL_EXPORTS -> sell(server, player, colony);
             case ColonyIntentPayload.OP_TOGGLE_EXPORT -> toggleExport(level, player, pos);
             default -> {
@@ -124,18 +145,33 @@ public final class ColonyIntents {
         }
     }
 
+    /** Splits {@code "<role>|<player name>"} and hands it on. A malformed argument is dropped. */
+    private static void roleIntent(MinecraftServer server, ServerPlayer player, Colony colony,
+            String argument, boolean add) {
+        int split = argument.indexOf(ColonyIntentPayload.ROLE_SEPARATOR);
+        if (split <= 0) {
+            return;
+        }
+        role(server, player, colony, argument.substring(0, split).trim().toLowerCase(Locale.ROOT),
+                argument.substring(split + 1), add);
+    }
+
     /**
-     * Adds or removes an access-list member by name. Owner (or operator) only — an access-list member
-     * may use a colony, not decide who else may.
+     * Gives an online player a role, or takes one away. What is allowed is {@link ColonyMembership}'s
+     * decision, made from the sender's role on the server; all this does is turn a typed name into an
+     * online player and an outcome into a message.
      */
-    private static void access(MinecraftServer server, ServerPlayer player, Colony colony, String name,
-            boolean grant) {
-        if (!colony.isOwner(player.getUUID()) && !ColonyClaims.isGamemaster(player)) {
-            player.sendSystemMessage(Component.translatable("message.nerocolonies.access.owner_only"));
+    private static void role(MinecraftServer server, ServerPlayer player, Colony colony, String roleToken,
+            String name, boolean add) {
+        ColonyPermissions.Role actor = ColonyPermissions.effectiveRole(player, colony);
+        // Every role change needs at least this, and asking first means somebody who may not manage
+        // members cannot use the editor to ask the server who is online.
+        if (!ColonyPermissions.allows(actor, ColonyPermissions.Action.MANAGE_MEMBERS, false)) {
+            tell(player, ColonyMembership.Result.NOT_ALLOWED);
             return;
         }
         String trimmed = name == null ? "" : name.trim();
-        if (trimmed.isEmpty()) {
+        if (trimmed.isEmpty() || trimmed.length() > MAX_PLAYER_NAME_CHARS) {
             return;
         }
         ServerPlayer target = server.getPlayerList().getPlayerByName(trimmed);
@@ -143,28 +179,93 @@ public final class ColonyIntents {
             player.sendSystemMessage(Component.translatable("message.nerocolonies.access.not_found"));
             return;
         }
+        UUID actorId = player.getUUID();
         UUID targetId = target.getUUID();
-        if (targetId.equals(colony.ownerId())) {
-            player.sendSystemMessage(Component.translatable("message.nerocolonies.access.is_owner"));
+        ColonyMembership.Result result = switch (roleToken) {
+            case ColonyIntentPayload.ROLE_ALLY ->
+                    ColonyMembership.setAlly(server, colony, actor, actorId, targetId, add);
+            case ColonyIntentPayload.ROLE_CHIEF ->
+                    ColonyMembership.setChief(server, colony, actor, actorId, targetId, add);
+            case ColonyIntentPayload.ROLE_ENEMY, ColonyIntentPayload.ROLE_ENEMY_CONFIRMED ->
+                    ColonyMembership.setEnemy(server, colony, actor, actorId, targetId, add,
+                            ColonyIntentPayload.ROLE_ENEMY_CONFIRMED.equals(roleToken),
+                            ColonyClaims.isGamemaster(target));
+            default -> null;
+        };
+        if (result != null) {
+            // The message says what happened and never to whom (POPIA/GDPR).
+            tell(player, result);
+        }
+    }
+
+    /**
+     * Prioritises one of the colony's current needs, or clears the priority. The label has to be an
+     * item id that is on the needs list <em>now</em>, as the server derives it — a client cannot use
+     * this to store an arbitrary string.
+     */
+    private static void prioritise(MinecraftServer server, ServerPlayer player, Colony colony,
+            String argument) {
+        ColonyPermissions.Role actor = ColonyPermissions.effectiveRole(player, colony);
+        if (!ColonyPermissions.allows(actor, ColonyPermissions.Action.PLAN, false)) {
+            tell(player, ColonyMembership.Result.NOT_ALLOWED);
             return;
         }
-        Colony updated = grant ? colony.grantAccess(targetId) : colony.revokeAccess(targetId);
-        if (updated == colony) {
-            player.sendSystemMessage(Component.translatable(grant
-                    ? "message.nerocolonies.access.already"
-                    : "message.nerocolonies.access.absent"));
+        String label = argument == null ? "" : argument.trim();
+        Identifier item = null;
+        if (!label.isEmpty()) {
+            if (label.charAt(0) == '#') {
+                return; // a tag: there is no single item to prioritise
+            }
+            item = Identifier.tryParse(label);
+            if (item == null || !isCurrentNeed(server, colony, item)) {
+                return;
+            }
+        }
+        ColonyMembership.Result result = ColonyMembership.setPriorityNeed(server, colony, actor, item);
+        if (result == ColonyMembership.Result.DONE || result == ColonyMembership.Result.ALREADY) {
+            player.sendSystemMessage(Component.translatable(item == null
+                    ? "message.nerocolonies.need.cleared" : "message.nerocolonies.need.prioritised"));
+        } else {
+            tell(player, result);
+        }
+    }
+
+    private static boolean isCurrentNeed(MinecraftServer server, Colony colony, Identifier item) {
+        ServerLevel home = server.getLevel(colony.dimension());
+        if (home == null) {
+            return false;
+        }
+        for (ColonyNeeds.Need need : ColonyNeeds.derive(home, colony)) {
+            if (need.target().item().map(item::equals).orElse(false)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Shares the Gratitude Cache with Allies, or stops. Owner (or operator) only. */
+    private static void cacheShare(MinecraftServer server, ServerPlayer player, Colony colony,
+            String argument) {
+        boolean shared;
+        if ("1".equals(argument)) {
+            shared = true;
+        } else if ("0".equals(argument)) {
+            shared = false;
+        } else {
             return;
         }
-        ColonyState colonies = ColonyState.get(server);
-        colonies.put(updated);
-        colonies.log(colony.colonyId(), targetId,
-                grant ? AccessLog.Action.ACCESS_GRANT : AccessLog.Action.ACCESS_REVOKE);
-        // The message names the colony and a count, never the member (POPIA/GDPR): the person who
-        // typed the name already knows it, and nothing else needs to.
-        player.sendSystemMessage(Component.translatable(
-                grant ? "message.nerocolonies.access.granted" : "message.nerocolonies.access.revoked",
-                updated.accessList().size()));
-        ColonySync.refresh(server, colony.colonyId());
+        ColonyMembership.Result result = ColonyMembership.setCacheShared(server, colony,
+                ColonyPermissions.effectiveRole(player, colony), shared);
+        if (result == ColonyMembership.Result.DONE || result == ColonyMembership.Result.ALREADY) {
+            player.sendSystemMessage(Component.translatable(shared
+                    ? "message.nerocolonies.cache.shared" : "message.nerocolonies.cache.private"));
+        } else {
+            tell(player, result);
+        }
+    }
+
+    private static void tell(ServerPlayer player, ColonyMembership.Result result) {
+        player.sendSystemMessage(Component.translatable(ColonyMembership.messageKey(result)));
     }
 
     /**

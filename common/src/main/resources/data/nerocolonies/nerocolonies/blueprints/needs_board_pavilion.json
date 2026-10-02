@@ -1,0 +1,71 @@
+{
+  "name": "blueprint.nerocolonies.needs_board_pavilion",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 41,
+  "max": 1,
+  "level": 1,
+  "roles": ["needs_board"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 0},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "P": "minecraft:oak_planks",
+    "^": "minecraft:lantern[hanging=true]",
+    "_": "minecraft:air",
+    "a": "minecraft:oak_log[axis=y]",
+    "b": "minecraft:oak_slab[type=bottom]",
+    "c": "nerocolonies:needs_board"
+  },
+  "layers": [
+    [
+      "#####",
+      "#####",
+      "#####",
+      "#####",
+      "#####"
+    ],
+    [
+      "aPcPa",
+      "_____",
+      "_____",
+      "_____",
+      "a___a"
+    ],
+    [
+      "a___a",
+      "_____",
+      "_____",
+      "_____",
+      "a___a"
+    ],
+    [
+      "a___a",
+      "_____",
+      "__^__",
+      "_____",
+      "a___a"
+    ],
+    [
+      "bbbbb",
+      "bPPPb",
+      "bPPPb",
+      "bPPPb",
+      "bbbbb"
+    ],
+    [
+      ".....",
+      ".bbb.",
+      ".bbb.",
+      ".bbb.",
+      "....."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 17},
+    {"item": "minecraft:stone_bricks", "count": 12},
+    {"tag": "minecraft:logs", "count": 6},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "nerocolonies:needs_board", "count": 1}
+  ],
+  "rotate": true
+}

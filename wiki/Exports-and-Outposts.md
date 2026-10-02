@@ -94,8 +94,8 @@ parent colony.
 ### What an outpost has
 
 - a **parent colony id**, whose claim and permission context it borrows wholesale — no separate
-  owner and no separate access list, so there is no second place for player-shaped data to
-  accumulate;
+  owner, no separate access list and no role lists of its own, so there is no second place for
+  player-shaped data to accumulate;
 - its own small claim, `outpostClaimRadius` (default 16) blocks square from its beacon, widened by
   `RANGE` modules;
 - reduced caps: `outpostColonistCap` (default 2) and `outpostJobSlots` (default 1);

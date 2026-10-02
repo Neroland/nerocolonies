@@ -37,8 +37,11 @@ import za.co.neroland.nerocolonies.platform.Services;
  * <h2>Privacy (POPIA/GDPR)</h2>
  *
  * <p>{@link #refresh} fans a change out only to players who are <b>members of that colony</b>, and
- * each one is sent their own snapshot. Nothing is broadcast, and no snapshot contains another
- * player's identity — see {@link ColonySnapshotPayload} for what is and is not in one.
+ * each one is sent their own snapshot, built for their own role. Nothing is broadcast. No snapshot
+ * ever carries a player's UUID, and the only one that carries names is the one built for a viewer who
+ * may manage that colony's members — see {@link ColonySnapshotPayload} for exactly what is and is not
+ * in one. A player who stops being a member is sent the empty snapshot ({@link #clearView}), so a
+ * roster they were allowed to see a moment ago does not linger on their client.
  */
 public final class ColonySync {
 
@@ -94,6 +97,19 @@ public final class ColonySync {
                 Services.NETWORK.sendToPlayer(player,
                         ColonySnapshotPayload.of(server, player, colony, colony.beaconPos()));
             }
+        }
+    }
+
+    /**
+     * Tells one player they have no colony open any more — the call to make for somebody who has just
+     * stopped being a member, because {@link #refresh} (rightly) no longer reaches them and the last
+     * snapshot they were sent would otherwise stay in their client's memory. A no-op when they are
+     * offline: a client that leaves a server drops its snapshot by itself.
+     */
+    public static void clearView(MinecraftServer server, UUID playerId) {
+        ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+        if (player != null) {
+            Services.NETWORK.sendToPlayer(player, ColonySnapshotPayload.EMPTY);
         }
     }
 

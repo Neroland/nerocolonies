@@ -14,9 +14,12 @@ import za.co.neroland.nerolandcore.registry.RegistrationProvider.RegistryEntry;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.block.ColonyBeaconBlock;
 import za.co.neroland.nerocolonies.block.ColonyDepotBlock;
+import za.co.neroland.nerocolonies.block.GratitudeCacheBlock;
 import za.co.neroland.nerocolonies.block.JobStationBlock;
+import za.co.neroland.nerocolonies.block.NeedsBoardBlock;
 import za.co.neroland.nerocolonies.block.OutpostBeaconBlock;
 import za.co.neroland.nerocolonies.block.OxygenGeneratorBlock;
+import za.co.neroland.nerocolonies.block.PlanningTableBlock;
 import za.co.neroland.nerocolonies.block.ResearchStationBlock;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 
@@ -122,11 +125,39 @@ public final class NeroColoniesBlocks {
     public static final RegistryEntry<Block> FABRICATOR_STATION =
             BLOCKS.register("fabricator_station", key -> station(key, MapColor.COLOR_PURPLE));
 
+    // --- colony life ----------------------------------------------------------
+
+    /** Lists what the colony is short of and takes contributions straight into colony storage. */
+    public static final RegistryEntry<Block> NEEDS_BOARD = BLOCKS.register("needs_board",
+            key -> new NeedsBoardBlock(BlockBehaviour.Properties.of()
+                    .setId(key)
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.5F, 6.0F)
+                    .sound(SoundType.WOOD)));
+
+    /** Opens the colony's Gratitude Cache: one shared stock per colony, held on the colony record. */
+    public static final RegistryEntry<Block> GRATITUDE_CACHE = BLOCKS.register("gratitude_cache",
+            key -> new GratitudeCacheBlock(BlockBehaviour.Properties.of()
+                    .setId(key)
+                    .mapColor(MapColor.GOLD)
+                    .strength(3.0F, 12.0F)
+                    .requiresCorrectToolForDrops()
+                    .sound(SoundType.METAL)));
+
+    /** Where the owner and Chiefs read what can be planned and what is queued. */
+    public static final RegistryEntry<Block> PLANNING_TABLE = BLOCKS.register("planning_table",
+            key -> new PlanningTableBlock(BlockBehaviour.Properties.of()
+                    .setId(key)
+                    .mapColor(MapColor.WOOD)
+                    .strength(2.5F, 6.0F)
+                    .sound(SoundType.WOOD)));
+
     /** Every block that gets a plain {@code BlockItem} and a creative-tab entry. */
     public static final List<RegistryEntry<? extends Block>> ALL = List.of(
             COLONY_BEACON, OUTPOST_BEACON, OXYGEN_GENERATOR, COLONY_DEPOT, RESEARCH_STATION,
             HABITAT_POD, HABITAT_MODULE, HABITAT_BLOCK,
-            FARM_STATION, HYDROPONICS_STATION, REFINERY_STATION, FABRICATOR_STATION);
+            FARM_STATION, HYDROPONICS_STATION, REFINERY_STATION, FABRICATOR_STATION,
+            NEEDS_BOARD, GRATITUDE_CACHE, PLANNING_TABLE);
 
     /** Every housing block, in tier order — the shipped {@code HousingTier} content names these. */
     public static final List<RegistryEntry<? extends Block>> HOUSING =

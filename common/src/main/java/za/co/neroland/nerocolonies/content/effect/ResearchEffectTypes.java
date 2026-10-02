@@ -74,11 +74,6 @@ public final class ResearchEffectTypes {
         }
     }
 
-    /** Whether {@code typeId} names a registered effect type. */
-    public static boolean isRegistered(Identifier typeId) {
-        return TYPES.containsKey(typeId);
-    }
-
     /** Every registered effect type id (a snapshot). */
     public static Set<Identifier> ids() {
         return Collections.unmodifiableSet(new LinkedHashSet<>(TYPES.keySet()));

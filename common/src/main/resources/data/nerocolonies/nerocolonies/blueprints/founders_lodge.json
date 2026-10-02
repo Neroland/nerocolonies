@@ -1,0 +1,95 @@
+{
+  "name": "blueprint.nerocolonies.founders_lodge",
+  "category": "housing",
+  "stage": "founding",
+  "priority": 1,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:builder"],
+  "roles": ["sleep"],
+  "capacity": {"housing": 4, "storage": 0, "jobs": 0},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "H": "nerocolonies:habitat_pod",
+    "P": "minecraft:oak_planks",
+    "_": "minecraft:air",
+    "a": "minecraft:crafting_table",
+    "b": "minecraft:oak_door[facing=south,half=lower,hinge=left,open=false]",
+    "c": "minecraft:oak_door[facing=south,half=upper,hinge=left,open=false]",
+    "d": "minecraft:oak_log[axis=y]",
+    "g": "minecraft:glass_pane",
+    "h": "minecraft:spruce_stairs[facing=north,half=bottom]",
+    "i": "minecraft:spruce_stairs[facing=south,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCpppppCC",
+      "CCCCCCCCC"
+    ],
+    [
+      ".dCCCCCd.",
+      ".CH___HC.",
+      ".C_____C.",
+      ".C*___aC.",
+      ".C_____C.",
+      ".dCCbCCd."
+    ],
+    [
+      ".dPgPgPd.",
+      ".P_____P.",
+      ".g_____g.",
+      ".P_____P.",
+      ".P_____P.",
+      ".dgPcPgd."
+    ],
+    [
+      ".dPPPPPd.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".dPPPPPd."
+    ],
+    [
+      "iiiiiiiii",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      ".P_____P.",
+      "hhhhhhhhh"
+    ],
+    [
+      ".........",
+      "iiiiiiiii",
+      ".P_____P.",
+      ".P_____P.",
+      "hhhhhhhhh",
+      "........."
+    ],
+    [
+      ".........",
+      ".........",
+      "iiiiiiiii",
+      "hhhhhhhhh",
+      ".........",
+      "........."
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 52},
+    {"item": "minecraft:cobblestone", "count": 23},
+    {"tag": "minecraft:logs", "count": 6},
+    {"item": "minecraft:glass", "count": 3},
+    {"item": "nerocolonies:habitat_pod", "count": 2},
+    {"item": "minecraft:crafting_table", "count": 1},
+    {"item": "minecraft:lantern", "count": 1},
+    {"item": "minecraft:oak_door", "count": 1}
+  ],
+  "rotate": true
+}

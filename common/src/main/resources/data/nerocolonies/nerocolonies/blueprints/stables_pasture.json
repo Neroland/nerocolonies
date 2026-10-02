@@ -1,0 +1,123 @@
+{
+  "name": "blueprint.nerocolonies.stables_pasture",
+  "category": "farm",
+  "stage": "growing",
+  "priority": 25,
+  "max": 1,
+  "level": 1,
+  "capacity": {"housing": 0, "storage": 0, "jobs": 1},
+  "palette": {
+    "*": "minecraft:lantern[hanging=false]",
+    "Y": "minecraft:hay_block[axis=y]",
+    "_": "minecraft:air",
+    "a": "minecraft:cauldron",
+    "b": "minecraft:spruce_log[axis=y]",
+    "c": "minecraft:spruce_stairs[facing=east,half=bottom]",
+    "d": "minecraft:grass_block",
+    "f": "minecraft:oak_fence",
+    "h": "minecraft:spruce_stairs[facing=west,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd",
+      "pppppdddddddddd"
+    ],
+    [
+      "bpppbffffffffff",
+      "pY_ap_________f",
+      "pY__p_________f",
+      "p_____________f",
+      "p___p_________f",
+      "b___b_________f",
+      "p___p_________f",
+      "p_____________f",
+      "pY__p_________f",
+      "pY__p_________f",
+      "bp_pbffff__ffff"
+    ],
+    [
+      "bpppb.........*",
+      "p___p__________",
+      "p___p__________",
+      "p______________",
+      "p___p__________",
+      "b___b__________",
+      "p___p__________",
+      "p______________",
+      "p___p__________",
+      "p___p__________",
+      "bp_pb*_________"
+    ],
+    [
+      "bpppb..........",
+      "p___p..........",
+      "p___p..........",
+      "p___p..........",
+      "p___p..........",
+      "b___b..........",
+      "p___p..........",
+      "p___p..........",
+      "p___p..........",
+      "p___p..........",
+      "bpppb.........."
+    ],
+    [
+      "cppph..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "c___h..........",
+      "cppph.........."
+    ],
+    [
+      ".cph...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".c_h...........",
+      ".cph..........."
+    ],
+    [
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............",
+      "..p............"
+    ]
+  ],
+  "materials": [
+    {"tag": "minecraft:planks", "count": 93},
+    {"item": "minecraft:dirt", "count": 50},
+    {"tag": "minecraft:logs", "count": 9},
+    {"item": "minecraft:hay_block", "count": 2},
+    {"item": "minecraft:lantern", "count": 2},
+    {"item": "minecraft:cauldron", "count": 1}
+  ],
+  "rotate": true
+}

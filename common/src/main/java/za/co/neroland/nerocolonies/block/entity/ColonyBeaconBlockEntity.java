@@ -46,6 +46,7 @@ import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.FoodSupply;
 import za.co.neroland.nerocolonies.colony.LifeSupport;
 import za.co.neroland.nerocolonies.colony.Morale;
+import za.co.neroland.nerocolonies.colony.Population;
 import za.co.neroland.nerocolonies.menu.ColonyBeaconMenu;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 
@@ -149,7 +150,9 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_BUILD_PERCENT = 15;
     public static final int DATA_STRUCTURES_BUILT = 16;
     public static final int DATA_BUILD_SUPPLIED = 17;
-    public static final int DATA_SIZE = 18;
+    public static final int DATA_GROWTH_STATUS = 18;
+    public static final int DATA_BUILD_STATUS = 19;
+    public static final int DATA_SIZE = 20;
 
     /** The colony this beacon anchors, or {@code null} until placement binds one. */
     @Nullable
@@ -184,6 +187,7 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
     private transient int buildPercent;
     private transient int structuresBuilt;
     private transient boolean buildSupplied;
+    private transient int growthStatus;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -210,6 +214,9 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 case DATA_BUILD_PERCENT -> ColonyBeaconBlockEntity.this.buildPercent;
                 case DATA_STRUCTURES_BUILT -> clamp(ColonyBeaconBlockEntity.this.structuresBuilt);
                 case DATA_BUILD_SUPPLIED -> ColonyBeaconBlockEntity.this.buildSupplied ? 1 : 0;
+                case DATA_GROWTH_STATUS -> ColonyBeaconBlockEntity.this.growthStatus;
+                case DATA_BUILD_STATUS -> ColonyBeaconBlockEntity.this.tickState.construction()
+                        .status().ordinal();
                 default -> 0;
             };
         }
@@ -348,7 +355,11 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
 
         if (--this.refreshCountdown <= 0) {
             this.refreshCountdown = REFRESH_INTERVAL_TICKS;
-            int radius = ColonyClaims.effectiveClaimRadius(modifiers().rangeBonus());
+            // Range modules, plus the claim a colony grows into once it is Growing (see Growth).
+            // The growth part stops short of a neighbouring colony's claim.
+            int baseRadius = ColonyClaims.effectiveClaimRadius(modifiers().rangeBonus());
+            int radius = ColonyClaims.clampGrowth(server, colony, baseRadius, baseRadius
+                    + za.co.neroland.nerocolonies.colony.ColonyProgress.claimBonus(server, colony));
             if (radius != colony.claimRadius()) {
                 colony = colony.withClaimRadius(radius);
                 colonies.put(colony);
@@ -356,9 +367,13 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 this.tickState.housing().restart();
             }
         }
-        this.buildPercent = Construction.progressPercent(server, this.colonyId);
-        this.structuresBuilt = Construction.structuresBuilt(server, this.colonyId);
-        this.buildSupplied = Construction.isSupplied(server, this.colonyId);
+        Construction.Readout build = Construction.readout(server, this.colonyId);
+        this.buildPercent = build.percent();
+        this.structuresBuilt = build.built();
+        this.buildSupplied = build.supplied();
+        if (this.refreshCountdown == REFRESH_INTERVAL_TICKS) {
+            this.growthStatus = Population.growthStatus(serverLevel, colony).ordinal();
+        }
         this.cached = colony;
     }
 

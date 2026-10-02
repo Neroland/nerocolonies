@@ -60,6 +60,7 @@ public final class ColonyDefinitions {
     private static final String HOUSING_DIRECTORY = "nerocolonies/housing";
     private static final String EXPORT_DIRECTORY = "nerocolonies/exports";
     private static final String BLUEPRINT_DIRECTORY = "nerocolonies/blueprints";
+    private static final String PROFESSION_DIRECTORY = "nerocolonies/professions";
     private static final String EXTENSION = ".json";
 
     /** Stands in for "the whole load", which belongs to no single resource. */
@@ -84,6 +85,7 @@ public final class ColonyDefinitions {
     private static Map<Identifier, HousingTier> housing = Map.of();
     private static Map<Identifier, ExportEntry> exports = Map.of();
     private static Map<Identifier, Blueprint> blueprints = Map.of();
+    private static Map<Identifier, ProfessionDefinition> professions = Map.of();
 
     /** Housing lookup by block id — the housing sweep's hot path, rebuilt with the definitions. */
     private static Map<Identifier, HousingTier> housingByBlock = Map.of();
@@ -128,6 +130,12 @@ public final class ColonyDefinitions {
         return blueprints;
     }
 
+    public static synchronized Map<Identifier, ProfessionDefinition> professionsForServer(
+            MinecraftServer server) {
+        ensureLoaded(server);
+        return professions;
+    }
+
     /**
      * The blueprints in build-priority order — what the construction planner walks. Sorted once per
      * load; the planner filters this list rather than sorting one of its own.
@@ -149,14 +157,6 @@ public final class ColonyDefinitions {
     /** The validation problems this server's content produced (loads + caches on first use). */
     public static synchronized List<ValidationIssue> issuesForServer(MinecraftServer server) {
         ensureLoaded(server);
-        return issues;
-    }
-
-    /**
-     * Everything the last load dropped or ignored, empty when the packs are clean. The list is
-     * immutable and replaced (never mutated) per load, so a caller may hold on to a snapshot.
-     */
-    public static List<ValidationIssue> validationIssues() {
         return issues;
     }
 
@@ -214,16 +214,20 @@ public final class ColonyDefinitions {
         return Optional.ofNullable(research.get(id));
     }
 
-    public static Optional<HousingTier> housingTier(Identifier id) {
-        return Optional.ofNullable(housing.get(id));
-    }
-
     public static Optional<ExportEntry> exportEntry(Identifier id) {
         return Optional.ofNullable(exports.get(id));
     }
 
     public static Optional<Blueprint> blueprint(Identifier id) {
         return Optional.ofNullable(blueprints.get(id));
+    }
+
+    public static Optional<ProfessionDefinition> profession(Identifier id) {
+        return id == null ? Optional.empty() : Optional.ofNullable(professions.get(id));
+    }
+
+    public static Map<Identifier, ProfessionDefinition> professions() {
+        return professions;
     }
 
     /** The currently loaded jobs, keyed by id (empty until a server loads its datapacks). */
@@ -254,12 +258,14 @@ public final class ColonyDefinitions {
         // through to Unknown. init() is idempotent, so calling it here as well as from common init
         // costs nothing and removes an ordering trap.
         ResearchEffectTypes.init();
+        BlockStateText.clearCache();
 
         Map<Identifier, JobDefinition> loadedJobs = Map.of();
         Map<Identifier, ResearchNode> loadedResearch = Map.of();
         Map<Identifier, HousingTier> loadedHousing = Map.of();
         Map<Identifier, ExportEntry> loadedExports = Map.of();
         Map<Identifier, Blueprint> loadedBlueprints = Map.of();
+        Map<Identifier, ProfessionDefinition> loadedProfessions = Map.of();
         List<ValidationIssue> collected = new ArrayList<>();
         try {
             ResourceManager resources = server.getResourceManager();
@@ -282,10 +288,14 @@ public final class ColonyDefinitions {
             // Blueprints last: their optional research prerequisite is checked against the research
             // that actually survived, so a blueprint gated behind a node that was dropped for a cycle
             // is reported rather than silently unbuildable.
-            loadedBlueprints = validateBlueprints(
+            loadedBlueprints = validateBlueprints(resources,
                     read(resources, BLUEPRINT_DIRECTORY, Blueprint.CODEC, Blueprint::withId,
                             "blueprint", collected),
                     loadedResearch, collected);
+            loadedProfessions = validateProfessions(
+                    read(resources, PROFESSION_DIRECTORY, ProfessionDefinition.CODEC,
+                            ProfessionDefinition::withId, "profession", collected),
+                    loadedBlueprints, collected);
         } catch (RuntimeException e) {
             NeroColoniesCommon.LOGGER.warn(
                     "[NeroColonies] Colony content load failed; no colony content is active.", e);
@@ -294,6 +304,7 @@ public final class ColonyDefinitions {
             loadedHousing = Map.of();
             loadedExports = Map.of();
             loadedBlueprints = Map.of();
+            loadedProfessions = Map.of();
             collected.clear();
             // The exception's own message can carry a filesystem path, so only its type is kept for
             // the operator-facing report; the full trace stays in the log line above.
@@ -305,13 +316,15 @@ public final class ColonyDefinitions {
         housing = loadedHousing;
         exports = loadedExports;
         blueprints = loadedBlueprints;
+        professions = loadedProfessions;
         housingByBlock = indexHousingByBlock(loadedHousing);
         blueprintsByPriority = orderBlueprints(loadedBlueprints);
         issues = List.copyOf(collected);
         NeroColoniesCommon.LOGGER.info(
                 "[NeroColonies] Loaded {} job(s), {} research node(s), {} housing tier(s), "
-                        + "{} export entr(ies), {} blueprint(s){}.",
+                        + "{} export entr(ies), {} blueprint(s), {} profession(s){}.",
                 jobs.size(), research.size(), housing.size(), exports.size(), blueprints.size(),
+                professions.size(),
                 issues.isEmpty() ? "" : " with " + issues.size() + " validation issue(s)");
     }
 
@@ -548,10 +561,21 @@ public final class ColonyDefinitions {
      * eligible, and saying so in the report is more use than deleting it. Only a blueprint whose
      * every cell is a hole is {@code DROPPED}, because it can never do anything at all.
      */
-    private static Map<Identifier, Blueprint> validateBlueprints(Map<Identifier, Blueprint> parsed,
-            Map<Identifier, ResearchNode> validResearch, List<ValidationIssue> collected) {
+    private static Map<Identifier, Blueprint> validateBlueprints(ResourceManager resources,
+            Map<Identifier, Blueprint> parsed, Map<Identifier, ResearchNode> validResearch,
+            List<ValidationIssue> collected) {
         Map<Identifier, Blueprint> accepted = new LinkedHashMap<>();
-        for (Blueprint blueprint : parsed.values()) {
+        for (Blueprint declared : parsed.values()) {
+            Blueprint blueprint = declared;
+            if (declared.structure().isPresent() && !declared.hasGrid()) {
+                var grid = StructureNbt.load(resources, declared.structure().get());
+                if (grid.result().isEmpty()) {
+                    warn(collected, declared.id(), grid.error().map(e -> e.message())
+                            .orElse("structure could not be read"), true);
+                    continue;
+                }
+                blueprint = declared.withGrid(grid.result().get());
+            }
             for (Identifier missing : blueprint.missingBlocks()) {
                 warn(collected, blueprint.id(),
                         "names unregistered block " + missing + " (those cells are left empty)", false);
@@ -560,12 +584,11 @@ public final class ColonyDefinitions {
                 warn(collected, blueprint.id(), "places no blocks at all", true);
                 continue;
             }
-            blueprint.research().ifPresent(node -> {
-                if (!validResearch.containsKey(node)) {
-                    warn(collected, blueprint.id(),
-                            "requires unknown research " + node + " and can never be built", false);
-                }
-            });
+            Identifier needsResearch = blueprint.research().orElse(null);
+            if (needsResearch != null && !validResearch.containsKey(needsResearch)) {
+                warn(collected, blueprint.id(),
+                        "requires unknown research " + needsResearch + " and can never be built", false);
+            }
             for (ItemTarget material : blueprint.materials()) {
                 if (!material.present()) {
                     warn(collected, blueprint.id(), "material " + material.label()
@@ -573,6 +596,55 @@ public final class ColonyDefinitions {
                 }
             }
             accepted.put(blueprint.id(), blueprint);
+        }
+        for (Blueprint blueprint : accepted.values()) {
+            blueprint.upgradeTo().ifPresent(next -> {
+                if (!accepted.containsKey(next)) {
+                    warn(collected, blueprint.id(), "upgrades to unknown blueprint " + next
+                            + " (it simply has no upgrade)", false);
+                }
+            });
+        }
+        return Collections.unmodifiableMap(accepted);
+    }
+
+    private static Map<Identifier, ProfessionDefinition> validateProfessions(
+            Map<Identifier, ProfessionDefinition> parsed, Map<Identifier, Blueprint> validBlueprints,
+            List<ValidationIssue> collected) {
+        Map<Identifier, ProfessionDefinition> accepted = new LinkedHashMap<>();
+        for (ProfessionDefinition profession : parsed.values()) {
+            profession.tool().ifPresent(tool -> {
+                if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(tool)) {
+                    warn(collected, profession.id(), "names unregistered tool " + tool
+                            + " (Nerans of this trade work empty-handed)", false);
+                }
+            });
+            for (ItemAmount output : profession.outputs()) {
+                if (!output.present()) {
+                    warn(collected, profession.id(), "output " + output.item()
+                            + " is not registered in this launch (ignored)", false);
+                }
+            }
+            boolean unlockable = false;
+            for (Blueprint blueprint : validBlueprints.values()) {
+                if (blueprint.unlocks().contains(profession.id())) {
+                    unlockable = true;
+                    break;
+                }
+            }
+            if (!unlockable) {
+                warn(collected, profession.id(),
+                        "is unlocked by no blueprint and can never be assigned", false);
+            }
+            accepted.put(profession.id(), profession);
+        }
+        for (Blueprint blueprint : validBlueprints.values()) {
+            for (Identifier unlock : blueprint.unlocks()) {
+                if (!accepted.containsKey(unlock)) {
+                    warn(collected, blueprint.id(), "unlocks unknown profession " + unlock + " (ignored)",
+                            false);
+                }
+            }
         }
         return Collections.unmodifiableMap(accepted);
     }

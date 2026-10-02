@@ -104,6 +104,11 @@ public final class ColonyTicker {
         private LifeSupport.State lastLifeState = LifeSupport.State.OK;
         private boolean lastExportsFull;
 
+        /** The construction loop's state, for the beacon to expose to its GUI. */
+        public Construction.State construction() {
+            return this.construction;
+        }
+
         /** The housing sweep state, for the beacon to expose to its GUI. */
         public HousingScan.State housing() {
             return this.housing;
@@ -127,8 +132,21 @@ public final class ColonyTicker {
      * @return the colony record, updated if anything happened this tick
      */
     public static Colony tick(ServerLevel level, Colony colony, State state, Container supply) {
-        // The housing sweep runs on its own cadence and is budgeted internally.
-        HousingScan.tick(level, colony, state.housing);
+        // Until the first sweep after a load closes, the colony is what its saved record says it
+        // is. Without this seed every cycle before the sweep finished saw zero housing and shed
+        // every Neran above the founder floor on each chunk reload.
+        state.housing.seed(colony.housingCapacity());
+
+        // The housing sweep runs on its own cadence. Its block-reading slices share the colony tick
+        // budget; a slice the budget cannot afford stays due and runs on the next tick with room.
+        long now = level.getGameTime();
+        if (!state.housing.sliceDue()) {
+            HousingScan.tick(level, colony, state.housing);
+        } else if (Budget.claim(now)) {
+            long sliceStarted = System.nanoTime();
+            HousingScan.tick(level, colony, state.housing);
+            Budget.spend(System.nanoTime() - sliceStarted);
+        }
 
         if (!state.caughtUp) {
             state.caughtUp = true;
@@ -141,7 +159,7 @@ public final class ColonyTicker {
         }
 
         long gameTime = level.getGameTime();
-        int interval = Math.max(1, NeroColoniesConfig.COLONY_TICK_INTERVAL_TICKS.get());
+        int interval = NeroColoniesConfig.colonyTickInterval();
         // Stagger by the colony's own id, so N colonies never share a game tick.
         long offset = Math.floorMod(colony.colonyId().hashCode(), interval);
         if (Math.floorMod(gameTime, interval) == offset) {
@@ -166,7 +184,7 @@ public final class ColonyTicker {
         // Pick up a /reload cheaply: the common case is one reference comparison.
         ColonyDefinitions.refreshIfReloaded(level.getServer());
 
-        int interval = Math.max(1, NeroColoniesConfig.COLONY_TICK_INTERVAL_TICKS.get());
+        int interval = NeroColoniesConfig.colonyTickInterval();
         Colony updated = colony;
 
         // 1. Life support.
@@ -176,10 +194,24 @@ public final class ColonyTicker {
         updated = FoodSupply.intake(supply, updated);
         updated = FoodSupply.consume(updated, 1, 1.0D);
 
-        // 3. Population.
-        updated = Population.tick(level, updated, state.housing.capacity(), state.housing.homes());
-        if (updated.housingCapacity() != state.housing.capacity()) {
+        // 3. Births first, once the colony is Growing and has food and a bed to spare: a child gets
+        //    first call on a free bed.
+        ColonyStage stage = ColonyProgress.stage(level.getServer(), updated);
+        Colony beforeBirth = updated;
+        updated = Population.breed(level, updated, stage, state.housing.capacity(), state.housing.committed());
+
+        // 3b. Then the roster: departures if housing was lost, homes, and (when no child was born
+        //     this cycle and a newcomer is due) one arrival.
+        boolean arrivals = updated == beforeBirth && Population.arrivalDue(level, stage);
+        updated = Population.tick(level, updated, state.housing.capacity(), state.housing.homes(),
+                state.housing.committed(), arrivals);
+        if (state.housing.committed() && updated.housingCapacity() != state.housing.capacity()) {
             updated = updated.withHousingCapacity(state.housing.capacity());
+        }
+
+        // 3c. Trades and workplaces, before the job board so stations can claim their tradespeople.
+        if (state.housing.committed()) {
+            Professions.assign(level, updated);
         }
 
         // 4. Jobs. Job stations run their recipes on the COLONY tick so throughput is budgeted in one
@@ -190,6 +222,13 @@ public final class ColonyTicker {
         //     did not need. This is the loop that makes a colony build itself: founders arrive with
         //     the beacon, they put up housing, the housing brings more colonists.
         tickConstruction(level, state, updated);
+
+        // 4c. The colony tick's half of every trade: gathered goods, tools, meals, the cache, guardians.
+        updated = Professions.produce(level, updated);
+
+        // 4d. Growth stage, which only ever goes up.
+        ColonyProgress.tick(level, updated);
+        ColonyLinkEvents.needsCheck(level, updated);
 
         // 5. Morale, reacting to everything above.
         updated = Morale.apply(level, updated, state.housing.comfortRatio(), state.housing.capacity(), 1);
@@ -252,6 +291,7 @@ public final class ColonyTicker {
         }
         // A new structure is new geometry: rescan now rather than at the next scheduled sweep.
         state.housing.restart();
+        ColonyBuildings.invalidate(colony.colonyId());
         publishStructure(level, colony, completed);
     }
 

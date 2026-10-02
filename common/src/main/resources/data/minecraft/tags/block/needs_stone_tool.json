@@ -12,6 +12,9 @@
     "nerocolonies:farm_station",
     "nerocolonies:hydroponics_station",
     "nerocolonies:refinery_station",
-    "nerocolonies:fabricator_station"
+    "nerocolonies:fabricator_station",
+    "nerocolonies:needs_board",
+    "nerocolonies:gratitude_cache",
+    "nerocolonies:planning_table"
   ]
 }

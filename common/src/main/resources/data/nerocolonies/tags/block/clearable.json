@@ -1,0 +1,31 @@
+{
+  "replace": false,
+  "values": [
+    "#nerocolonies:clearable_vegetation",
+    {
+      "id": "#minecraft:replaceable_by_trees",
+      "required": false
+    },
+    "#minecraft:dirt",
+    "minecraft:grass_block",
+    "minecraft:podzol",
+    "minecraft:mycelium",
+    "minecraft:coarse_dirt",
+    "minecraft:rooted_dirt",
+    "minecraft:sand",
+    "minecraft:red_sand",
+    "minecraft:gravel",
+    "minecraft:stone",
+    "minecraft:deepslate",
+    "minecraft:granite",
+    "minecraft:diorite",
+    "minecraft:andesite",
+    "minecraft:tuff",
+    "minecraft:snow_block",
+    "minecraft:moss_block",
+    {
+      "id": "minecraft:pale_moss_block",
+      "required": false
+    }
+  ]
+}

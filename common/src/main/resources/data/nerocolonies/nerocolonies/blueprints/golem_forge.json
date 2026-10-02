@@ -1,0 +1,160 @@
+{
+  "name": "blueprint.nerocolonies.golem_forge",
+  "category": "defence",
+  "stage": "growing",
+  "priority": 65,
+  "max": 1,
+  "level": 1,
+  "unlocks": ["nerocolonies:beastkeeper"],
+  "roles": ["golem_forge"],
+  "capacity": {"housing": 0, "storage": 0, "jobs": 1},
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "*": "minecraft:lantern[hanging=false]",
+    "C": "minecraft:cobblestone",
+    "_": "minecraft:air",
+    "a": "minecraft:anvil[facing=east]",
+    "b": "minecraft:blast_furnace[facing=west,lit=false]",
+    "c": "minecraft:iron_bars",
+    "d": "minecraft:iron_block",
+    "h": "minecraft:polished_andesite",
+    "i": "minecraft:stone_brick_stairs[facing=north,half=bottom]",
+    "j": "minecraft:stone_brick_stairs[facing=south,half=bottom]",
+    "p": "minecraft:spruce_planks"
+  },
+  "layers": [
+    [
+      "CCCCCCCCCCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCpppppppCC",
+      "CCCCCCCCCCC"
+    ],
+    [
+      ".CCCCCCCCC.",
+      ".C_______C.",
+      ".Ca__d__bC.",
+      ".C_______C.",
+      ".C______bC.",
+      ".Cc__*___C.",
+      ".C_______C.",
+      ".C_______C.",
+      ".hCC___CCh."
+    ],
+    [
+      ".C#c#c#c#C.",
+      ".#_______#.",
+      ".c___d___c.",
+      ".#_______#.",
+      ".c_______c.",
+      ".#c______#.",
+      ".c_______c.",
+      ".#_______#.",
+      ".h#c___c#h."
+    ],
+    [
+      ".C#######C.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#c______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".h##___##h."
+    ],
+    [
+      ".C#######C.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".h#######h."
+    ],
+    [
+      ".C#######C.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".h#######h."
+    ],
+    [
+      "jCjjjjjjjCj",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      "iiiiiiiiiii"
+    ],
+    [
+      ".C.......C.",
+      "jjjjjjjjjjj",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      "iiiiiiiiiii",
+      "..........."
+    ],
+    [
+      ".C.......C.",
+      "...........",
+      "jjjjjjjjjjj",
+      ".#_______#.",
+      ".#_______#.",
+      ".#_______#.",
+      "iiiiiiiiiii",
+      "...........",
+      "..........."
+    ],
+    [
+      ".C.......C.",
+      "...........",
+      "...........",
+      "jjjjjjjjjjj",
+      ".#_______#.",
+      "iiiiiiiiiii",
+      "...........",
+      "...........",
+      "..........."
+    ],
+    [
+      ".C.......C.",
+      "...........",
+      "...........",
+      "...........",
+      "###########",
+      "...........",
+      "...........",
+      "...........",
+      "..........."
+    ]
+  ],
+  "materials": [
+    {"item": "minecraft:stone_bricks", "count": 101},
+    {"item": "minecraft:cobblestone", "count": 43},
+    {"tag": "minecraft:planks", "count": 23},
+    {"tag": "c:ingots/iron", "count": 7},
+    {"item": "minecraft:polished_andesite", "count": 5},
+    {"item": "minecraft:blast_furnace", "count": 2},
+    {"item": "minecraft:iron_block", "count": 2},
+    {"item": "minecraft:anvil", "count": 1},
+    {"item": "minecraft:lantern", "count": 1}
+  ],
+  "rotate": true
+}

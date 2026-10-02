@@ -57,19 +57,38 @@ public final class NeroColoniesData {
         if (server == null || player == null) {
             return;
         }
-        int[] counts = ColonyState.get(server).forgetPlayer(player);
+        ColonyState state = ColonyState.get(server);
+        java.util.List<UUID> ownedBefore = new java.util.ArrayList<>();
+        for (za.co.neroland.nerocolonies.colony.Colony colony : state.colonies()) {
+            if (colony.isOwner(player)) {
+                ownedBefore.add(colony.colonyId());
+            }
+        }
+        int[] counts = state.forgetPlayer(player);
+        // Under the dissolve policy the colony record is gone, so everything filed under its id goes
+        // now too: its stores, build records, and its Chief and Enemy lists (other players' ids),
+        // rather than waiting for the next retention sweep.
+        for (UUID id : ownedBefore) {
+            if (state.colony(id) == null) {
+                za.co.neroland.nerocolonies.colony.ColonyStores.get(server).forget(id);
+                za.co.neroland.nerocolonies.colony.Construction.forget(server, id);
+            }
+        }
         int owned = counts[0];
         int access = counts[1];
         int rows = counts[2];
-        if (owned == 0 && access == 0 && rows == 0) {
+        // Chief and Enemy lists too — an Enemy listing is removed like any other, because the law
+        // outranks the rule that only retribution or a Chief can lift an enmity.
+        int roles = za.co.neroland.nerocolonies.colony.ColonyRoles.get(server).forgetPlayer(player);
+        if (owned == 0 && access == 0 && rows == 0 && roles == 0) {
             return;
         }
         // Counts only — never who was erased, and never which colonies (POPIA/GDPR).
         NeroColoniesCommon.LOGGER.info(
-                "[NeroColonies] Erasure: {} owned colony record(s) {}, {} access-list membership(s) "
-                        + "removed, {} access-log row(s) deleted.",
+                "[NeroColonies] Erasure: {} owned colony record(s) {}, {} ally membership(s) removed, "
+                        + "{} chief/enemy listing(s) removed, {} access-log row(s) deleted.",
                 owned,
                 NeroColoniesConfig.erasureDissolves() ? "dissolved" : "transferred to the server",
-                access, rows);
+                access, roles, rows);
     }
 }

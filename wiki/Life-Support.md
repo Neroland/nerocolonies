@@ -3,7 +3,7 @@
 Keeping a colony breathing on a world that has no air of its own.
 
 > **The short version:** an oxygen generator turns power into oxygen gas, the colony burns it every
-> cycle, and running out decays morale and nothing else. It never kills a colonist. On a breathable
+> cycle, and running out decays morale and nothing else. It never kills a Neran. On a breathable
 > dimension the whole system is inert — the machinery still builds and still runs, it simply has
 > nothing to hold back.
 
@@ -104,10 +104,10 @@ clean grace window and reassesses from what it finds.
 Failed life support contributes zero to the morale life-support term (against 1.0 for OK and 0.5 for
 DEGRADED), which drags the morale target down by up to `moraleWeightLifeSupport` points — 30 by
 default. Morale then slides toward that target at the usual rate, and if it falls below
-`moraleWorkStopThreshold` the colony's jobs stop and its colonists idle. Population growth is also
+`moraleWorkStopThreshold` the colony's jobs stop and its Nerans idle. Population growth is also
 gated on life support holding, so a failed colony stops growing.
 
-**No colonist is ever killed, harmed or removed by life-support failure.** Nothing is destroyed and
+**No Neran is ever killed, harmed or removed by life-support failure.** Nothing is destroyed and
 nothing is lost. The failure curve runs *life support loss → morale decay → work stop → idle* and
 stops there, so a colony that has gone wrong is still a colony you can walk back into and fix.
 
@@ -119,17 +119,17 @@ alert systems — can react. Switch it off with `thresholdEventsEnabled`.
 
 Two signals, in strict priority order.
 
-1. **A planet mod's own answer.** When Nerospace is installed, its `airless` flag for the dimension
-   is authoritative. NeroColonies reads it through a single reflective adapter, resolved once at
-   startup: Nerospace is a **soft dependency**, is not on the compile classpath and is not required
-   by any manifest.
-2. **Core's space dimension tag, as an advisory hint.** With Nerospace absent, a dimension carrying
+1. **A planet mod's own answer.** When the Neroland planet mod is installed, its `airless` flag for
+   the dimension is authoritative. NeroColonies reads it through a single reflective adapter,
+   resolved once at startup: the planet mod is a **soft dependency**, is not on the compile classpath
+   and is not required by any manifest.
+2. **Core's space dimension tag, as an advisory hint.** With that mod absent, a dimension carrying
    the shared Neroland space tag is treated as airless. Another mod's planet dimension may well
    carry that tag, and honouring it costs nothing and makes NeroColonies work with a planet mod it
    has never heard of.
 
-The hint never overrides the adapter: with Nerospace installed, a dimension it says is breathable is
-breathable, tag or no tag. There is a single authority for the answer whenever there is one.
+The hint never overrides the adapter: with the planet mod installed, a dimension it says is
+breathable is breathable, tag or no tag. There is a single authority for the answer whenever there is one.
 
 ### With neither
 
@@ -143,7 +143,7 @@ because a *different* mod was not installed would be indefensible.
 ### What is deliberately not consulted
 
 Per-block breathability — a planet mod's oxygen-field system — is **not** used anywhere in
-NeroColonies. Colonist life support is our own colony-level system precisely because a planet mod's
+NeroColonies. Neran life support is our own colony-level system precisely because a planet mod's
 oxygen path is written for players and has no NPC route at all. There was never an implementation to
 reuse, so this is not duplication.
 
