@@ -103,6 +103,7 @@ public final class ColonyIntents {
                     payload.argument());
             case ColonyIntentPayload.OP_CACHE_SHARE -> cacheShare(server, player, colony,
                     payload.argument());
+            case ColonyIntentPayload.OP_DELIVER -> deliver(level, player, colony);
             case ColonyIntentPayload.OP_SELL_EXPORTS -> sell(server, player, colony);
             case ColonyIntentPayload.OP_TOGGLE_EXPORT -> toggleExport(level, player, pos);
             default -> {
@@ -198,10 +199,37 @@ public final class ColonyIntents {
         }
     }
 
+    /** The player's own carried inventory: the hotbar and the three rows above it, nothing worn. */
+    private static final int CARRIED_SLOTS = 36;
+
+    /**
+     * Hands the colony what the sender is carrying that its needs list wants. Any member may: this
+     * is the same permission the Needs Board asks for, and it only ever <em>adds</em> to colony
+     * storage. What is taken is worked out here, from the server's needs list and the sender's own
+     * inventory — the packet says nothing but "I am offering".
+     */
+    private static void deliver(ServerLevel level, ServerPlayer player, Colony colony) {
+        if (!ColonyPermissions.check(player, colony, ColonyPermissions.Action.CONTRIBUTE)) {
+            return;
+        }
+        ColonyNeeds.Delivery delivery = ColonyNeeds.contributeAll(level, colony, player.getInventory(),
+                CARRIED_SLOTS);
+        if (delivery.accepted() > 0) {
+            player.containerMenu.broadcastChanges();
+            player.sendSystemMessage(Component.translatable(delivery.storageFull()
+                    ? "message.nerocolonies.needs.delivered_full"
+                    : "message.nerocolonies.needs.delivered", delivery.accepted()));
+        } else {
+            player.sendSystemMessage(Component.translatable(delivery.storageFull()
+                    ? "message.nerocolonies.needs.storage_full"
+                    : "message.nerocolonies.needs.nothing_to_deliver"));
+        }
+    }
+
     /**
      * Prioritises one of the colony's current needs, or clears the priority. The label has to be an
-     * item id that is on the needs list <em>now</em>, as the server derives it — a client cannot use
-     * this to store an arbitrary string.
+     * item id — or {@code #tag}, for an "any ..." need — that is on the needs list <em>now</em>, as
+     * the server derives it; a client cannot use this to store an arbitrary string.
      */
     private static void prioritise(MinecraftServer server, ServerPlayer player, Colony colony,
             String argument) {
@@ -212,31 +240,36 @@ public final class ColonyIntents {
         }
         String label = argument == null ? "" : argument.trim();
         Identifier item = null;
+        Identifier tag = null;
         if (!label.isEmpty()) {
-            if (label.charAt(0) == '#') {
-                return; // a tag: there is no single item to prioritise
-            }
-            item = Identifier.tryParse(label);
-            if (item == null || !isCurrentNeed(server, colony, item)) {
+            boolean tagged = label.charAt(0) == '#';
+            Identifier id = Identifier.tryParse(tagged ? label.substring(1) : label);
+            if (id == null || !isCurrentNeed(server, colony, id, tagged)) {
                 return;
             }
+            if (tagged) {
+                tag = id;
+            } else {
+                item = id;
+            }
         }
-        ColonyMembership.Result result = ColonyMembership.setPriorityNeed(server, colony, actor, item);
+        ColonyMembership.Result result = ColonyMembership.setPriority(server, colony, actor, item, tag);
         if (result == ColonyMembership.Result.DONE || result == ColonyMembership.Result.ALREADY) {
-            player.sendSystemMessage(Component.translatable(item == null
+            player.sendSystemMessage(Component.translatable(item == null && tag == null
                     ? "message.nerocolonies.need.cleared" : "message.nerocolonies.need.prioritised"));
         } else {
             tell(player, result);
         }
     }
 
-    private static boolean isCurrentNeed(MinecraftServer server, Colony colony, Identifier item) {
+    private static boolean isCurrentNeed(MinecraftServer server, Colony colony, Identifier id,
+            boolean tagged) {
         ServerLevel home = server.getLevel(colony.dimension());
         if (home == null) {
             return false;
         }
         for (ColonyNeeds.Need need : ColonyNeeds.derive(home, colony)) {
-            if (need.target().item().map(item::equals).orElse(false)) {
+            if ((tagged ? need.target().tag() : need.target().item()).map(id::equals).orElse(false)) {
                 return true;
             }
         }

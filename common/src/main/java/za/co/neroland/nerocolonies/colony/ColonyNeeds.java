@@ -37,11 +37,13 @@ import za.co.neroland.nerocolonies.entity.ColonistEntity;
  *
  * <p>Each need shows two times. <em>Alone</em> is how long the colony's own gatherers will take at
  * their current rate (or "never" if nobody gathers that item, as with the Starter Works).
- * <em>With help</em> is zero: deliver it to a Colony Depot or the Needs Board and it is satisfied
- * at once. Contributions always go to colony storage, which is the one place needs are paid from, so
- * a contribution satisfies the list before anything else can use it.
+ * <em>With help</em> is zero: hand it over and it is satisfied at once. There are three ways to hand
+ * something over, and all three end in colony storage, which is the one place needs are paid from:
+ * the beacon screen's "Give needed items" button ({@link #contributeAll}), the Needs Board
+ * ({@link #contribute}), or simply putting it in a Colony Depot.
  *
- * <p>The owner or a Chief may prioritise one need; trades that gather it work half as fast again.
+ * <p>The owner or a Chief may prioritise one need — a single item, or a tag such as "any planks" —
+ * and the trades that gather it work half as fast again.
  */
 public final class ColonyNeeds {
 
@@ -84,9 +86,10 @@ public final class ColonyNeeds {
     public static List<Need> derive(ServerLevel level, Colony colony) {
         MinecraftServer server = level.getServer();
         ColonyStage stage = ColonyProgress.stage(server, colony);
-        Identifier priority = Optional.ofNullable(ColonyLife.get(server).peek(colony.colonyId()))
-                .map(ColonyLife.Life::priorityNeed).orElse(null);
-        Map<Identifier, Double> rates = gatherRates(level, colony, priority);
+        ColonyLife.Life life = ColonyLife.get(server).peek(colony.colonyId());
+        Identifier priority = life == null ? null : life.priorityNeed();
+        Identifier priorityTag = life == null ? null : life.priorityTag();
+        Map<Identifier, Double> rates = gatherRates(level, colony, priority, priorityTag);
         List<Need> needs = new ArrayList<>();
 
         // 1. Construction materials.
@@ -103,7 +106,7 @@ public final class ColonyNeeds {
             for (ItemTarget material : building.materials()) {
                 int have = ColonyStorage.count(server, colony.colonyId(), material);
                 if (have < material.count()) {
-                    needs.add(need(material, material.count(), have, reason, rates, priority));
+                    needs.add(need(material, material.count(), have, reason, rates, priority, priorityTag));
                 }
             }
         }
@@ -113,7 +116,8 @@ public final class ColonyNeeds {
         if (demand > 0 && colony.foodStock() < demand) {
             ItemTarget food = new ItemTarget(Optional.empty(), Optional.of(FoodSupply.FOOD.location()), 1);
             needs.add(new Need(food, "#" + FoodSupply.FOOD.location(), "need.nerocolonies.food",
-                    (int) Math.min(Integer.MAX_VALUE, demand), colony.foodStock(), Reason.FOOD, -1, false));
+                    (int) Math.min(Integer.MAX_VALUE, demand), colony.foodStock(), Reason.FOOD, -1,
+                    FoodSupply.FOOD.location().equals(priorityTag)));
         }
 
         // 3. Tools.
@@ -128,7 +132,7 @@ public final class ColonyNeeds {
             ItemTarget target = new ItemTarget(Optional.of(tool), Optional.empty(), count);
             int have = ColonyStorage.count(server, colony.colonyId(), target);
             if (have < count) {
-                needs.add(need(target, count, have, Reason.TOOLS, rates, priority));
+                needs.add(need(target, count, have, Reason.TOOLS, rates, priority, priorityTag));
             }
         });
 
@@ -144,9 +148,10 @@ public final class ColonyNeeds {
             .thenComparing(Need::label);
 
     private static Need need(ItemTarget target, int needed, int have, Reason reason,
-            Map<Identifier, Double> rates, @Nullable Identifier priority) {
+            Map<Identifier, Double> rates, @Nullable Identifier priority, @Nullable Identifier priorityTag) {
         double rate = rateFor(target, rates);
-        boolean prioritised = priority != null && target.item().map(priority::equals).orElse(false);
+        boolean prioritised = (priority != null && target.item().map(priority::equals).orElse(false))
+                || (priorityTag != null && target.tag().map(priorityTag::equals).orElse(false));
         int eta = reason == Reason.STARTER ? -1
                 : etaMinutes(needed - have, rate, NeroColoniesConfig.colonyTickInterval());
         return new Need(target, target.label(), nameKey(target), needed, have, reason, eta, prioritised);
@@ -178,7 +183,7 @@ public final class ColonyNeeds {
 
     /** Items gathered per colony cycle by the colony's tradespeople, by item id. */
     private static Map<Identifier, Double> gatherRates(ServerLevel level, Colony colony,
-            @Nullable Identifier priority) {
+            @Nullable Identifier priority, @Nullable Identifier priorityTag) {
         Map<Identifier, Double> rates = new HashMap<>();
         double morale = Morale.outputMultiplier(colony);
         for (ColonistEntity neran : Population.colonistsOf(level, colony)) {
@@ -188,7 +193,7 @@ public final class ColonyNeeds {
             }
             // Half the day is night, so the average rate is half the daytime rate.
             double chance = trade.outputChance() * morale * (neran.hasTool() ? 1.0D : 0.5D) * 0.5D;
-            if (priority != null && gathers(trade, priority)) {
+            if (boosted(trade, priority, priorityTag)) {
                 chance *= PRIORITY_BOOST;
             }
             for (ItemAmount output : trade.outputs()) {
@@ -196,6 +201,27 @@ public final class ColonyNeeds {
             }
         }
         return rates;
+    }
+
+    /**
+     * Whether a trade works faster because of the colony's priority: it gathers the prioritised item,
+     * or something in the prioritised tag.
+     */
+    public static boolean boosted(ProfessionDefinition trade, @Nullable Identifier priority,
+            @Nullable Identifier priorityTag) {
+        if (priority != null && gathers(trade, priority)) {
+            return true;
+        }
+        if (priorityTag == null) {
+            return false;
+        }
+        ItemTarget tagged = new ItemTarget(Optional.empty(), Optional.of(priorityTag), 1);
+        for (ItemAmount output : trade.outputs()) {
+            if (BuiltInRegistries.ITEM.containsKey(output.item()) && tagged.matches(output.toStack())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether a trade's outputs include an item. */
@@ -298,5 +324,66 @@ public final class ColonyNeeds {
         int accepted = offer - left;
         stack.shrink(accepted);
         return accepted;
+    }
+
+    /**
+     * What one "Give needed items" press did.
+     *
+     * @param accepted    items taken from the player and put in colony storage
+     * @param storageFull whether the hand-over stopped because colony storage had no room left
+     */
+    public record Delivery(int accepted, boolean storageFull) {
+    }
+
+    /**
+     * Takes from the first {@code slots} slots of {@code inventory} everything the needs list still
+     * wants and puts it in colony storage — each need only as far as it is short, so a player who
+     * walks up with nine stacks of planks hands over fifty-two and keeps the rest.
+     *
+     * <p>The list is derived once and each need is ticked off as it is filled, rather than derived
+     * again for every stack. Food is not taken: it is eaten from the beacon's food supply slots, not
+     * from colony storage, and taking it here would put it somewhere the colony cannot eat it from.
+     */
+    public static Delivery contributeAll(ServerLevel level, Colony colony,
+            net.minecraft.world.Container inventory, int slots) {
+        List<Need> needs = derive(level, colony);
+        int[] missing = new int[needs.size()];
+        boolean anything = false;
+        for (int i = 0; i < missing.length; i++) {
+            Need need = needs.get(i);
+            missing[i] = need.reason() == Reason.FOOD ? 0 : need.missing();
+            anything |= missing[i] > 0;
+        }
+        if (!anything) {
+            return new Delivery(0, false);
+        }
+        int usable = ColonyStorage.usableSlots(level, colony);
+        int accepted = 0;
+        int limit = Math.min(slots, inventory.getContainerSize());
+        for (int slot = 0; slot < limit; slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            for (int i = 0; i < missing.length && !stack.isEmpty(); i++) {
+                if (missing[i] <= 0 || !needs.get(i).target().matches(stack)) {
+                    continue;
+                }
+                int offer = Math.min(missing[i], stack.getCount());
+                int left = ColonyStorage.insert(level.getServer(), colony.colonyId(),
+                        stack.copyWithCount(offer), usable);
+                int taken = offer - left;
+                if (taken > 0) {
+                    stack.shrink(taken);
+                    missing[i] -= taken;
+                    accepted += taken;
+                }
+                if (left > 0) {
+                    inventory.setChanged();
+                    return new Delivery(accepted, true);
+                }
+            }
+        }
+        if (accepted > 0) {
+            inventory.setChanged();
+        }
+        return new Delivery(accepted, false);
     }
 }

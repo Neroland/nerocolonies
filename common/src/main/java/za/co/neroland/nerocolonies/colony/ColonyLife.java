@@ -108,6 +108,8 @@ public final class ColonyLife extends SavedData {
         private boolean cacheShared;
         @Nullable
         private Identifier priorityNeed;
+        @Nullable
+        private Identifier priorityTag;
         private int retributions;
         private boolean sandbox;
 
@@ -175,8 +177,25 @@ public final class ColonyLife extends SavedData {
             return this.priorityNeed;
         }
 
+        /**
+         * Prioritises one item, or clears the priority. An item and a tag are never both set: a
+         * colony puts one need first, whichever kind it is.
+         */
         public void setPriorityNeed(@Nullable Identifier item) {
             this.priorityNeed = item;
+            this.priorityTag = null;
+        }
+
+        /** The item tag the colony is putting first ("any planks"), or {@code null}. */
+        @Nullable
+        public Identifier priorityTag() {
+            return this.priorityTag;
+        }
+
+        /** Prioritises a need for "any item in this tag", or clears the priority. */
+        public void setPriorityTag(@Nullable Identifier tag) {
+            this.priorityTag = tag;
+            this.priorityNeed = null;
         }
 
         public int retributions() {
@@ -197,7 +216,7 @@ public final class ColonyLife extends SavedData {
 
         boolean isEmpty() {
             return !this.stageKnown && this.stuckEvents == 0 && this.births == 0 && this.cache.isEmpty()
-                    && this.priorityNeed == null && !this.sandbox
+                    && this.priorityNeed == null && this.priorityTag == null && !this.sandbox
                     && !this.cacheShared && this.retributions == 0;
         }
     }
@@ -206,7 +225,8 @@ public final class ColonyLife extends SavedData {
 
     private record Row(UUID colony, int stage, boolean stageKnown, long stuck, int births,
             long lastBirth, List<ItemStack> cache, long cacheStocked, boolean cacheShared,
-            Optional<Identifier> priority, int retributions, boolean sandbox) {
+            Optional<Identifier> priority, int retributions, boolean sandbox,
+            Optional<Identifier> priorityTag) {
 
         static final Codec<Row> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Colony.UUID_CODEC.fieldOf("colony").forGetter(Row::colony),
@@ -221,7 +241,8 @@ public final class ColonyLife extends SavedData {
                 Codec.BOOL.optionalFieldOf("cache_shared", false).forGetter(Row::cacheShared),
                 Identifier.CODEC.optionalFieldOf("priority").forGetter(Row::priority),
                 Codec.INT.optionalFieldOf("retributions", 0).forGetter(Row::retributions),
-                Codec.BOOL.optionalFieldOf("sandbox", false).forGetter(Row::sandbox)
+                Codec.BOOL.optionalFieldOf("sandbox", false).forGetter(Row::sandbox),
+                Identifier.CODEC.optionalFieldOf("priority_tag").forGetter(Row::priorityTag)
         ).apply(instance, Row::new));
     }
 
@@ -247,7 +268,7 @@ public final class ColonyLife extends SavedData {
             out.add(new Row(id, life.stage.ordinal(), life.stageKnown, life.stuckEvents, life.births,
                     life.lastBirthTick, cache, life.cacheLastStocked, life.cacheShared,
                     Optional.ofNullable(life.priorityNeed),
-                    life.retributions, life.sandbox));
+                    life.retributions, life.sandbox, Optional.ofNullable(life.priorityTag)));
         });
         return out;
     }
@@ -269,6 +290,8 @@ public final class ColonyLife extends SavedData {
             life.cacheLastStocked = row.cacheStocked();
             life.cacheShared = row.cacheShared();
             life.priorityNeed = row.priority().orElse(null);
+            // An item wins if a hand-edited file somehow carries both.
+            life.priorityTag = life.priorityNeed == null ? row.priorityTag().orElse(null) : null;
             life.retributions = Math.max(0, row.retributions());
             life.sandbox = row.sandbox();
         }

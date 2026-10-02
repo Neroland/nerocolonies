@@ -75,7 +75,7 @@ produced is ever silently voided.** A colony that has gone wrong is a problem to
 
 - **Neroland Core** — required, and the only hard dependency. NeroColonies uses Core's registration
   seam, machine base and side config, config framework, energy and gas systems, upgrade modules,
-  shared creative tab, currency API, progression gates, threshold event bus, space dimension tags,
+  currency API, progression gates, threshold event bus, space dimension tags,
   entity registration seam and data-erasure hook.
 - **Everything else is optional.** With no planet mod installed every dimension is breathable, so
   life support machinery builds and runs but has nothing to hold back; with no economy mod installed

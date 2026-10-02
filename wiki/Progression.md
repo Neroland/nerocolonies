@@ -57,11 +57,12 @@ After that it can carry itself.
 How it plays:
 
 1. The two founders arrive with the beacon. The colony picks a site for the first Starter Work and
-   waits. The beacon's Colony tab reads `Waiting for the Starter Works' materials. See the Needs
-   tab.`
-2. Put the listed materials into **colony storage**: through a Colony Depot inside the claim, by
-   using a Needs Board while holding the item, or with a hopper or pipe into the beacon. The beacon's
-   six supply slots are for food only.
+   waits. The beacon's Colony tab reads `Waiting for the Starter Works' materials: see the Needs
+   tab, then press Give needed items.`
+2. Hand over the listed materials. The quickest way is to carry them to the beacon, open it and
+   press **Give needed items** above your inventory: the colony takes what it needs and leaves the
+   rest. A Colony Depot inside the claim, a Needs Board, or a hopper or pipe into the beacon work
+   too. The beacon's six food supply slots are for food only.
 3. The moment the whole set for the current building is in storage it is taken, once, and the
    building goes up at full speed. Then the next Starter Work begins.
 
@@ -211,7 +212,7 @@ Open the beacon. Two tabs each carry a line that names the reason.
 | The tab says | Meaning | What to do |
 | --- | --- | --- |
 | `Arrivals paused: life support has failed.` | The dimension is airless and the colony has no oxygen | See [Life support](Life-Support.md) |
-| `Arrivals paused: the food store is empty. Put food in the supply row.` | The food stock is zero | Put food in the beacon's supply slots, or see to it that a Cook has food in colony storage to work with |
+| `Arrivals paused: the food store is empty. Put food in the Food supply slots.` | The food stock is zero | Put food in the beacon's supply slots, or see to it that a Cook has food in colony storage to work with |
 | `This colony has reached its population cap.` | The roster is at `colonistsPerColony` | A server setting |
 | `Housing is full. The colony builds more when it runs short.` | Every bed is taken | Supply the materials for the housing it is building, or place housing yourself |
 | `The server-wide Neran limit has been reached.` | The server is at `maxLoadedColonists` | A server setting |
@@ -223,7 +224,7 @@ The reasons are checked in that order and the first one that applies is shown.
 
 | The tab says | Meaning |
 | --- | --- |
-| `Waiting for the Starter Works' materials. See the Needs tab.` | The colony is founding and the current Starter Work is unpaid |
+| `Waiting for the Starter Works' materials: see the Needs tab, then press Give needed items.` | The colony is founding and the current Starter Work is unpaid |
 | `Morale is too low to work.` | Morale is below `moraleWorkStopThreshold` |
 | `Life support has failed, so building has stopped.` | As it says |
 | `There is nobody here to build.` | The roster is empty and `constructionRequiresColonist` is on |
@@ -232,12 +233,12 @@ The reasons are checked in that order and the first one that applies is shown.
 | `Looking for flat, open ground in the claim. Clear trees or level a spot to help.` | Something is eligible but no site fits |
 | `Autonomous construction is turned off on this server.` | `constructionEnabled` is `false` |
 
-A line reading `Fabricating <building> - 34% (no materials)` is not a stop: the colony is building
+A line reading `Fabricating <building>` is not a stop: the colony is building
 at the unsupplied rate. Put the materials in colony storage and it speeds up.
 
 ### The stage is not advancing
 
-- Look at the Needs tab's `next:` line and compare it with the People tab's Neran count and the
+- Look at the Needs tab's `Next stage:` line and compare it with the People tab's Neran count and the
   Colony tab's structure count. Both targets have to be met.
 - Population is capped by housing. If the colony has stopped building homes, the usual cause is that
   it has enough: it only starts a new house when fewer than two beds are free.

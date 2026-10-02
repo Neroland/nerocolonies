@@ -51,7 +51,7 @@ NeroColonies records **player-linked data** for gameplay and anti-grief: colony 
 
 ## Why it fits the ecosystem
 
-- 🧩 **Built on Neroland Core** — one power/upgrade framework, one currency and reputation layer, one claim/permission system, one progression arc, and shared `c:` material tags. NeroColonies' items appear in the shared Neroland creative tab.
+- 🧩 **Built on Neroland Core** — one power/upgrade framework, one currency and reputation layer, one claim/permission system, one progression arc, and shared `c:` material tags. NeroColonies' items have their own **NeroColonies** creative tab.
 - 🚀 **The payoff for the space arc** — it turns Nerospace's planets into places worth living, reading breathability and dimension data from Nerospace to gate life support. It closes the Earth → industrialise → space → colonies journey (Build #8) and seeds later mods with persistent, contestable off-world assets.
 - 🔌 **Interoperates, never hard-depends** — synergy mods are detected at runtime: **NeroAgriculture** feeds Nerans, **NeroLogistics** ships supplies and drains export buffers, and **NeroEconomy** prices and sells exports. External mods (Create, AE2, Mekanism, Ad Astra, Energized Power) interoperate through Core's common tags for power, items, and oxygen — no hard dependency on any of them.
 - 🧱 **Cross-loader** — NeoForge, Forge, and Fabric on Minecraft **26.1.2**, **26.2** and **26.3**.

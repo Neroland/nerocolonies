@@ -182,6 +182,7 @@ public final class Professions {
         boolean toolsmith = false;
         ColonyLife.Life life = server == null ? null : ColonyLife.get(server).peek(colony.colonyId());
         Identifier priority = life == null ? null : life.priorityNeed();
+        Identifier priorityTag = life == null ? null : life.priorityTag();
 
         List<ColonistEntity> roster = Population.colonistsOf(level, colony);
         for (ColonistEntity neran : roster) {
@@ -203,7 +204,7 @@ public final class Professions {
             neran.addProfessionXp(1);
             double chance = trade.outputChance() * morale * (neran.hasTool() ? 1.0D : 0.5D)
                     * (1.0D + LEVEL_BONUS * (neran.professionLevel() - 1));
-            if (priority != null && ColonyNeeds.gathers(trade, priority)) {
+            if (ColonyNeeds.boosted(trade, priority, priorityTag)) {
                 chance *= ColonyNeeds.PRIORITY_BOOST;
             }
             int batches = (int) Math.floor(chance) + (random.nextDouble() < chance - Math.floor(chance) ? 1 : 0);

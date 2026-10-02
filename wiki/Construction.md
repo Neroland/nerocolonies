@@ -156,8 +156,9 @@ count Builders on site, so a staffed site finishes sooner than it says.
 
 ### Where to see it
 
-- **The beacon's Needs tab** shows the colony's stage, the next milestone, up to three needs at a
-  time with a pager, and the build estimate.
+- **The beacon's Needs tab** shows the next milestone, the whole needs list (up to eight lines, each
+  with how much the colony has, how much it wants and an estimate), and the build estimate. Hover a
+  line to read it in full if its name was shortened.
 - **A Needs Board** (`nerocolonies:needs_board`) prints the list in chat when a member uses it
   empty-handed, up to eight lines.
 - **A companion app** — see [Link module](Link-Module.md).
@@ -167,36 +168,49 @@ builds one for itself in its Needs Board Pavilion.
 
 ### Contributing
 
-Use a Needs Board while holding something on the list. The colony takes as much of the stack as it
-still needs, straight into colony storage, and thanks you; if it does not need the item it says so
-and takes nothing.
+Every need is paid from **colony storage**, and there are three ways to put something there. Any
+member of the colony may use them.
 
-The board stores nothing itself. A contribution is exactly the same as putting the item in a Colony
-Depot, with the convenience that it never takes more than is wanted. Food is the one need the board
-does not take: food goes in the beacon's supply slots.
+- **At the beacon: the `Give needed items` button.** It sits above your inventory on every tab of the
+  beacon's screen. Carry the items to the beacon, open it and press the button: the colony takes
+  everything in your hotbar and inventory that the needs list wants, and no more of each thing than it
+  is short of. The button lights up only when you are carrying something on the list, and on the
+  Needs tab each need you can pay towards gets a green pip. A new colony has no depot yet, so this
+  is how the Starter Works get their materials.
+- **A Needs Board.** Use it while holding something on the list. The colony takes as much of the
+  stack as it still needs and thanks you; if it does not need the item it says so and takes nothing.
+- **A Colony Depot.** Open it and put the items in. A depot is a door onto colony storage itself, so
+  it takes anything, needed or not. Hoppers and pipes into a depot or the beacon work too.
+
+Neither the button nor the board stores anything itself, and neither takes more than is wanted.
+Food is the one need they do not take: food goes in the beacon's food supply slots. If colony
+storage is full the colony takes what fits and says so; a `CAPACITY` module in the beacon makes it
+bigger.
 
 ### Prioritising a need
 
-The owner or a Chief can put one need first. The trades that gather that item then work **half as
-fast again** until the priority is cleared or moved.
+The owner or a Chief can put one need first. The trades that gather it then work **half as fast
+again** until the priority is cleared or moved.
 
 - At the beacon: click the need on the Needs tab; click it again to clear it.
 - By command: `/nerocolonies colony need prioritise <colony> <item>`, or with no item to clear it.
 - From a companion app: the `prioritise_need` action.
 
-Only a single item can be prioritised. A line that stands for a tag — any logs, any planks, food —
-cannot be clicked at the beacon; with the command you can name a specific item such as
-`minecraft:oak_log` instead, whether or not it is on the list today. There is one priority per
-colony.
+At the beacon any line can be clicked, including one that stands for a tag — any logs, any planks,
+food. Prioritising a tag speeds up every trade that gathers something in it. The command and the
+companion app take a single item, such as `minecraft:oak_log`, whether or not it is on the list
+today. There is one priority per colony: setting a new one replaces the old.
 
 ## Watching it happen
 
-The beacon's **Colony** tab shows one line:
+The beacon's **Colony** tab has a **Construction** section. Its heading shows how many structures
+the colony has built (`3 built`), and under it:
 
-- `Building Habitat Pod - 34%` — supplied, running at full rate;
-- `Fabricating Habitat Pod - 34% (no materials)` — unsupplied, running at
-  `constructionUnsuppliedFactor`. Put the materials in colony storage;
-- `Not building - 3 structure(s) up`, followed by the reason.
+- `Building Habitat Pod`, a percentage and a progress bar — supplied, running at full rate;
+- `Fabricating Habitat Pod`, a percentage, an amber progress bar and a note that there are no
+  materials — unsupplied, running at `constructionUnsuppliedFactor`. Put the materials in colony
+  storage;
+- when nothing is being built, the reason, in full.
 
 A completed structure also:
 

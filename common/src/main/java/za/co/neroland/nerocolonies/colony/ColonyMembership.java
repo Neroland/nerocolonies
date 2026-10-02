@@ -252,6 +252,17 @@ public final class ColonyMembership {
      */
     public static Result setPriorityNeed(MinecraftServer server, Colony colony,
             ColonyPermissions.Role actor, @Nullable Identifier item) {
+        return setPriority(server, colony, actor, item, null);
+    }
+
+    /**
+     * Prioritises one need — a single item, or a tag ("any planks") — or clears the priority when
+     * both are {@code null}. If both are given the item wins. Owner or Chief.
+     *
+     * @return {@link Result#DONE}, {@link Result#ALREADY} when nothing changed, or a refusal
+     */
+    public static Result setPriority(MinecraftServer server, Colony colony, ColonyPermissions.Role actor,
+            @Nullable Identifier item, @Nullable Identifier tag) {
         if (!may(actor, ColonyPermissions.Action.PLAN)) {
             return Result.NOT_ALLOWED;
         }
@@ -259,12 +270,17 @@ public final class ColonyMembership {
         if (ColonyState.get(server).colony(id) == null) {
             return Result.ABSENT;
         }
+        Identifier wantedTag = item == null ? tag : null;
         ColonyLife store = ColonyLife.get(server);
         ColonyLife.Life life = store.life(id);
-        if (Objects.equals(life.priorityNeed(), item)) {
+        if (Objects.equals(life.priorityNeed(), item) && Objects.equals(life.priorityTag(), wantedTag)) {
             return Result.ALREADY;
         }
-        life.setPriorityNeed(item);
+        if (wantedTag != null) {
+            life.setPriorityTag(wantedTag);
+        } else {
+            life.setPriorityNeed(item);
+        }
         store.touch();
         return done(server, id);
     }

@@ -1,6 +1,7 @@
 package za.co.neroland.nerocolonies.registry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.core.registries.Registries;
@@ -9,7 +10,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
-import za.co.neroland.nerolandcore.registry.CoreCreativeTab;
 import za.co.neroland.nerolandcore.registry.RegistrationProvider;
 import za.co.neroland.nerolandcore.registry.RegistrationProvider.RegistryEntry;
 import za.co.neroland.nerolandcore.upgrade.UpgradeType;
@@ -23,10 +23,9 @@ import za.co.neroland.nerocolonies.item.ColonyUpgradeItem;
 /**
  * Item registrations, through Neroland Core's {@link RegistrationProvider}.
  *
- * <p>There is deliberately <b>no NeroColonies creative tab</b>: every item joins Core's shared
- * {@code Neroland} tab via {@link CoreCreativeTab}, so a player with five Nero mods installed gets
- * one tab rather than five. Core reads the tab's contents lazily when it is displayed, so
- * contributing after Core has already built the tab is fine.
+ * <p>Every item registered here is listed in NeroColonies' <b>own creative tab</b>
+ * ({@link NeroColoniesCreativeTab}), in registration order. Nothing is contributed to Neroland
+ * Core's shared {@code Neroland} tab.
  */
 public final class NeroColoniesItems {
 
@@ -127,10 +126,12 @@ public final class NeroColoniesItems {
     public static void init() {
     }
 
-    /** Adds every NeroColonies item to Core's shared creative tab. */
-    public static void addToCreativeTab() {
-        for (RegistryEntry<? extends Item> entry : TAB_ITEMS) {
-            CoreCreativeTab.add(entry::get);
-        }
+    /**
+     * Every NeroColonies item, in registration order — the contents of the mod's own creative tab.
+     * Read lazily by {@link NeroColoniesCreativeTab} when the tab is displayed, so the entries are
+     * only resolved after every registry has been filled.
+     */
+    public static List<RegistryEntry<? extends Item>> creativeContents() {
+        return Collections.unmodifiableList(TAB_ITEMS);
     }
 }

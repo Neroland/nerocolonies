@@ -62,15 +62,22 @@ public record ColonyIntentPayload(int op, BlockPos pos, String argument) impleme
     public static final int OP_ROLE_REMOVE = 7;
 
     /**
-     * Prioritise a need. {@link #argument} is the need's label exactly as the snapshot sent it, or
-     * empty to clear the priority. Only item ids count: a {@code #tag} label is ignored.
+     * Prioritise a need. {@link #argument} is the need's label exactly as the snapshot sent it — an
+     * item id, or {@code #tag} for an "any ..." need — or empty to clear the priority.
      */
     public static final int OP_PRIORITISE_NEED = 8;
 
     /** Share the Gratitude Cache with Allies ({@code "1"}) or stop sharing it ({@code "0"}). */
     public static final int OP_CACHE_SHARE = 9;
 
-    private static final int OP_COUNT = 10;
+    /**
+     * Hand the colony everything the sender is carrying that its needs list wants, and no more of
+     * each thing than it is short of. Takes no argument: what is taken is decided on the server, from
+     * the server's own needs list and the sender's own inventory.
+     */
+    public static final int OP_DELIVER = 10;
+
+    private static final int OP_COUNT = 11;
 
     /** A generous cap on the one free-text field — a player name or an id, never a sentence. */
     public static final int MAX_ARGUMENT_CHARS = 256;
@@ -140,6 +147,10 @@ public record ColonyIntentPayload(int op, BlockPos pos, String argument) impleme
     /** @param label the need's label from the snapshot, or empty to clear the priority */
     public static ColonyIntentPayload prioritiseNeed(BlockPos pos, String label) {
         return new ColonyIntentPayload(OP_PRIORITISE_NEED, pos, label);
+    }
+
+    public static ColonyIntentPayload deliver(BlockPos pos) {
+        return new ColonyIntentPayload(OP_DELIVER, pos, "");
     }
 
     public static ColonyIntentPayload cacheShare(BlockPos pos, boolean shared) {

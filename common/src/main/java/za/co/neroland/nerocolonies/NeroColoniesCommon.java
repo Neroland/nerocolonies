@@ -12,6 +12,7 @@ import za.co.neroland.nerocolonies.network.ColonyNetwork;
 import za.co.neroland.nerocolonies.platform.Services;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlocks;
+import za.co.neroland.nerocolonies.registry.NeroColoniesCreativeTab;
 import za.co.neroland.nerocolonies.registry.NeroColoniesEntityTypes;
 import za.co.neroland.nerocolonies.registry.NeroColoniesItems;
 import za.co.neroland.nerocolonies.registry.NeroColoniesMenus;
@@ -67,10 +68,10 @@ public final class NeroColoniesCommon {
         NeroColoniesItems.init();
         NeroColoniesMenus.init();
 
-        // 6. Everything joins Neroland Core's shared creative tab — NeroColonies has no tab of its
-        //    own. Core reads the tab lazily when displayed, so contributing after Core built it is
-        //    fine.
-        NeroColoniesItems.addToCreativeTab();
+        // 6. NeroColonies' own creative tab. Nothing is added to Neroland Core's shared tab. The
+        //    tab reads its contents lazily when displayed, so it only needs the item entries from
+        //    step 5 to exist, not to be resolved.
+        NeroColoniesCreativeTab.init();
 
         // 7. Entity attributes through Core's entity seam. No spawn placement is registered: a
         //    colonist has no natural spawn, it is grown by a colony that can house and feed it.

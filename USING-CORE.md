@@ -14,8 +14,7 @@ NeroColonies degrades gracefully without them; no third-party mod is depended on
 | Core package / class | Used for | Where |
 | --- | --- | --- |
 | `config.ConfigSchema`, `config.ConfigValue`, `config.ConfigManager` | The whole config schema — `config/nerocolonies.properties`, hot-reloadable via `/neroland config reload`, with server-authoritative flags per key | `common/src/main/java/za/co/neroland/nerocolonies/config/NeroColoniesConfig.java` |
-| `registry.RegistrationProvider`, `RegistrationProvider.RegistryEntry` | Loader-agnostic registration of blocks, items, block entities, entity types and menus | `common/.../registry/NeroColoniesBlocks.java`, `NeroColoniesItems.java`, `NeroColoniesBlockEntities.java`, `NeroColoniesEntityTypes.java`, `NeroColoniesMenus.java`; `forge/.../forge/NeroColoniesForge.java`; `neoforge/.../neoforge/NeroColoniesNeoForge.java` |
-| `registry.CoreCreativeTab` | Contributing every item to Core's shared **Neroland** creative tab. NeroColonies has no tab of its own, so five Nero mods still give a player one tab | `common/.../registry/NeroColoniesItems.java` |
+| `registry.RegistrationProvider`, `RegistrationProvider.RegistryEntry` | Loader-agnostic registration of blocks, items, block entities, entity types, menus and the mod's own creative tab | `common/.../registry/NeroColoniesBlocks.java`, `NeroColoniesItems.java`, `NeroColoniesBlockEntities.java`, `NeroColoniesEntityTypes.java`, `NeroColoniesMenus.java`, `NeroColoniesCreativeTab.java`; `forge/.../forge/NeroColoniesForge.java`; `neoforge/.../neoforge/NeroColoniesNeoForge.java` |
 | `entity.EntityRegistrationSupport` | Declaring the Neran's attributes (entity id `nerocolonies:colonist`) through Core's cross-loader entity seam. No spawn placement is registered — a Neran is grown by a colony, never spawned naturally | `common/.../registry/NeroColoniesEntityTypes.java` |
 | `machine.AbstractMachineBlockEntity` | The base class for all six block entities: energy buffer, upgrade container, side config plumbing and the shared server ticker | `common/.../block/entity/ColonyBeaconBlockEntity.java`, `ColonyDepotBlockEntity.java`, `JobStationBlockEntity.java`, `OutpostBeaconBlockEntity.java`, `OxygenGeneratorBlockEntity.java`, `ResearchStationBlockEntity.java`; the six block classes that build their tickers (`block/ColonyBeaconBlock.java`, `ColonyDepotBlock.java`, `JobStationBlock.java`, `OutpostBeaconBlock.java`, `OxygenGeneratorBlock.java`, `ResearchStationBlock.java`); and all three loader capability classes |
 | `sideconfig.SideConfig`, `SideMode`, `SidePreset`, `Channel`, `RelativeFace`, `SlotGroup` | Per-face item / energy / gas routing on every machine, and the item-slot filtering the `WorldlyContainer` implementations delegate to | `common/.../block/entity/ColonyBeaconBlockEntity.java`, `ColonyDepotBlockEntity.java`, `JobStationBlockEntity.java`, `OutpostBeaconBlockEntity.java`, `OxygenGeneratorBlockEntity.java`, `ResearchStationBlockEntity.java` (the research station uses every one of these except `SlotGroup` — it has no item slots) |
@@ -37,7 +36,9 @@ NeroColonies degrades gracefully without them; no third-party mod is depended on
 
 - **No claim layer.** Core has none, so the claim, role (Owner, Chief, Ally, Enemy) and
   operator-override model is NeroColonies' own.
-- **No creative tab of its own.** Everything joins Core's shared tab.
+- **No shared creative tab.** NeroColonies has its own **NeroColonies** tab
+  (`registry/NeroColoniesCreativeTab`) and adds nothing to Core's shared **Neroland** tab.
+  `registry.CoreCreativeTab` is deliberately unused.
 - **No HTTP or outbound networking.** Core ships none and neither does this mod; a companion app is
   served by a separate bridge mod.
 

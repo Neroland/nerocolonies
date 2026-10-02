@@ -44,18 +44,21 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
      * every slot from these very coordinates (see {@code NeroColoniesScreen#paintSlotWells}), so a
      * change here moves the frame with the slot rather than leaving the two out of step.
      *
-     * <p>Both module and supply slots sit in one band at the foot of the tab content, above the
-     * player inventory: they are the only things on this screen a player puts an item into, and a
-     * player who cannot see where the food goes will not feed the colony.
+     * <p>The supply and module slots sit <em>beside</em> the player inventory rather than above it,
+     * the six food slots as a 3x2 block level with the inventory's top rows and the three modules
+     * level with the hotbar. They are the only things on this screen a player puts an item into, so
+     * they are on every tab; putting them beside the inventory leaves the whole upper half of the
+     * panel for the colony's readouts.
      */
-    public static final int SLOT_ROW_Y = 110;
-    public static final int SUPPLY_ROW_X = 8;
-    public static final int SUPPLY_ROW_Y = SLOT_ROW_Y;
-    public static final int UPGRADE_ROW_X = 140;
-    public static final int UPGRADE_ROW_Y = SLOT_ROW_Y;
-    public static final int INVENTORY_X = 23;
-    public static final int INVENTORY_Y = 156;
-    public static final int HOTBAR_Y = 212;
+    public static final int INVENTORY_X = 8;
+    public static final int INVENTORY_Y = 155;
+    public static final int HOTBAR_Y = 213;
+    public static final int SUPPLY_COLUMNS = 3;
+    public static final int SUPPLY_ROWS = 2;
+    public static final int SUPPLY_X = 190;
+    public static final int SUPPLY_Y = INVENTORY_Y;
+    public static final int UPGRADE_X = SUPPLY_X;
+    public static final int UPGRADE_Y = HOTBAR_Y;
 
     private final Container container;
     private final ContainerData data;
@@ -74,7 +77,7 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         // Slot order is part of this menu's contract (quickMoveStack and the client's stand-in
         // container both index off it): three modules, then six supply, then the player inventory.
         for (int slot = 0; slot < UPGRADE_SLOTS; slot++) {
-            this.addSlot(new Slot(container, slot, UPGRADE_ROW_X + slot * 18, UPGRADE_ROW_Y) {
+            this.addSlot(new Slot(container, slot, UPGRADE_X + slot * 18, UPGRADE_Y) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return container.canPlaceItem(this.getContainerSlot(), stack);
@@ -83,7 +86,7 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         }
         for (int slot = 0; slot < SUPPLY_SLOTS; slot++) {
             this.addSlot(new Slot(container, UPGRADE_SLOTS + slot,
-                    SUPPLY_ROW_X + slot * 18, SUPPLY_ROW_Y) {
+                    SUPPLY_X + (slot % SUPPLY_COLUMNS) * 18, SUPPLY_Y + (slot / SUPPLY_COLUMNS) * 18) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
                     return container.canPlaceItem(this.getContainerSlot(), stack);

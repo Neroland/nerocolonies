@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1-beta.1] - 2026-10-02
+
+### Added
+
+- **A drop-off at the beacon: `Give needed items`.** A new colony has no depot, so there was nowhere
+  obvious to put the Starter Works' materials. The beacon's screen now has a `Give needed items`
+  button above the player inventory, on every tab. It hands the colony everything you are carrying
+  that its needs list wants, and no more of each thing than it is short of; the rest stays with
+  you. Any member may use it. The button lights up only when you are carrying something on the
+  list, each need you can pay towards gets a green pip on the Needs tab, and hovering a need says
+  how many you are carrying. Food is not taken: it still goes in the food supply slots. The server
+  decides what is taken, from its own needs list and your own inventory.
+- **"Any ..." needs can be put first.** A need that stands for a tag (any planks, any logs, food)
+  can now be clicked on the Needs tab like any other. Prioritising a tag speeds up every trade that
+  gathers something in it. The command and the link action still take a single item.
+
+### Changed
+
+- **NeroColonies has its own creative tab.** Every NeroColonies item is now listed in a dedicated
+  **NeroColonies** tab (icon: the Colony Beacon) instead of Neroland Core's shared **Neroland** tab.
+  Nothing is added to Core's tab any more. No item, block, recipe, tag or save data changed, and the
+  Core floor is unchanged.
+- **The colony beacon's screen has a new layout that shows everything.** The seven tabs are now a
+  rail down the left instead of two cramped rows, the food supply and module slots sit beside the
+  player inventory instead of above it, and the content area is twice as tall. Every tab is laid
+  out as caption/value rows with gauges, hints wrap instead of ending in "...", and the panel is
+  268 x 238 (was 208 x 236).
+  - **Needs** lists every need at once (it used to show two and hide the rest behind "+6 more"),
+    as an aligned table, and a tag such as `#minecraft:planks` reads "Any planks".
+  - **Colony** now also shows the claim radius, the oxygen generator count, and a Construction
+    section with a progress bar or the full reason nothing is being built.
+  - **Roles** now shows how full the Gratitude Cache is, and five roster lines instead of two.
+  - **Tech** now shows research progress and names the nodes that are ready to research.
+  - **People**, **Jobs** and **Trade** show their figures as rows with gauges (storage and export
+    buffer included) and their hints in full.
+  - A tab that needs attention carries a coloured pip on the rail: failed life support, paused
+    arrivals, a need the colony cannot meet alone, research that is ready, a full export buffer.
+  - Hovering the food or module slots says what goes in them.
+  The six food slots moved from one row to a 3 x 2 block; slot order, the menu's contract and every
+  synced value are unchanged, so this is client layout only.
+
 ## [0.3.0-beta.1] - 2026-10-02
 
 The living-colony release, and the first beta. A colony now starts with two founders and four
