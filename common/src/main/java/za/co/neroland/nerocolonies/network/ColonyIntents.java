@@ -324,8 +324,14 @@ public final class ColonyIntents {
             case NOTHING_TO_SELL -> Component.translatable("message.nerocolonies.export.nothing");
             case NO_MARKET -> Component.translatable("message.nerocolonies.export.no_market");
             case NO_OWNER -> Component.translatable("message.nerocolonies.export.no_owner");
+            case REFUSED -> Component.translatable("message.nerocolonies.export.refused",
+                    Component.translatable(String.valueOf(result.refusalKey())));
         });
         if (result.status() == ExportBuffer.SaleResult.Status.SOLD) {
+            if (result.refusalKey() != null) {
+                player.sendSystemMessage(Component.translatable("message.nerocolonies.export.partial",
+                        Component.translatable(result.refusalKey())));
+            }
             ColonySync.refresh(server, colony.colonyId());
         }
     }

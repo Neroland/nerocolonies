@@ -31,5 +31,8 @@
     "nerologistics": "*",
     "neroeconomy": "*",
     "energizedpower": "*"
+  },
+  "breaks": {
+    "neroeconomy": "<0.3.0-beta.1"
   }
 }

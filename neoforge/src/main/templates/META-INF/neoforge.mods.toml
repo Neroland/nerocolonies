@@ -65,12 +65,13 @@ versionRange = "[0,)"
 ordering = "AFTER"
 side = "BOTH"
 
-# NeroEconomy — optional. It registers itself as Core's CurrencyApi provider and export valuation
-# picks it up; absent, Core's in-memory fallback applies and the sell path is skipped.
+# NeroEconomy — optional. When present, export sales and stage rewards are paid through its budgeted
+# sibling API (0.3.0-beta.1+) and exports are priced at its Merchant House bid; absent, the export
+# table prices goods and the sale goes through Core's CurrencyApi (skipped with no real provider).
 [[dependencies.${mod_id}]]
 modId = "neroeconomy"
 type = "optional"
-versionRange = "[0,)"
+versionRange = "[0.3.0-beta.1,)"
 ordering = "AFTER"
 side = "BOTH"
 

@@ -167,6 +167,11 @@
   "message.nerocolonies.export.nothing": "Nothing in the export buffer is on this colony's manifest.",
   "message.nerocolonies.export.no_market": "No economy mod is installed, so exports cannot be sold.",
   "message.nerocolonies.export.no_owner": "This colony has no owner to pay.",
+  "message.nerocolonies.export.refused": "Nothing was sold, and the goods stay in the export buffer: %s",
+  "message.nerocolonies.export.partial": "The rest stays in the export buffer: %s",
+  "message.nerocolonies.export.deposit_failed": "The economy did not accept the payment, so nothing was sold.",
+  "message.nerocolonies.stage_reward.paid": "%s earned a stage reward of %s credits.",
+  "message.nerocolonies.stage_reward.refused": "The stage reward for %s was not paid: %s",
   "message.nerocolonies.export.routed_to_buffer": "This station now feeds the export buffer.",
   "message.nerocolonies.export.routed_to_storage": "This station now feeds colony storage.",
 

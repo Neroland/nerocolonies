@@ -936,17 +936,23 @@ public final class NeroColoniesCommands {
         }
         ExportBuffer.SaleResult result = ExportBuffer.sell(server, colony);
         if (result.status() != ExportBuffer.SaleResult.Status.SOLD) {
-            source.sendFailure(Component.translatable(switch (result.status()) {
-                case NOTHING_TO_SELL -> "message.nerocolonies.export.nothing";
-                case NO_MARKET -> "message.nerocolonies.export.no_market";
-                case NO_OWNER -> "message.nerocolonies.export.no_owner";
-                default -> "message.nerocolonies.export.nothing";
-            }));
+            source.sendFailure(switch (result.status()) {
+                case NOTHING_TO_SELL -> Component.translatable("message.nerocolonies.export.nothing");
+                case NO_MARKET -> Component.translatable("message.nerocolonies.export.no_market");
+                case NO_OWNER -> Component.translatable("message.nerocolonies.export.no_owner");
+                case REFUSED -> Component.translatable("message.nerocolonies.export.refused",
+                        Component.translatable(String.valueOf(result.refusalKey())));
+                default -> Component.translatable("message.nerocolonies.export.nothing");
+            });
             return 0;
         }
         ColonySync.refresh(server, colony.colonyId());
         source.sendSuccess(() -> Component.translatable("message.nerocolonies.export.sold",
                 result.items(), result.credits()), false);
+        if (result.refusalKey() != null) {
+            source.sendSuccess(() -> Component.translatable("message.nerocolonies.export.partial",
+                    Component.translatable(result.refusalKey())), false);
+        }
         return Command.SINGLE_SUCCESS;
     }
 

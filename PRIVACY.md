@@ -33,8 +33,8 @@ part way through and the buildings its owner or Chiefs have planned: blueprint i
 positions, rotations and counters. A plan does not record who placed it.
 
 `nerocolonies:life` holds each colony's growth stage, its counters (births, stuck events,
-retributions), the items in its Gratitude Cache and whether that cache is shared, and the one need
-that has been prioritised. Like the other two it is keyed by colony id, contains **no player data
+retributions, and how many export payouts it has had), the items in its Gratitude Cache and whether
+that cache is shared, and the one need that has been prioritised. Like the other two it is keyed by colony id, contains **no player data
 whatsoever**, and is out of scope for a data request.
 
 Colony **research** is stored on the colony record as a set of node ids. It is colony-local rather
@@ -172,6 +172,17 @@ Everything else is bounded by two mechanisms, and both end in the same place:
   request reaches.
 
 Both log **counts only** — never which colonies, and never which players.
+
+## Payments through NeroEconomy
+
+When NeroEconomy is installed, export sales and the optional stage reward are paid through its
+budgeted payout API. NeroColonies passes NeroEconomy only the colony owner's UUID it already holds,
+an amount and a reason code (`export_sale` or `stage_reward`). The request key that makes a retry
+safe is built from the **colony id and a payout counter** (or the stage name), never from a player
+id or name. NeroColonies stores nothing new about the player for this, and its logs carry counts and
+result names only — never who was paid or how much. What NeroEconomy keeps about these payments
+(today's total per player for its daily cap, and the ledger rows) is described in NeroEconomy's own
+privacy notice and is exported and erased with the player's other economy data there.
 
 ## Access / export
 

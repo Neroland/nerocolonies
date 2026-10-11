@@ -23,6 +23,8 @@ public final class CompatRegistry {
 
     private static volatile NerospaceCompat nerospace = NerospaceCompat.NONE;
 
+    private static volatile EconomyCompat economy = EconomyCompat.NONE;
+
     private static volatile boolean neroAgriculture;
     private static volatile boolean neroLogistics;
     private static volatile boolean neroEconomy;
@@ -48,11 +50,26 @@ public final class CompatRegistry {
         neroAgriculture = Services.PLATFORM.isModLoaded("neroagriculture");
         neroLogistics = Services.PLATFORM.isModLoaded("nerologistics");
         neroEconomy = Services.PLATFORM.isModLoaded("neroeconomy");
+        if (neroEconomy) {
+            // The one NeroEconomy-typed class, touched only now that the loader said it is present.
+            // It claims the budgeted caller here, at common init, as NeroEconomy requires.
+            try {
+                EconomyCompat bridge =
+                        za.co.neroland.nerocolonies.compat.neroeconomy.NeroEconomyBridge.probe();
+                if (bridge != null) {
+                    economy = bridge;
+                }
+            } catch (LinkageError e) {
+                NeroColoniesCommon.LOGGER.warn(
+                        "[NeroColonies] The NeroEconomy bridge could not load ({}); export sales use "
+                                + "Core's CurrencyApi.", e.getClass().getSimpleName());
+            }
+        }
 
         NeroColoniesCommon.LOGGER.info(
                 "[NeroColonies] Sibling compat: nerospace={}, neroagriculture={}, nerologistics={}, "
-                        + "neroeconomy={}.",
-                nerospace.active(), neroAgriculture, neroLogistics, neroEconomy);
+                        + "neroeconomy={} (budgeted={}).",
+                nerospace.active(), neroAgriculture, neroLogistics, neroEconomy, economy.active());
     }
 
     /**
@@ -109,5 +126,13 @@ public final class CompatRegistry {
 
     public static boolean hasNeroEconomy() {
         return neroEconomy;
+    }
+
+    /**
+     * NeroEconomy's budgeted payout and market-price façade. Never {@code null}: with NeroEconomy
+     * absent, or older than sibling API 1, this is {@link EconomyCompat#NONE}.
+     */
+    public static EconomyCompat economy() {
+        return economy;
     }
 }

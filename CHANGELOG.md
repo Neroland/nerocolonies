@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0-beta.1] - 2026-10-11
+
+### Added
+
+- **Export sales are paid through NeroEconomy's budgeted payouts.** With NeroEconomy 0.3.0 or later
+  installed, selling the export buffer is paid from its Reserve under the reason `export_sale`,
+  counted against the colony exports' own daily budget instead of the small pool shared by mods
+  that have not moved over. A full buffer is paid in several payouts of at most `exportPayoutChunk`
+  credits (new config key, default 1,000 to match NeroEconomy's `siblingMaxSinglePayout`; a larger
+  value is halved automatically when refused). Each payout removes only the goods it paid for and
+  the sale stops at the first refusal, so goods never leave the buffer without credits arriving.
+  Each payout's request key is the colony id plus a per-colony payout counter, persisted with the
+  colony's life record, so a retried payout is recognised and never paid twice.
+- **Exports are priced from the market.** With NeroEconomy installed, an item its Merchant Houses
+  buy is priced at their live bid for one unmodified unit; the export table times
+  `exportValueMultiplier` stays the price for everything else, and for every item without
+  NeroEconomy. The GUI preview uses the same prices.
+- **Optional stage rewards.** New config key `stageRewardCredits` (default `0`, off): a one-off
+  credit reward to the owner each time a colony reaches a new stage, paid through NeroEconomy under
+  the reason `stage_reward` and keyed by colony and stage so a stage is never paid twice. Needs
+  NeroEconomy; a refused reward is reported to the owner and not retried.
+- **A refused sale says why.** A new sale outcome, *Refused*, shows NeroEconomy's own explanation
+  (reserve low, today's budget spent, the owner's daily limit reached, economy paused). A partial
+  sale reports what was sold and why the rest stayed in the buffer.
+
+### Changed
+
+- **Without NeroEconomy's budgeted API, the deposit's result is checked.** Core's
+  `CurrencyApi.deposit` is now made before the goods leave the buffer, and they leave only when it
+  reports success.
+- **NeroEconomy is now compiled against, optionally.** NeroColonies compiles against NeroEconomy's
+  public API (`compileOnly`, never bundled) and touches it from one bridge class, loaded only when
+  NeroEconomy is present. The sibling API version is checked at start-up; with NeroEconomy absent or
+  older than API 1 nothing changes. The optional dependency now names a floor of `0.3.0-beta.1`
+  (NeoForge and Forge `versionRange`, Fabric `breaks`); NeroEconomy is still never required.
+
+### Privacy
+
+- No new player data is stored. NeroEconomy receives only the owner's UUID that NeroColonies already
+  holds; request keys carry a colony id and a counter, never a player id or name, and log lines carry
+  counts and result names only. See `PRIVACY.md`, *Payments through NeroEconomy*.
+
 ## [0.3.1-beta.1] - 2026-10-02
 
 ### Added

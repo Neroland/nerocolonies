@@ -71,6 +71,11 @@ dependencies {
     // and loads BEFORE NeroColonies (see fabric.mod.json depends).
     implementation "za.co.neroland.nerolandcore:nerolandcore-fabric-${mc}:${nerolandcoreVersion}"
 
+    // NeroEconomy — OPTIONAL. Its public api package on the compile classpath only, for the one bridge
+    // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
+    // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
+    compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${rootProject.neroeconomy_version}"
+
     // Sentry SDK (telemetry/NeroColoniesTelemetry): compile against it + embed it as a jar-in-jar so the
     // shipped Fabric jar carries it. Counterpart to the NeoForge JarJar bundling.
     implementation 'io.sentry:sentry:8.45.0'

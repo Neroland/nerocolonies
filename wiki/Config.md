@@ -77,7 +77,9 @@ have not changed, so existing config files carry over.
 | `jobSlotsPerColony` | integer | `4` | 0–64 | yes | Base number of simultaneously worked job slots per colony. Research raises it. |
 | `jobBaseRateMultiplier` | double | `1.0` | 0–100 | yes | Global scalar on every job's production rate. |
 | `exportBufferSlots` | integer | `18` | 1–54 | yes | Slots in the beacon's export buffer. Overflow blocks further export production rather than voiding items. |
-| `exportValueMultiplier` | double | `1.0` | 0–1,000 | yes | Scalar on the credits paid when an export entry is sold. |
+| `exportValueMultiplier` | double | `1.0` | 0–1,000 | yes | Scalar on the credits paid when an export entry is sold from the export table. Not applied to a NeroEconomy market bid. |
+| `exportPayoutChunk` | integer | `1000` | 1–1,000,000 | yes | With NeroEconomy, the largest single payout an export sale is split into. Keep it at or below NeroEconomy's `siblingMaxSinglePayout`; a larger value is halved automatically when refused. |
+| `stageRewardCredits` | integer | `0` | 0–1,000 | yes | One-off credit reward to the owner when a colony reaches a new stage. Needs NeroEconomy; `0` turns it off. |
 
 ## Autonomous construction
 

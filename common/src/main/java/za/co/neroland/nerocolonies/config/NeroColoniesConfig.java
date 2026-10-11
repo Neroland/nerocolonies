@@ -196,7 +196,22 @@ public final class NeroColoniesConfig {
 
     public static final ConfigValue<Double> EXPORT_VALUE_MULTIPLIER = SCHEMA.doubleRange(
             "exportValueMultiplier", 1.0D, 0.0D, 1000.0D, true,
-            "Scalar on the credits paid when an export entry is sold.");
+            "Scalar on the credits paid when an export entry is sold from the datapack export table. "
+                    + "With NeroEconomy installed, an item its Merchant Houses buy is priced at their "
+                    + "live bid instead, and this multiplier does not apply to it.");
+
+    public static final ConfigValue<Integer> EXPORT_PAYOUT_CHUNK = SCHEMA.intRange(
+            "exportPayoutChunk", 1000, 1, 1_000_000, true,
+            "With NeroEconomy installed, the largest single payout one export sale is split into. "
+                    + "Keep it at or below NeroEconomy's siblingMaxSinglePayout (1000 by default); a "
+                    + "larger value is halved automatically when NeroEconomy refuses it. A sale stops at "
+                    + "the first refused payout and the unpaid goods stay in the buffer.");
+
+    public static final ConfigValue<Integer> STAGE_REWARD_CREDITS = SCHEMA.intRange(
+            "stageRewardCredits", 0, 0, 1000, true,
+            "A one-off credit reward paid to a colony's owner each time the colony reaches a new stage "
+                    + "(Settled, Growing, Thriving, Metropolis). Needs NeroEconomy; paid from its Reserve "
+                    + "under the colony's daily budget. 0 (the default) turns it off.");
 
     // --- Autonomous construction (server-authoritative) ---------------------
 

@@ -112,6 +112,7 @@ public final class ColonyLife extends SavedData {
         private Identifier priorityTag;
         private int retributions;
         private boolean sandbox;
+        private long exportSales;
 
         public ColonyStage stage() {
             return this.stage;
@@ -210,6 +211,19 @@ public final class ColonyLife extends SavedData {
             return this.sandbox;
         }
 
+        /**
+         * How many budgeted export payouts this colony has had applied. Part of each payout's request
+         * key (colony id + this counter), so a retry of the same payout is recognised as a duplicate
+         * and a new one never is. A count, nothing player-shaped.
+         */
+        public long exportSales() {
+            return this.exportSales;
+        }
+
+        public void countExportSale() {
+            this.exportSales++;
+        }
+
         public void setSandbox(boolean value) {
             this.sandbox = value;
         }
@@ -217,7 +231,7 @@ public final class ColonyLife extends SavedData {
         boolean isEmpty() {
             return !this.stageKnown && this.stuckEvents == 0 && this.births == 0 && this.cache.isEmpty()
                     && this.priorityNeed == null && this.priorityTag == null && !this.sandbox
-                    && !this.cacheShared && this.retributions == 0;
+                    && !this.cacheShared && this.retributions == 0 && this.exportSales == 0L;
         }
     }
 
@@ -226,7 +240,7 @@ public final class ColonyLife extends SavedData {
     private record Row(UUID colony, int stage, boolean stageKnown, long stuck, int births,
             long lastBirth, List<ItemStack> cache, long cacheStocked, boolean cacheShared,
             Optional<Identifier> priority, int retributions, boolean sandbox,
-            Optional<Identifier> priorityTag) {
+            Optional<Identifier> priorityTag, long exportSales) {
 
         static final Codec<Row> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Colony.UUID_CODEC.fieldOf("colony").forGetter(Row::colony),
@@ -242,7 +256,8 @@ public final class ColonyLife extends SavedData {
                 Identifier.CODEC.optionalFieldOf("priority").forGetter(Row::priority),
                 Codec.INT.optionalFieldOf("retributions", 0).forGetter(Row::retributions),
                 Codec.BOOL.optionalFieldOf("sandbox", false).forGetter(Row::sandbox),
-                Identifier.CODEC.optionalFieldOf("priority_tag").forGetter(Row::priorityTag)
+                Identifier.CODEC.optionalFieldOf("priority_tag").forGetter(Row::priorityTag),
+                Codec.LONG.optionalFieldOf("export_sales", 0L).forGetter(Row::exportSales)
         ).apply(instance, Row::new));
     }
 
@@ -268,7 +283,8 @@ public final class ColonyLife extends SavedData {
             out.add(new Row(id, life.stage.ordinal(), life.stageKnown, life.stuckEvents, life.births,
                     life.lastBirthTick, cache, life.cacheLastStocked, life.cacheShared,
                     Optional.ofNullable(life.priorityNeed),
-                    life.retributions, life.sandbox, Optional.ofNullable(life.priorityTag)));
+                    life.retributions, life.sandbox, Optional.ofNullable(life.priorityTag),
+                    life.exportSales));
         });
         return out;
     }
@@ -294,6 +310,7 @@ public final class ColonyLife extends SavedData {
             life.priorityTag = life.priorityNeed == null ? row.priorityTag().orElse(null) : null;
             life.retributions = Math.max(0, row.retributions());
             life.sandbox = row.sandbox();
+            life.exportSales = Math.max(0L, row.exportSales());
         }
         return store;
     }

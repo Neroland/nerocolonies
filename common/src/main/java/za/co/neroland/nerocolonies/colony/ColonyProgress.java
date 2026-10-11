@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerolandcore.event.ThresholdEvents;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.compat.CompatRegistry;
+import za.co.neroland.nerocolonies.compat.EconomyCompat;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.Blueprint;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
@@ -140,7 +142,36 @@ public final class ColonyProgress {
         store.life(colony.colonyId()).setStage(earned);
         store.touch();
         announce(level, colony, earned);
+        payStageReward(server, colony, earned);
         return earned;
+    }
+
+    /**
+     * The optional one-off stage reward ({@code stageRewardCredits}, 0 = off): a budgeted NeroEconomy
+     * payout to the owner under the reason {@code stage_reward}, keyed
+     * {@code colony/<colony id>/stage/<stage>} so a stage can never be paid twice. Needs NeroEconomy's
+     * sibling API; without it, or for the gallery sandbox, nothing is paid. A refusal is reported to
+     * the owner and not retried: the reward is a bonus, not a debt.
+     */
+    private static void payStageReward(MinecraftServer server, Colony colony, ColonyStage stage) {
+        int amount = NeroColoniesConfig.STAGE_REWARD_CREDITS.get();
+        if (amount <= 0 || !colony.hasOwner() || ColonyLife.isSandbox(server, colony.colonyId())) {
+            return;
+        }
+        EconomyCompat economy = CompatRegistry.economy();
+        if (!economy.active()) {
+            return;
+        }
+        EconomyCompat.Payout payout = economy.pay(server, colony.ownerId(), amount,
+                EconomyCompat.REASON_STAGE_REWARD,
+                "colony/" + ExportBuffer.compactId(colony.colonyId()) + "/stage/" + stage.key());
+        ServerPlayer owner = server.getPlayerList().getPlayer(colony.ownerId());
+        if (owner != null) {
+            owner.sendSystemMessage(payout.ok()
+                    ? Component.translatable("message.nerocolonies.stage_reward.paid", colony.name(), amount)
+                    : Component.translatable("message.nerocolonies.stage_reward.refused", colony.name(),
+                            Component.translatable(String.valueOf(payout.translationKey()))));
+        }
     }
 
     /** Claim radius bonus a colony has grown into (zero before Growing). */

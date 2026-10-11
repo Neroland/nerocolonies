@@ -34,15 +34,28 @@ into the working stock rather than being voided.
 
 ## Selling
 
-Selling pays the colony's **owner** in Neroland Core's `CREDITS` currency, through Core's currency
-API. Everything sellable in the buffer is valued, removed and paid for in one operation.
+Selling pays the colony's **owner** in Neroland Core's `CREDITS` currency. Goods leave the buffer
+**only** for credits that actually moved: a refused payment leaves them where they are.
 
-Order matters: the market and the owner are checked **before** anything leaves the buffer, so a
-refused sale is a no-op rather than a partial one. A sale can end four ways:
+**With NeroEconomy 0.3.0 or later** the sale is paid from NeroEconomy's Reserve through its budgeted
+payout API, under the reason `export_sale`. A full buffer is paid in several payouts of at most
+`exportPayoutChunk` credits each (1,000 by default, matching NeroEconomy's `siblingMaxSinglePayout`).
+Each payout removes only the goods it paid for, and the sale **stops at the first refusal** — the
+Reserve is low, today's budget for colony exports is spent, the owner has had today's limit of
+credits from other mods, or the economy is paused. The player is told why in NeroEconomy's own
+words, and whatever was not paid for stays in the buffer for a later sale. Every payout carries a
+request key made of the colony id and a per-colony payout counter (never a player id or name), so a
+retried payout is recognised and never paid twice.
+
+**Without NeroEconomy** the whole buffer is paid in one deposit through Core's currency API, and the
+goods leave only when Core reports that the deposit succeeded.
+
+A sale can end five ways:
 
 | Outcome | Meaning |
 | --- | --- |
-| **Sold** | goods were removed and credits paid |
+| **Sold** | goods were removed and credits paid — possibly only part of the buffer, with the reason the rest stayed |
+| **Refused** | the market refused the first payout; nothing was sold and the reason is shown |
 | **Nothing to sell** | the buffer held nothing the loaded export tables recognise |
 | **No market** | no real currency provider is installed |
 | **No owner** | the colony has no player owner to pay |
@@ -57,9 +70,15 @@ provider and this path picks it up with no change here.
 
 ### Valuation
 
+With NeroEconomy installed, an item its Merchant Houses buy is priced at their **live bid** for one
+unmodified unit (NeroEconomy ships prices for the colony staples and upgrade modules). Everything
+else — and every item when NeroEconomy is absent — is priced from the export table:
+
 ```text
 credits = base value x item count x exportValueMultiplier   (floored to a whole number)
 ```
+
+The multiplier applies to table prices only, never to a market bid.
 
 Where a stack matches more than one export entry, the **most valuable** entry the colony has
 unlocked wins. A pack that lists an item twice meant the better price to apply, not whichever file
@@ -81,10 +100,15 @@ The shipped tables:
 | `nerocolonies:refined_metals` | `minecraft:iron_ingot` | 4.0 | `nerocolonies:trade/manifest` |
 | `nerocolonies:fabricated_goods` | `minecraft:repeater` | 12.0 | `nerocolonies:trade/manifest` |
 
-**The only code-level hook in the entire export system is the base value feeding Core's currency
-API.** It is a value lookup, not a pricing engine. NeroColonies has no market model and will not
-grow one: pricing belongs to a dedicated economy mod, and this path is already shaped to hand over
-to it.
+NeroColonies has no market model and will not grow one: pricing belongs to the economy mod. The
+export table is the fallback price list, used whenever no market bid is available.
+
+## Stage rewards
+
+`stageRewardCredits` (default `0`, off) pays a colony's owner a one-off reward each time the colony
+reaches a new stage. It needs NeroEconomy 0.3.0 or later and is paid from its Reserve under the
+reason `stage_reward`, counted against the same daily budgets as export sales. Each stage can be
+paid at most once per colony; a refused reward is reported to the owner and not retried.
 
 ## Outposts
 
