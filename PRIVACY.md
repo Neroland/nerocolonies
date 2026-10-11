@@ -326,3 +326,17 @@ ownership, access-list, role-list or access-log data**. `sendDefaultPii` is off,
 attached, the Sentry user object is cleared on every event, stack frames have their absolute paths
 stripped, and file paths are scrubbed of your OS account name before sending. Volume is bounded:
 events are de-duplicated per session and capped at 10 per game session.
+
+To exercise any data-subject right over an error report (access, deletion, objection), contact
+**[info@neroland.co.za](mailto:info@neroland.co.za)** with the approximate date/time of the crash so
+the matching event can be located and removed. Sentry acts as a data processor; see the
+[Sentry privacy policy](https://sentry.io/privacy/) and
+[data processing addendum](https://sentry.io/legal/dpa/).
+
+---
+
+> **Telemetry notice:** NeroColonies sends anonymous error reports (stack trace + mod/game versions
+> only — never IPs, usernames, UUIDs, or world data) to the developers via Sentry (EU servers) so
+> crashes can be fixed. On by default — opt out any time by setting `telemetryEnabled = false` in
+> `config/nerocolonies.properties`. Full details:
+> [PRIVACY.md](https://github.com/Neroland/nerocolonies/blob/main/PRIVACY.md).

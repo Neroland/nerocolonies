@@ -83,6 +83,14 @@ Energized Power are optional and detected at runtime; remove them all and the mo
 - [`CHANGELOG.md`](CHANGELOG.md) — what has shipped so far, with migration notes for existing worlds
 - [`CREDITS.md`](CREDITS.md) — where the building designs come from
 
+## Privacy
+
+NeroColonies sends anonymous crash reports (stack trace + mod/game versions only — never IPs,
+usernames, UUIDs, colony data or world data) via Sentry on EU servers. It is **on by default** and
+**opt-out**: set `telemetryEnabled=false` in `config/nerocolonies.properties` (client-local, takes
+effect on next launch). Player-linked colony data, retention, export and erasure are covered in
+[`PRIVACY.md`](PRIVACY.md).
+
 ## Build targets
 
 - **Minecraft:** 26.1.2, 26.2 and 26.3

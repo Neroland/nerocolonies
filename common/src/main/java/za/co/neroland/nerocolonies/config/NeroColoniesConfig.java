@@ -35,7 +35,9 @@ public final class NeroColoniesConfig {
                     + "mod/MC/loader/OS/Java versions, your other installed mods, this mod's config, "
                     + "an anonymous per-launch session marker; no IP, username, UUID, world "
                     + "data, colony ownership or chat; file paths scrubbed of your account name. "
-                    + "false = opt out of all of it. See PRIVACY.md");
+                    + "On by default; false = opt out of all of it "
+                    + "(client-local, takes effect on restart). "
+                    + "See PRIVACY.md");
 
     // --- Claims and caps (server-authoritative) -----------------------------
 

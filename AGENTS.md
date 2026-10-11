@@ -17,7 +17,7 @@
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
 - Version: **0.3.0-beta.1**, the first beta: the living-colony rework (stages, professions, 51
   blueprints, roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the
-  gallery). `docs/AUDIT-2026-10.md` is the audit that opened it. Verified by the nine-cell build,
+  gallery), opened by the October 2026 audit. Verified by the nine-cell build,
   `ecjCheck` and the JUnit suite; **not yet run in a game client**, so never write that it was.
 - Targets **MC 26.1.2, 26.2 AND 26.3** on **NeoForge, MinecraftForge/Forge, and Fabric** → the **"9 cells"**.
   **Java 25.** Mappings = official Mojang names (26.x ships de-obfuscated; no Parchment).

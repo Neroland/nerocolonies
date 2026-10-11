@@ -15,7 +15,7 @@ have not changed, so existing config files carry over.
 
 | Key | Type | Default | Server-authoritative | Purpose |
 | --- | --- | --- | --- | --- |
-| `telemetryEnabled` | boolean | `true` | **no** — client-local | Send anonymous, NeroColonies-only crash reports (Sentry, EU servers): stack trace, mod/MC/loader/OS/Java versions, your other installed mods, this mod's config, an anonymous per-launch session marker. No IP, username, UUID, world data, colony ownership or chat; file paths scrubbed of your account name. `false` opts out of all of it. See [Telemetry](Telemetry.md) and [`../PRIVACY.md`](../PRIVACY.md). Read once at bootstrap, so a change takes effect on restart. |
+| `telemetryEnabled` | boolean | `true` | **no** — client-local | Send anonymous, NeroColonies-only crash reports (Sentry, EU servers): stack trace, mod/MC/loader/OS/Java versions, your other installed mods, this mod's config, an anonymous per-launch session marker. No IP, username, UUID, world data, colony ownership or chat; file paths scrubbed of your account name. **On by default**; set `false` in `config/nerocolonies.properties` to opt out of all of it. See [Telemetry](Telemetry.md) and [`../PRIVACY.md`](../PRIVACY.md). Read once at bootstrap, so a change takes effect on restart. |
 
 ## Claims and caps
 

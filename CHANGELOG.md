@@ -326,7 +326,7 @@ Checked so far by automation only: all nine loader/version cells build, `ecjChec
 
 ### Fixed (audit)
 
-From the October 2026 audit (`docs/AUDIT-2026-10.md`, items AUD-01 to AUD-40).
+From the October 2026 audit (items AUD-01 to AUD-40).
 
 - **Nerans no longer vanish when a colony's chunk reloads.** The colony uses its saved housing
   figure until the first housing sweep after a load has finished, and never grows or shrinks the
