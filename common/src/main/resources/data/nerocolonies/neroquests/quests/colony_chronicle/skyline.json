@@ -1,0 +1,33 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.skyline.title",
+  "description": "quest.nerocolonies.colony_chronicle.skyline.desc",
+  "icon": "minecraft:lodestone",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/thriving_city"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:stage",
+      "min_value": 4,
+      "audience": "world"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 600
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 500
+    },
+    {
+      "type": "neroquests:item",
+      "item": "nerocolonies:capacity_module",
+      "count": 1
+    }
+  ],
+  "scope": "server",
+  "visible_gate": "nerocolonies:established"
+}

@@ -1,0 +1,28 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.settled_ground.title",
+  "description": "quest.nerocolonies.colony_chronicle.settled_ground.desc",
+  "icon": "minecraft:bricks",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:structures",
+      "min_value": 3,
+      "audience": "everyone"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 200
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 250
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

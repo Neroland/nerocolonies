@@ -15,15 +15,19 @@
   stay `*Colonist*`, so existing worlds and configs load. Never rename any of them.
 - Mod id: **`nerocolonies`** (matches the registry namespace + every loader manifest). Package root:
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
-- Version: **0.3.0-beta.1**, the first beta: the living-colony rework (stages, professions, 51
-  blueprints, roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the
-  gallery), opened by the October 2026 audit. Verified by the nine-cell build,
-  `ecjCheck` and the JUnit suite; **not yet run in a game client**, so never write that it was.
+- Version: **0.5.0-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
+  roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the gallery); 0.4 added
+  NeroEconomy payouts; 0.5 ships the Colony Chronicle quest chapter, nine record gates, three new
+  threshold channels and the two quest-hook rewards. Verified by the nine-cell build, `ecjCheck`
+  and the JUnit suite; **not yet run in a game client**, so never write that it was.
 - Targets **MC 26.1.2, 26.2 AND 26.3** on **NeoForge, MinecraftForge/Forge, and Fabric** → the **"9 cells"**.
   **Java 25.** Mappings = official Mojang names (26.x ships de-obfuscated; no Parchment).
-- **Neroland Core is the only hard dependency** (floor 1.13.0, the `nerolandcore_version` pin). Nerospace, NeroAgriculture,
+- **Neroland Core is the only hard dependency** (floor 1.15.0, the `nerolandcore_version` pin). Nerospace, NeroAgriculture,
   NeroLogistics, NeroEconomy and Energized Power are optional, detected once at init, and interop
   runs through tags and capabilities. No third-party mod is a dependency in any build script.
+- **NeroQuests is never a dependency, in any form** — no import, no manifest entry, no `compileOnly`.
+  The quest pack under `data/nerocolonies/neroquests/` is inert data plus lang keys; the only
+  contract with a quest mod is Core's gates and threshold bus. `QuestPackTest` checks the pack.
 
 ## Working rules
 
@@ -92,10 +96,20 @@
   and never reaches a neighbouring colony's claim.
 - **Goods come from the colony tick.** A trade's `outputs` are gathered in `Professions.produce`
   whether or not a Neran is loaded; the visible behaviours in `entity/ai/profession` are extra.
-- **No Core gate is ever required.** `progression/ColonyGates` *writes* two soft gates for other
-  mods to read and never reads one. `ProgressionGates.tryOpen`, never `open`. Colony stages are the
-  mod's own progression: they live in `ColonyLife` and only ever go up.
-- **Broadcasts and threshold events carry a colony id, never a person.**
+- **No Core gate is ever required.** `progression/ColonyGates` *writes* gates for other mods to
+  read and never reads one for access. The two soft gates (`established`, `self_sufficient`) honour
+  their `requires` (`tryOpen`, or the offline UUID path that checks `GateDefinitions` first); the
+  nine **record gates** (`stage_*`, `life_support_online`, `food_secure`, `first_research`,
+  `first_export`, `first_outpost`) have no `requires` and go through `ColonyGates.record`. Only
+  gates that ship a file under `data/nerocolonies/neroland_gates/` may ever be written: Core resolves
+  an undefined gate to server scope. Colony stages are the mod's own progression: they live in
+  `ColonyLife` and only ever go up.
+- **Hook gates (`hook/supply_drop`, `hook/morale_boost`) are records a quest mod opens**, handled
+  in `progression/QuestHooks`: effect to the player's own colony, then `close` to re-arm. Never
+  check one for access; never log the target UUID.
+- **Broadcasts and threshold events carry a colony id, never a person.** Every `ThresholdEvents.fire`
+  passes `NeroColoniesCommon.MOD_ID` as the source. New count-style channels go through
+  `colony/ColonyCrossings`.
 - **The gallery's sandbox colony stays invisible:** it never runs a colony cycle and never appears
   in a link section, event, alert, gate write or threshold event. Never mark a real player as an
   Enemy in it.
@@ -113,7 +127,7 @@
 - Static analysis: `./gradlew :fabric:26.2:ecjCheck` (the VS Code Problems panel, via `tools/ecj.prefs`).
   The task only FAILS on errors.
 - Tests: `./gradlew :neoforge:26.2:test` runs the pure-JVM JUnit suite in `common/src/test/java`
-  (146 tests in 12 classes; also part of every `:neoforge:<mc>:build`). `common` is source-only, so
+  (149 tests in 14 classes; also part of every `:neoforge:<mc>:build`). `common` is source-only, so
   the NeoForge nodes own test execution. Model tests only: no server or client is started. Put the
   pure half of new logic where a test can reach it.
 - A Cowork agent sandbox cannot decompile Minecraft — run builds natively (or via the local gradle MCP)
@@ -136,7 +150,7 @@
 
 ```text
 za.co.neroland.nerocolonies
-├── NeroColoniesCommon            the 11-step init(); link module is step 11
+├── NeroColoniesCommon            the 11-step init(); quest hooks are step 10b, link module step 11
 ├── config/ telemetry/ platform/  Core config, opt-out Sentry, ServiceLoader seams
 ├── network/                      own channel, snapshot + definitions payloads, intents
 ├── data/                         erasure registration, SavedDataRecovery, LenientCodecs
@@ -161,7 +175,8 @@ za.co.neroland.nerocolonies
 ├── command/                      NeroColoniesCommands (the /nerocolonies tree, built once in
 │                                 common) + GalleryCommand
 ├── link/                         ColonyLinkModule/Snapshots/Sections/Actions/Events/Access
-├── progression/ColonyGates       two soft gates, written and never read
+├── progression/                  ColonyGates (soft + record gates, written and never read),
+│                                 QuestHooks (the two mod_hook reward gates)
 └── compat/                       CompatRegistry, the one reflective Nerospace bridge, and the
                                   JEI/EMI information pages
 ```

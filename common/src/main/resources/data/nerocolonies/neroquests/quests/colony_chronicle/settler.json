@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.settler.title",
+  "description": "quest.nerocolonies.colony_chronicle.settler.desc",
+  "icon": "minecraft:campfire",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:stage_settled"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 100
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

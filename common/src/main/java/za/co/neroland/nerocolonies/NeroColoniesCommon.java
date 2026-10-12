@@ -10,6 +10,7 @@ import za.co.neroland.nerocolonies.data.NeroColoniesData;
 import za.co.neroland.nerocolonies.link.ColonyLinkModule;
 import za.co.neroland.nerocolonies.network.ColonyNetwork;
 import za.co.neroland.nerocolonies.platform.Services;
+import za.co.neroland.nerocolonies.progression.QuestHooks;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlocks;
 import za.co.neroland.nerocolonies.registry.NeroColoniesCreativeTab;
@@ -92,6 +93,10 @@ public final class NeroColoniesCommon {
         //     whose type is unregistered at load time would decode to Unknown for the whole session.
         ColonyNetwork.init();
         ResearchEffectTypes.init();
+
+        // 10b. The quest-hook listener on Core's gate bus: a quest pack's mod_hook reward opens a
+        //      record gate, this applies the effect to the player's colony. No quest mod is named.
+        QuestHooks.init();
 
         // 11. The NeroLink module goes LAST, so a companion client is never told about something
         //     before the mod itself has finished reacting to it, and its own init swallows any

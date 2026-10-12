@@ -1,0 +1,28 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.beacon_lit.title",
+  "description": "quest.nerocolonies.colony_chronicle.beacon_lit.desc",
+  "icon": "nerocolonies:colony_beacon",
+  "prerequisites": [],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:established"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 100
+    },
+    {
+      "type": "neroquests:item",
+      "item": "minecraft:bread",
+      "count": 8
+    },
+    {
+      "type": "neroquests:mod_hook",
+      "gate": "nerocolonies:hook/supply_drop"
+    }
+  ],
+  "scope": "player"
+}

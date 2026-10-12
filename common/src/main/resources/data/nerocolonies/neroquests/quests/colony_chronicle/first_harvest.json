@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.first_harvest.title",
+  "description": "quest.nerocolonies.colony_chronicle.first_harvest.desc",
+  "icon": "minecraft:bread",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:food_secure"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    },
+    {
+      "type": "neroquests:mod_hook",
+      "gate": "nerocolonies:hook/morale_boost"
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

@@ -65,19 +65,25 @@ buffer.
 - **Companion app support** — eleven read sections and four actions through Core's link API (schema
   version 2), scoped to the colonies the requesting player owns or is a member of. People are
   counts, never names.
+- **A quest chapter** — *Colony Chronicle*, 22 quests that follow a colony from its beacon to a
+  Metropolis, shipped as a NeroQuests quest pack inside this jar. It appears in the quest book when
+  NeroQuests is installed and is inert otherwise; NeroQuests is optional and never a dependency.
+  Two of its rewards reach the colony itself: a crate of starter goods and a morale boost.
 - **Everything is datapack-driven** — jobs, professions, research, housing tiers, export tables,
   structure blueprints, the Gratitude Cache loot tables and the land-clearing block tags are all
   data.
 
-Neroland Core is the only hard dependency. Nerospace, NeroAgriculture, NeroLogistics, NeroEconomy and
-Energized Power are optional and detected at runtime; remove them all and the mod still runs.
+Neroland Core (1.15.0 or later) is the only hard dependency. Nerospace, NeroAgriculture,
+NeroLogistics, NeroEconomy, NeroQuests and Energized Power are optional; remove them all and the mod
+still runs.
 
 ## Documentation
 
 - [Wiki](wiki/Home.md) — player and operator documentation, including
   [Progression](wiki/Progression.md), [Nerans and Professions](wiki/Nerans-and-Professions.md),
   [Buildings](wiki/Buildings.md), [Roles and Defence](wiki/Roles-and-Defence.md),
-  [Gratitude Cache](wiki/Gratitude-Cache.md) and [Gallery](wiki/Gallery.md)
+  [Gratitude Cache](wiki/Gratitude-Cache.md), [Gallery](wiki/Gallery.md) and
+  [NeroQuests integration](wiki/NeroQuests-Integration.md)
 - [`PRIVACY.md`](PRIVACY.md) — what is stored, retention, export and erasure, telemetry opt-out
 - [`USING-CORE.md`](USING-CORE.md) — every Neroland Core API this mod consumes
 - [`CHANGELOG.md`](CHANGELOG.md) — what has shipped so far, with migration notes for existing worlds

@@ -70,6 +70,8 @@ produced is ever silently voided.** A colony that has gone wrong is a problem to
 - [Content format](Content-Format.md) — the datapack JSON schemas for jobs, research, housing,
   exports, blueprints and professions, with worked examples, and what happens to bad content.
 - [Link module](Link-Module.md) — what a Neroland companion app can see and do.
+- [NeroQuests integration](NeroQuests-Integration.md) — the Colony Chronicle quest chapter, the
+  record gates and threshold channels behind it, and the two rewards a quest can send to a colony.
 
 ## Requirements
 
@@ -79,8 +81,9 @@ produced is ever silently voided.** A colony that has gone wrong is a problem to
   entity registration seam and data-erasure hook.
 - **Everything else is optional.** With no planet mod installed every dimension is breathable, so
   life support machinery builds and runs but has nothing to hold back; with no economy mod installed
-  exports still accumulate but cannot be sold. NeroColonies never *requires* a progression gate to
-  be open, and it hard-depends on no third-party mod.
+  exports still accumulate but cannot be sold; with NeroQuests installed the Colony Chronicle
+  chapter appears in the quest book. NeroColonies never *requires* a progression gate to be open,
+  and it hard-depends on no third-party mod.
 
 ## Privacy
 

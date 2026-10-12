@@ -23,6 +23,7 @@ import za.co.neroland.nerocolonies.compat.EconomyCompat;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.content.ExportEntry;
+import za.co.neroland.nerocolonies.progression.ColonyGates;
 
 /**
  * The colony's export buffer: where jobs flagged {@code export} put their output, and the one place
@@ -290,6 +291,11 @@ public final class ExportBuffer {
                 } else if (!CurrencyApi.deposit(colony.ownerId(), CoreCurrencies.CREDITS, credits)) {
                     refusal = "message.nerocolonies.export.deposit_failed";
                     break;
+                } else {
+                    // Counted on both paths so the sale tally below is honest; the budgeted path's
+                    // request keys only need to be unique, so a skipped number costs nothing.
+                    life.life(colony.colonyId()).countExportSale();
+                    life.touch();
                 }
             }
             for (Take take : takes) {
@@ -314,6 +320,10 @@ public final class ExportBuffer {
         // Counts only — never who was paid (POPIA/GDPR).
         NeroColoniesCommon.LOGGER.debug("[NeroColonies] A colony sold {} export item(s) for {} credit(s).",
                 sold, paid);
+        // The world hears the sale tally on the colony's channel; the owner gets the record gate.
+        ColonyCrossings.count(server, colony, ColonyCrossings.CHANNEL_EXPORTS_SHIPPED,
+                life.life(colony.colonyId()).exportSales());
+        ColonyGates.recordForOwner(server, colony, ColonyGates.FIRST_EXPORT);
         return new SaleResult(sold, paid, SaleResult.Status.SOLD, refusal);
     }
 

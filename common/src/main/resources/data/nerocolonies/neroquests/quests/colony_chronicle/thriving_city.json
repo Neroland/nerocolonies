@@ -1,0 +1,28 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.thriving_city.title",
+  "description": "quest.nerocolonies.colony_chronicle.thriving_city.desc",
+  "icon": "minecraft:bell",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/growing_township"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:stage",
+      "min_value": 3,
+      "audience": "world"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 400
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 300
+    }
+  ],
+  "scope": "server",
+  "visible_gate": "nerocolonies:established"
+}

@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.on_its_own_feet.title",
+  "description": "quest.nerocolonies.colony_chronicle.on_its_own_feet.desc",
+  "icon": "minecraft:hay_block",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/settled_ground"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:self_sufficient"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 300
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 300
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

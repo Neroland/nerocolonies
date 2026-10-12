@@ -12,6 +12,7 @@ import net.minecraft.server.MinecraftServer;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.content.ResearchNode;
+import za.co.neroland.nerocolonies.progression.ColonyGates;
 
 /**
  * The <b>writing</b> side of colony research: spending a node's cost and adding it to the colony.
@@ -143,6 +144,9 @@ public final class Research {
         // A node id and a count — never which colony belongs to whom (POPIA/GDPR).
         NeroColoniesCommon.LOGGER.debug("[NeroColonies] A colony unlocked research {} ({} total).",
                 nodeId, unlocked.size());
+        // The world hears a count on the colony's channel; the owner gets the personal record gate.
+        ColonyCrossings.count(server, colony, ColonyCrossings.CHANNEL_RESEARCH, unlocked.size());
+        ColonyGates.recordForOwner(server, colony, ColonyGates.FIRST_RESEARCH);
         return true;
     }
 }

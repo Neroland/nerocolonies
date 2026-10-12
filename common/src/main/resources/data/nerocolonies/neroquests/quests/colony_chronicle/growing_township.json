@@ -1,0 +1,28 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.growing_township.title",
+  "description": "quest.nerocolonies.colony_chronicle.growing_township.desc",
+  "icon": "minecraft:oak_door",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/charter_signed"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:stage",
+      "min_value": 2,
+      "audience": "world"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 250
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 200
+    }
+  ],
+  "scope": "server",
+  "visible_gate": "nerocolonies:established"
+}

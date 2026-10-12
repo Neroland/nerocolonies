@@ -32,6 +32,7 @@ import za.co.neroland.nerolandcore.progression.CoreGates;
 import za.co.neroland.nerolandcore.progression.ProgressionGates;
 
 import za.co.neroland.nerocolonies.progression.ColonyGates;
+import za.co.neroland.nerocolonies.progression.QuestHooks;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.block.entity.ColonyBeaconBlockEntity;
@@ -168,6 +169,8 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
             // mod reads it — see ColonyGates.
             ColonyGates.founded(player);
         }
+        // A quest reward that arrived before this player owned a colony lands now.
+        QuestHooks.onFounded(serverLevel.getServer(), colony);
         player.sendSystemMessage(
                 Component.translatable("message.nerocolonies.claim.founded", colony.name()));
         NeroColoniesCommon.LOGGER.info("[NeroColonies] Colony founded in {} ({} total).",

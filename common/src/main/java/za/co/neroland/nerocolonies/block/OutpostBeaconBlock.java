@@ -36,6 +36,7 @@ import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.Outpost;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
+import za.co.neroland.nerocolonies.progression.ColonyGates;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 
 /**
@@ -127,6 +128,8 @@ public class OutpostBeaconBlock extends BaseEntityBlock {
         ColonyState colonies = ColonyState.get(serverLevel.getServer());
         colonies.putOutpost(outpost);
         beacon.bind(outpost.outpostId());
+        // The placing player's personal record of a first outpost. A record gate gates nothing.
+        ColonyGates.record(serverLevel.getServer(), player.getUUID(), ColonyGates.FIRST_OUTPOST);
 
         player.sendSystemMessage(
                 Component.translatable("message.nerocolonies.outpost.founded", parent.name()));

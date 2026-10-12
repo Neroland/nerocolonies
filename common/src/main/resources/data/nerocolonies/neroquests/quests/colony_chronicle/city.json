@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.city.title",
+  "description": "quest.nerocolonies.colony_chronicle.city.desc",
+  "icon": "minecraft:bell",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/township"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:stage_thriving"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 400
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 300
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

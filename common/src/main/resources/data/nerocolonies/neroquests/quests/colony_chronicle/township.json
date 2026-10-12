@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.township.title",
+  "description": "quest.nerocolonies.colony_chronicle.township.desc",
+  "icon": "minecraft:oak_door",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/settler"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:stage_growing"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 250
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 200
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

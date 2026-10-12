@@ -1,0 +1,117 @@
+{
+  "title": "chapter.nerocolonies.colony_chronicle.title",
+  "icon": "nerocolonies:colony_beacon",
+  "allow_server_scope": true,
+  "quests": [
+    {
+      "quest": "nerocolonies:colony_chronicle/beacon_lit",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/drawing_board",
+      "x": 2,
+      "y": -2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/settled_ground",
+      "x": 2,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/breathing_room",
+      "x": 2,
+      "y": 2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/full_larder",
+      "x": 4,
+      "y": 2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/back_to_work",
+      "x": 4,
+      "y": 4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/charter_signed",
+      "x": 4,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/growing_township",
+      "x": 6,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/thriving_city",
+      "x": 8,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/skyline",
+      "x": 10,
+      "y": 0
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/on_its_own_feet",
+      "x": 6,
+      "y": 2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/far_reach",
+      "x": 6,
+      "y": -2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/settler",
+      "x": 2,
+      "y": -4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/township",
+      "x": 4,
+      "y": -4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/city",
+      "x": 6,
+      "y": -4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/metropolis",
+      "x": 8,
+      "y": -4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/first_breakthrough",
+      "x": 2,
+      "y": -6
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/open_for_trade",
+      "x": 0,
+      "y": -6
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/first_breath",
+      "x": 0,
+      "y": 2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/first_harvest",
+      "x": 0,
+      "y": 4
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/outpost_planted",
+      "x": 8,
+      "y": -2
+    },
+    {
+      "quest": "nerocolonies:colony_chronicle/bustling",
+      "x": 8,
+      "y": 4
+    }
+  ]
+}

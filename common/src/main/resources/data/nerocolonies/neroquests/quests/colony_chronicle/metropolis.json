@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.metropolis.title",
+  "description": "quest.nerocolonies.colony_chronicle.metropolis.desc",
+  "icon": "minecraft:lodestone",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/city"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:stage_metropolis"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 600
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 500
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

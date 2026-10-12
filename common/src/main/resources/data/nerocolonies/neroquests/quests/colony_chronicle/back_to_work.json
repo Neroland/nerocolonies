@@ -1,0 +1,24 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.back_to_work.title",
+  "description": "quest.nerocolonies.colony_chronicle.back_to_work.desc",
+  "icon": "minecraft:iron_pickaxe",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/breathing_room"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:morale",
+      "direction": "rising",
+      "audience": "world"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    }
+  ],
+  "scope": "server",
+  "visible_gate": "nerocolonies:established"
+}

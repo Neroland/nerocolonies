@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.open_for_trade.title",
+  "description": "quest.nerocolonies.colony_chronicle.open_for_trade.desc",
+  "icon": "minecraft:emerald",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/settler"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:first_export"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 200
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 200
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

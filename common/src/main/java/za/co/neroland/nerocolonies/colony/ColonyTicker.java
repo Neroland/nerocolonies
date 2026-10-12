@@ -73,6 +73,17 @@ public final class ColonyTicker {
     public static final Identifier CHANNEL_STRUCTURES =
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "structures");
 
+    /**
+     * Core threshold channel: the colony's population. Fired when the roster crosses one of
+     * {@link #POPULATION_RUNGS} in either direction, with the new population as the value and the
+     * rung as the threshold. A "world log" quest can key off "a colony passed twenty-five Nerans".
+     */
+    public static final Identifier CHANNEL_POPULATION =
+            Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "population");
+
+    /** The population sizes worth a crossing on {@link #CHANNEL_POPULATION}. */
+    static final long[] POPULATION_RUNGS = {10L, 25L, 50L};
+
     /** Morale level whose crossing is worth publishing — the work-stop threshold is the interesting one. */
     private static final long MORALE_THRESHOLD_FALLBACK = 20L;
 
@@ -101,6 +112,7 @@ public final class ColonyTicker {
         private boolean lastLifeSupportOk = true;
         private boolean lastStarving;
         private boolean lastWorkStopped;
+        private int lastPopulation = -1;
         private LifeSupport.State lastLifeState = LifeSupport.State.OK;
         private boolean lastExportsFull;
 
@@ -237,8 +249,10 @@ public final class ColonyTicker {
         //     here, and never a requirement for anything.
         ColonyGates.tick(level, updated);
 
-        // 6. Threshold events and companion-client events, on crossings only.
+        // 6. Threshold events and companion-client events, on crossings only. The two "first time
+        //    it was fine" record gates for the owner sit with them: same signals, personal audience.
         publishCrossings(state, updated);
+        recordFirsts(level, updated);
         publishLinkEvents(level, state, updated);
         remember(level, state, updated);
 
@@ -300,7 +314,7 @@ public final class ColonyTicker {
         int built = Construction.structuresBuilt(level.getServer(), colony.colonyId());
         if (NeroColoniesConfig.THRESHOLD_EVENTS_ENABLED.get()) {
             try {
-                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
                         CHANNEL_STRUCTURES, colony.colonyId().toString(), built, 0L, true));
             } catch (RuntimeException | LinkageError e) {
                 NeroColoniesCommon.LOGGER.warn(
@@ -332,25 +346,53 @@ public final class ColonyTicker {
         try {
             boolean starving = FoodSupply.starving(colony);
             if (starving != state.lastStarving) {
-                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
                         CHANNEL_FOOD_STOCK, scope, colony.foodStock(), 0L, !starving));
             }
             if (colony.lifeSupportOk() != state.lastLifeSupportOk) {
-                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
                         CHANNEL_OXYGEN, scope, colony.lifeSupportOk() ? 1L : 0L, 1L,
                         colony.lifeSupportOk()));
             }
             boolean stopped = Morale.workStopped(colony);
             if (stopped != state.lastWorkStopped) {
                 long threshold = Math.round(NeroColoniesConfig.MORALE_WORK_STOP_THRESHOLD.get());
-                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
                         CHANNEL_MORALE, scope, Math.round(colony.morale()),
                         threshold == 0 ? MORALE_THRESHOLD_FALLBACK : threshold, !stopped));
+            }
+            int population = colony.population();
+            if (state.lastPopulation >= 0 && population != state.lastPopulation) {
+                for (long rung : POPULATION_RUNGS) {
+                    boolean was = state.lastPopulation >= rung;
+                    boolean now = population >= rung;
+                    if (was != now) {
+                        ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
+                                CHANNEL_POPULATION, scope, population, rung, now));
+                    }
+                }
             }
         } catch (RuntimeException | LinkageError e) {
             // A subscriber that throws must not take the colony tick with it.
             NeroColoniesCommon.LOGGER.warn(
                     "[NeroColonies] A threshold-event subscriber failed; the colony tick continued.", e);
+        }
+    }
+
+    /**
+     * The owner's two "first time it was fine" record gates: life support holding, and food in store
+     * with nobody starving. Written once each (the {@code isOpen} check inside {@code record} makes
+     * the usual cycle one lookup per gate), online or offline, never for the gallery sandbox.
+     */
+    private static void recordFirsts(ServerLevel level, Colony colony) {
+        if (!colony.hasOwner() || level.getServer() == null) {
+            return;
+        }
+        if (colony.lifeSupportOk()) {
+            ColonyGates.recordForOwner(level.getServer(), colony, ColonyGates.LIFE_SUPPORT_ONLINE);
+        }
+        if (colony.foodStock() > 0 && !FoodSupply.starving(colony)) {
+            ColonyGates.recordForOwner(level.getServer(), colony, ColonyGates.FOOD_SECURE);
         }
     }
 
@@ -396,6 +438,7 @@ public final class ColonyTicker {
         state.lastLifeSupportOk = colony.lifeSupportOk();
         state.lastStarving = FoodSupply.starving(colony);
         state.lastWorkStopped = Morale.workStopped(colony);
+        state.lastPopulation = colony.population();
         state.lastLifeState = LifeSupport.stateOf(colony);
         state.lastExportsFull = exportsFull(level, colony);
     }

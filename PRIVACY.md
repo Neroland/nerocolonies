@@ -246,15 +246,27 @@ personal data; the colony that remains identifies nobody.
 
 ## Events and broadcasts
 
-NeroColonies publishes colony food, oxygen, morale, structure-count and stage threshold crossings
-on Neroland Core's shared event bus, so other mods can react to a colony in trouble or one that has
-grown. Every one of those events is **scoped to a colony id and never to a player**. That is not
+NeroColonies publishes colony food, oxygen, morale, structure-count, stage, population, research and
+export-sale threshold crossings on Neroland Core's shared event bus, so other mods can react to a
+colony in trouble or one that has grown. Every one of those events is **scoped to a colony id and
+never to a player**, carries a count or a state and names this mod as its publisher. That is not
 incidental: the event bus is a broadcast surface any mod can subscribe to, and a colony id
 identifies a place, not a person. Publishing can be switched off entirely with
 `thresholdEventsEnabled`.
 
 The chat messages a colony sends to its own online members (a new stage, a retribution) name the
 colony and never a player.
+
+## Progression gates
+
+NeroColonies writes player-scope progression gates into Neroland Core's progression store — two soft
+gates (`established`, `self_sufficient`), nine milestone records (the stages, life support online,
+food secure, first research, first export, first outpost) and two hook gates a quest pack may name as
+a reward (`hook/supply_drop`, `hook/morale_boost`). Each is a flag keyed by the player's existing game
+UUID; it is stored by Core, not by this mod, and is removed by Core's own erasure registration when a
+player's data is erased. None of them is ever read to allow or deny anything, and none is logged
+with an identity. `gateWritesEnabled=false` stops the soft and milestone writes; the hook gates are
+closed again after their one-off effect regardless, so a reward is never delivered twice.
 
 ## Companion app (link module)
 

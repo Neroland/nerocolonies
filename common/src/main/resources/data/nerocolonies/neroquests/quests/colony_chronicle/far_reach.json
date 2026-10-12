@@ -1,0 +1,21 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.far_reach.title",
+  "description": "quest.nerocolonies.colony_chronicle.far_reach.desc",
+  "icon": "nerocolonies:outpost_beacon",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:craft_item",
+      "item": "nerocolonies:outpost_beacon"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    }
+  ],
+  "scope": "player"
+}

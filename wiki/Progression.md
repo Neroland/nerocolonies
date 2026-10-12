@@ -29,7 +29,9 @@ The rules behind the table:
 When a colony advances, every member who is online is told `<colony> has grown: it is now <stage>.`
 The crossing is also published on Core's threshold event bus (channel `nerocolonies:stage`, scoped to
 the colony id, value 0–4) unless `thresholdEventsEnabled` is off, and sent to companion apps
-([Link module](Link-Module.md)).
+([Link module](Link-Module.md)). The owner and every online member also receive the personal record
+gate `nerocolonies:stage_<stage>`, which the Colony Chronicle quests read
+([NeroQuests integration](NeroQuests-Integration.md)).
 
 The beacon's **Needs** tab shows the current stage and the next milestone: `next: the Starter Works`
 while founding, then `next: 6 Nerans, 6 buildings` and so on. `/nerocolonies colony info` prints the

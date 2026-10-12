@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0-beta.1] - 2026-10-11
+
+The quest release: a quest chapter, the milestone gates and world channels that drive it, and two
+quest rewards a colony can receive. Requires Neroland Core 1.15.0.
+
+### Added
+
+- **A quest chapter.** Ships a NeroQuests quest pack — chapter `nerocolonies:colony_chronicle`
+  *Colony Chronicle*, 22 quests — that appears in the quest book when NeroQuests is installed and
+  is inert otherwise: no dependency in either direction, the pack is data and lang inside this jar.
+  Fourteen personal quests follow one player's colony (the beacon, the Colony Planner, each stage
+  from Settled to Metropolis, life support online, food secure, the first research node, the first
+  export sale, the first outpost, self-sufficiency); eight *world log* quests record, once for the
+  whole server, the first colony to reach each stage, to recover its air, its larder or its morale,
+  and to pass twenty-five Nerans. Quests after the beacon are hidden until the player's
+  `nerocolonies:established` gate is open.
+- **Nine record gates.** Player-scope Core gates written as personal milestones and never read:
+  `stage_settled`, `stage_growing`, `stage_thriving`, `stage_metropolis` (for the owner and every
+  online member when a colony advances), `life_support_online` and `food_secure` (the owner, on the
+  first colony cycle with life support holding, or food in store and nobody starving),
+  `first_research`, `first_export` (the owner) and `first_outpost` (the placing player). They have
+  no `requires`, gate nothing and ship as datapack files under `data/nerocolonies/neroland_gates/`.
+- **Three threshold channels.** `nerocolonies:population` fires when a colony's roster crosses 10,
+  25 or 50 in either direction; `nerocolonies:research` fires on each research unlock with the
+  colony's node count; `nerocolonies:exports_shipped` fires on each export sale with the colony's
+  sale count. Scoped to the colony id like every other channel, behind `thresholdEventsEnabled`.
+- **Two quest rewards.** A pack may name the hook gates `nerocolonies:hook/supply_drop` (a fixed
+  crate — 32 cobblestone, 32 oak planks, 16 oak logs, 16 bread, 4 lanterns — lands in the completing
+  player's own colony store; what does not fit is skipped) and `nerocolonies:hook/morale_boost` (the
+  colony's morale rises by 15 points, capped at 100, and drifts back to its target at the usual
+  rate). Both go to the colony, so an offline player's colony receives them at once; a player who
+  owns no colony keeps the reward until they found one. The gallery sandbox receives nothing.
+- A JUnit check of the shipped pack against the pack rules (translation keys, scope, reward types,
+  and that every gate a quest names is a file this mod ships).
+
+### Changed
+
+- **Requires Neroland Core 1.15.0** (was 1.13.0) for the offline-capable gate writes and sourced
+  threshold crossings. The loader ranges derive from the pin as before.
+- **Gate writes no longer wait for the owner to be online.** `nerocolonies:self_sufficient` and
+  the record gates are written through Core's UUID overloads; the self-sufficiency gate still
+  honours its `requires` before opening.
+- **Every threshold crossing now names its publisher** (`nerocolonies`) through Core 1.15.0's
+  sourced `fire`, so a listener can tell this mod's channels from another's.
+- An export sale paid through Core's currency API (without NeroEconomy) now counts on the colony's
+  sale tally as a budgeted sale always did. The tally is only ever a count.
+
+### Privacy
+
+- The new record and hook gates live in Neroland Core's progression store, keyed by the player's
+  existing game UUID and erased by Core's own erasure hook; this mod stores nothing new. The new
+  channels carry a colony id and a count, never a player. See `PRIVACY.md`, *Events and
+  broadcasts* and *Progression gates*.
+
 ## [0.4.0-beta.1] - 2026-10-11
 
 ### Added

@@ -1,0 +1,21 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.drawing_board.title",
+  "description": "quest.nerocolonies.colony_chronicle.drawing_board.desc",
+  "icon": "nerocolonies:colony_planner",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:craft_item",
+      "item": "nerocolonies:colony_planner"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 50
+    }
+  ],
+  "scope": "player"
+}

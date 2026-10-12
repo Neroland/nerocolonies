@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.first_breakthrough.title",
+  "description": "quest.nerocolonies.colony_chronicle.first_breakthrough.desc",
+  "icon": "minecraft:enchanted_book",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/settler"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:first_research"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 200
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 150
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

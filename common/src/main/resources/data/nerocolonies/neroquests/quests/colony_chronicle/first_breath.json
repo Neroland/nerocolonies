@@ -1,0 +1,22 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.first_breath.title",
+  "description": "quest.nerocolonies.colony_chronicle.first_breath.desc",
+  "icon": "minecraft:conduit",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/beacon_lit"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:life_support_online"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

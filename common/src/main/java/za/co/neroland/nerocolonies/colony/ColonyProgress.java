@@ -22,6 +22,7 @@ import za.co.neroland.nerocolonies.content.Blueprint;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.link.ColonyLinkEvents;
 import za.co.neroland.nerocolonies.link.ColonyLinkModule;
+import za.co.neroland.nerocolonies.progression.ColonyGates;
 
 /**
  * The colony's growth stage: deciding it, advancing it, and announcing it.
@@ -190,9 +191,10 @@ public final class ColonyProgress {
         Component message = Component.translatable("message.nerocolonies.stage_advanced",
                 colony.name(), Component.translatable("stage.nerocolonies." + stage.key()));
         tellMembers(server, colony, message);
+        recordStage(server, colony, stage);
         if (NeroColoniesConfig.THRESHOLD_EVENTS_ENABLED.get()) {
             try {
-                ThresholdEvents.fire(new ThresholdEvents.ThresholdCrossing(
+                ThresholdEvents.fire(NeroColoniesCommon.MOD_ID, new ThresholdEvents.ThresholdCrossing(
                         CHANNEL_STAGE, colony.colonyId().toString(), stage.ordinal(), 0L, true));
             } catch (RuntimeException | LinkageError e) {
                 NeroColoniesCommon.LOGGER.warn(
@@ -204,6 +206,25 @@ public final class ColonyProgress {
         extra.addProperty("stage_index", stage.ordinal());
         ColonyLinkEvents.colonyEvent(colony, ColonyLinkModule.TOPIC_STAGE, extra);
         NeroColoniesCommon.LOGGER.debug("[NeroColonies] A colony reached stage {}.", stage.key());
+    }
+
+    /**
+     * The personal record of a stage: the {@code nerocolonies:stage_<stage>} gate, opened for the
+     * owner (online or not) and for every member who is online to hear the announcement. A record
+     * gate gates nothing; it exists so a quest pack can read it. Founding has no gate.
+     */
+    private static void recordStage(MinecraftServer server, Colony colony, ColonyStage stage) {
+        Identifier gate = ColonyGates.stageGate(stage);
+        if (gate == null) {
+            return;
+        }
+        ColonyGates.recordForOwner(server, colony, gate);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID id = player.getUUID();
+            if (colony.isMember(id)) {
+                ColonyGates.record(server, id, gate);
+            }
+        }
     }
 
     /** Sends a system message to every online member of the colony. Names nobody. */

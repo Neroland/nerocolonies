@@ -1,0 +1,26 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.charter_signed.title",
+  "description": "quest.nerocolonies.colony_chronicle.charter_signed.desc",
+  "icon": "minecraft:paper",
+  "prerequisites": [],
+  "objectives": [
+    {
+      "type": "neroquests:custom_event",
+      "channel": "nerocolonies:stage",
+      "min_value": 1,
+      "audience": "world"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 150
+    },
+    {
+      "type": "neroquests:currency",
+      "amount": 150
+    }
+  ],
+  "scope": "server",
+  "visible_gate": "nerocolonies:established"
+}

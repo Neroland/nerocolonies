@@ -1,0 +1,22 @@
+{
+  "title": "quest.nerocolonies.colony_chronicle.outpost_planted.title",
+  "description": "quest.nerocolonies.colony_chronicle.outpost_planted.desc",
+  "icon": "nerocolonies:outpost_beacon",
+  "prerequisites": [
+    "nerocolonies:colony_chronicle/far_reach"
+  ],
+  "objectives": [
+    {
+      "type": "neroquests:gate_open",
+      "gate": "nerocolonies:first_outpost"
+    }
+  ],
+  "rewards": [
+    {
+      "type": "neroquests:xp",
+      "amount": 200
+    }
+  ],
+  "scope": "player",
+  "visible_gate": "nerocolonies:established"
+}

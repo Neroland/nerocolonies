@@ -282,6 +282,24 @@ public final class ColonyState extends SavedData {
         return total;
     }
 
+    /**
+     * Server-side only: the colony this player owns — the oldest, when they own several — or
+     * {@code null}. The server-owner placeholder owns nothing.
+     */
+    @Nullable
+    public Colony ownedBy(@Nullable UUID player) {
+        if (player == null || Colony.SERVER_OWNER.equals(player)) {
+            return null;
+        }
+        Colony oldest = null;
+        for (Colony colony : this.byId.values()) {
+            if (colony.isOwner(player) && (oldest == null || colony.createdAt() < oldest.createdAt())) {
+                oldest = colony;
+            }
+        }
+        return oldest;
+    }
+
     /** Server-side only: the ids of the colonies this player owns or is a member of. */
     public List<UUID> memberOf(UUID player) {
         if (player == null) {
