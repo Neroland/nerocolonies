@@ -56,8 +56,9 @@ jobs:
           jq -Rs '{
             body: .,
             title: "NeroColonies",
-            description: "Mine alien ore, power up your machines, build rockets — then terraform a dead world until it rains.",
-            categories: ["technology", "worldgen", "adventure"],
+            description: "Settle the planets you reached: drop a beacon, ship in supplies, and let your Nerans grow a self-sustaining off-world settlement that keeps running while you are away.",
+            categories: ["management", "technology", "adventure"],
+            additional_categories: [],
             client_side: "required",
             server_side: "required",
             issues_url: "https://github.com/Neroland/nerocolonies/issues",
@@ -68,11 +69,28 @@ jobs:
             license_url: "https://github.com/Neroland/nerocolonies/blob/main/LICENSE"
           }' art/modrinth_description.md > payload.json
 
+          # Clear the additional (non-featured) categories first. Modrinth stores both kinds
+          # in one table and a `categories` PATCH only clears the primary rows, so a category
+          # that is already "additional" makes the insert fail with HTTP 500 (duplicate key
+          # on mods_categories_pkey). Both lists are pinned here, so nothing is lost.
+          CLEAR_CODE=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X PATCH "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT_ID}" \
+            -H "Authorization: ${MODRINTH_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: Neroland/nerocolonies-ci (info@neroland.co.za)" \
+            --data '{"additional_categories": []}')
+
+          if [ "$CLEAR_CODE" != "204" ]; then
+            echo "::error::Modrinth API returned HTTP $CLEAR_CODE while clearing additional categories"
+            cat response.txt
+            exit 1
+          fi
+
           HTTP_CODE=$(curl -sS -o response.txt -w "%{http_code}" \
             -X PATCH "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT_ID}" \
             -H "Authorization: ${MODRINTH_API_TOKEN}" \
             -H "Content-Type: application/json" \
-            -H "User-Agent: Neroland/nerocolonies-ci (dario@neroland.co.za)" \
+            -H "User-Agent: Neroland/nerocolonies-ci (info@neroland.co.za)" \
             --data @payload.json)
 
           if [ "$HTTP_CODE" != "204" ]; then
@@ -101,7 +119,7 @@ jobs:
             -X PATCH "https://api.modrinth.com/v2/project/${MODRINTH_PROJECT_ID}/icon?ext=png" \
             -H "Authorization: ${MODRINTH_API_TOKEN}" \
             -H "Content-Type: image/png" \
-            -H "User-Agent: Neroland/nerocolonies-ci (dario@neroland.co.za)" \
+            -H "User-Agent: Neroland/nerocolonies-ci (info@neroland.co.za)" \
             --data-binary @"$ICON")
 
           if [ "$HTTP_CODE" != "204" ]; then
