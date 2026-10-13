@@ -101,7 +101,7 @@ repositories {
 
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${forgeVersion}")
-    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.5'
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
 
     // Neroland Core — REQUIRED shared foundation (registration seam, config, creative tab, data
     // erasure, machine base, side config, energy/gas, progression gates). Core ships as its own mod
@@ -113,7 +113,7 @@ dependencies {
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
     compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${mc}:${rootProject.neroeconomy_version}"
 
-    implementation 'io.sentry:sentry:8.45.0'
+    implementation 'io.sentry:sentry:8.60.0'
     jarJar(group: 'io.sentry', name: 'sentry', version: '8.45.0')
 
     // JEI common API only; Forge 26.x loader artifacts are not yet published on the pinned JEI lines.
