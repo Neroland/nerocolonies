@@ -36,6 +36,18 @@
     {
       "id": "nerocolonies:fabricator_station",
       "required": false
+    },
+    {
+      "id": "nerocolonies:gratitude_cache",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:needs_board",
+      "required": false
+    },
+    {
+      "id": "nerocolonies:planning_table",
+      "required": false
     }
   ]
 }

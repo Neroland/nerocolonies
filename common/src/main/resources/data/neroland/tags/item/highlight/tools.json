@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "nerocolonies:colony_planner",
+      "required": false
+    }
+  ]
+}

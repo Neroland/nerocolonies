@@ -12,6 +12,10 @@
     {
       "id": "nerocolonies:habitat_block",
       "required": false
+    },
+    {
+      "id": "nerocolonies:thank_you_note",
+      "required": false
     }
   ]
 }
