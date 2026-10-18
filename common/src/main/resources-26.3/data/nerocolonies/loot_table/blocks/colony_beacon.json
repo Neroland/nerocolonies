@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "nerocolonies:colony_beacon"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "nerocolonies:blocks/colony_beacon"
+}

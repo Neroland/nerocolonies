@@ -1,0 +1,174 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "max": 3,
+              "min": 1
+            }
+          },
+          "name": "minecraft:bread",
+          "weight": 30
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "max": 3,
+              "min": 1
+            }
+          },
+          "name": "minecraft:apple",
+          "weight": 25
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "max": 6,
+              "min": 2
+            }
+          },
+          "name": "minecraft:iron_nugget",
+          "weight": 20
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "max": 5,
+              "min": 2
+            }
+          },
+          "name": "minecraft:wheat_seeds",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": {
+              "type": "minecraft:uniform",
+              "max": 3,
+              "min": 1
+            }
+          },
+          "name": "minecraft:carrot",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:emerald",
+          "weight": 2
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 3,
+        "min": 2
+      }
+    },
+    {
+      "entries": [
+        {
+          "type": "minecraft:empty",
+          "weight": 490
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_lore",
+            "lore": [
+              {
+                "color": "gold",
+                "italic": true,
+                "translate": "item.nerocolonies.thank_you_note.lore.0"
+              }
+            ],
+            "mode": "append"
+          },
+          "name": "nerocolonies:thank_you_note",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_lore",
+            "lore": [
+              {
+                "color": "gold",
+                "italic": true,
+                "translate": "item.nerocolonies.thank_you_note.lore.1"
+              }
+            ],
+            "mode": "append"
+          },
+          "name": "nerocolonies:thank_you_note",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_lore",
+            "lore": [
+              {
+                "color": "gold",
+                "italic": true,
+                "translate": "item.nerocolonies.thank_you_note.lore.2"
+              }
+            ],
+            "mode": "append"
+          },
+          "name": "nerocolonies:thank_you_note",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_lore",
+            "lore": [
+              {
+                "color": "gold",
+                "italic": true,
+                "translate": "item.nerocolonies.thank_you_note.lore.3"
+              }
+            ],
+            "mode": "append"
+          },
+          "name": "nerocolonies:thank_you_note",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:set_lore",
+            "lore": [
+              {
+                "color": "gold",
+                "italic": true,
+                "translate": "item.nerocolonies.thank_you_note.lore.4"
+              }
+            ],
+            "mode": "append"
+          },
+          "name": "nerocolonies:thank_you_note",
+          "weight": 2
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "nerocolonies:gratitude/tier_1"
+}
