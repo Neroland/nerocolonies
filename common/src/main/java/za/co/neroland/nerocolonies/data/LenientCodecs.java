@@ -15,7 +15,8 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
  *
  * <p>{@code Codec.listOf()} fails the whole list when one element fails, and every NeroColonies
  * store is a handful of lists. One item from a mod that has since been removed, or one malformed
- * UUID, used to fail the entire file. {@link SavedDataRecovery} then installed fresh data, and the
+ * UUID, used to fail the entire file. The saved-data guard
+ * ({@link za.co.neroland.nerolandcore.data.SavedDataRecovery}) then installed fresh data, and the
  * next save overwrote every colony on the server. A lenient list decodes what it can, skips what it
  * cannot, and logs how many it skipped (a count and a label, never the content, which could be
  * player-shaped).

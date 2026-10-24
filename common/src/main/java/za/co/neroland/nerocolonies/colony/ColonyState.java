@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
-import za.co.neroland.nerocolonies.data.SavedDataRecovery;
+import za.co.neroland.nerolandcore.data.SavedDataRecovery;
 
 /**
  * The one server-wide colony index: {@code colony id → }{@link Colony}, plus the optional
@@ -38,8 +38,8 @@ import za.co.neroland.nerocolonies.data.SavedDataRecovery;
  *
  * <p>Persisted as vanilla {@link SavedData} on the <b>overworld</b> (so it is always loaded, even
  * while a colony's own dimension is not) under the name {@code nerocolonies:colonies}. Every
- * accessor goes through {@link SavedDataRecovery}, so a corrupt file degrades to an empty index
- * instead of crashing the server.
+ * accessor goes through Neroland Core's {@link SavedDataRecovery}, so a corrupt file degrades to
+ * Core's last-known-good backup (or, failing that, an empty index) instead of crashing the server.
  *
  * <h2>Indexes</h2>
  *

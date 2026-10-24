@@ -15,7 +15,7 @@
   stay `*Colonist*`, so existing worlds and configs load. Never rename any of them.
 - Mod id: **`nerocolonies`** (matches the registry namespace + every loader manifest). Package root:
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
-- Version: **0.5.0-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
+- Version: **0.5.1-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
   roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the gallery); 0.4 added
   NeroEconomy payouts; 0.5 ships the Colony Chronicle quest chapter, nine record gates, three new
   threshold channels and the two quest-hook rewards. Verified by the nine-cell build, `ecjCheck`
@@ -60,8 +60,10 @@
   lives as long as its colony, and is purged by the erasure hook in `data/NeroColoniesData` —
   an Enemy listing included. Kill attribution (the retribution rule) and the Colony Planner's
   selection are memory-only: never store or log either.
-- **Every `SavedData` accessor goes through `data/SavedDataRecovery`.** A direct
-  `getDataStorage().computeIfAbsent(...)` is a review failure.
+- **Every `SavedData` accessor goes through Neroland Core's `SavedDataRecovery`**
+  (`za.co.neroland.nerolandcore.data`). A direct `getDataStorage().computeIfAbsent(...)` is a
+  review failure, and the erasure hook calls `SavedDataRecovery.backupNow` for every store it
+  purges so the erasure reaches Core's last-known-good backup too.
 - **Every `openMenu` call goes through `menu/MenuOpener`.**
 - **`Colony` is at the 16-field `RecordCodecBuilder` ceiling and stays at 16 fields.** New
   per-colony state goes in a side store, not on the record: `ColonyStores` (goods),
@@ -153,7 +155,7 @@ za.co.neroland.nerocolonies
 ├── NeroColoniesCommon            the 11-step init(); quest hooks are step 10b, link module step 11
 ├── config/ telemetry/ platform/  Core config, opt-out Sentry, ServiceLoader seams
 ├── network/                      own channel, snapshot + definitions payloads, intents
-├── data/                         erasure registration, SavedDataRecovery, LenientCodecs
+├── data/                         erasure registration, LenientCodecs
 ├── lifecycle/ServerStateReset    server started/stopped; clears the JVM-lifetime caches
 ├── colony/                       Colony, ColonyState, ColonyApi, ColonyClaims, AccessLog,
 │                                 ColonyTicker, ColonyCatchUp, ColonyStorage/Stores, ExportBuffer,

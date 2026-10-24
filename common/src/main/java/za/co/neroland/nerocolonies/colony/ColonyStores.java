@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
-import za.co.neroland.nerocolonies.data.SavedDataRecovery;
+import za.co.neroland.nerolandcore.data.SavedDataRecovery;
 
 /**
  * Where a colony's <b>goods</b> live: the shared colony storage every job station draws from and

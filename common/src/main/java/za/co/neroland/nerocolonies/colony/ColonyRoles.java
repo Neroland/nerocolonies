@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
-import za.co.neroland.nerocolonies.data.SavedDataRecovery;
+import za.co.neroland.nerolandcore.data.SavedDataRecovery;
 
 /**
  * Chiefs and Enemies, per colony.

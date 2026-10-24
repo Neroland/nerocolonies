@@ -12,7 +12,7 @@
 
 NeroColonies is the **sci-fi colony & settlement** mod of the Neroland ecosystem — a lightweight colony layer on top of the Neroland space arc, deliberately *not* a deep village-management sim. Claim a site on a discovered planet, anchor it with a colony beacon, ship in supplies, and watch your Nerans grow a settlement that produces rare off-world exports. Colonies are an automation and progression sink, not a micromanagement game — establish and upgrade them, then leave them ticking on the server.
 
-Built on **Neroland Core**, so its power/upgrade-module framework, currency and reputation APIs, claim/permission layer, progression gates, `c:` compat tags, and shared data-erasure hook are shared with the rest of the lineup. *(Now in beta: 0.5.0-beta.1.)*
+Built on **Neroland Core**, so its power/upgrade-module framework, currency and reputation APIs, claim/permission layer, progression gates, `c:` compat tags, and shared data-erasure hook are shared with the rest of the lineup. *(Now in beta: 0.5.1-beta.1.)*
 
 ---
 

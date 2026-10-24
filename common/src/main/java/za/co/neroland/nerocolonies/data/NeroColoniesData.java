@@ -3,11 +3,17 @@ package za.co.neroland.nerocolonies.data;
 import java.util.UUID;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 
 import za.co.neroland.nerolandcore.data.PlayerDataErasure;
+import za.co.neroland.nerolandcore.data.SavedDataRecovery;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.colony.ColonyConstruction;
+import za.co.neroland.nerocolonies.colony.ColonyLife;
+import za.co.neroland.nerocolonies.colony.ColonyRoles;
 import za.co.neroland.nerocolonies.colony.ColonyState;
+import za.co.neroland.nerocolonies.colony.ColonyStores;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 
 /**
@@ -38,6 +44,15 @@ import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
  * erasure request into a griefing tool — and it is not required by either POPIA or the GDPR, which
  * ask that the <em>personal data</em> be erased, not that the world be rearranged. Removing the
  * owner UUID removes the personal data; the colony that remains identifies nobody.
+ *
+ * <h2>Last-known-good backups</h2>
+ *
+ * <p>Every store goes through Neroland Core's {@link SavedDataRecovery}, which keeps a
+ * last-known-good copy of each store beside the primary file. That copy holds the same player-keyed
+ * rows, so once a player has been purged this hook calls {@link SavedDataRecovery#backupNow} for
+ * every store it touched — the colony index and the Chief/Enemy lists always, and the per-colony
+ * side stores when a colony was dissolved — so the erasure reaches the backup in the same request
+ * rather than at the next periodic backup pass.
  *
  * <p><b>Privacy (POPIA/GDPR):</b> nothing on this path logs the player's identity — the summary logs
  * counts only.
@@ -83,6 +98,7 @@ public final class NeroColoniesData {
         if (owned == 0 && access == 0 && rows == 0 && roles == 0) {
             return;
         }
+        refreshBackups(server, !ownedBefore.isEmpty() && NeroColoniesConfig.erasureDissolves());
         // Counts only — never who was erased, and never which colonies (POPIA/GDPR).
         NeroColoniesCommon.LOGGER.info(
                 "[NeroColonies] Erasure: {} owned colony record(s) {}, {} ally membership(s) removed, "
@@ -90,5 +106,26 @@ public final class NeroColoniesData {
                 owned,
                 NeroColoniesConfig.erasureDissolves() ? "dissolved" : "transferred to the server",
                 access, roles, rows);
+    }
+
+    /**
+     * Rewrites Core's last-known-good backup of every store the erasure touched, so the purged rows
+     * do not survive in the backup file. {@code dissolved} adds the per-colony side stores that a
+     * dissolved colony's records were dropped from.
+     */
+    private static void refreshBackups(MinecraftServer server, boolean dissolved) {
+        ServerLevel overworld = server.overworld();
+        SavedDataRecovery.backupNow(overworld, ColonyState.TYPE, ColonyState.get(server),
+                ColonyState.NAME);
+        SavedDataRecovery.backupNow(overworld, ColonyRoles.TYPE, ColonyRoles.get(server),
+                ColonyRoles.NAME);
+        if (dissolved) {
+            SavedDataRecovery.backupNow(overworld, ColonyStores.TYPE, ColonyStores.get(server),
+                    ColonyStores.NAME);
+            SavedDataRecovery.backupNow(overworld, ColonyConstruction.TYPE,
+                    ColonyConstruction.get(server), ColonyConstruction.NAME);
+            SavedDataRecovery.backupNow(overworld, ColonyLife.TYPE, ColonyLife.get(server),
+                    ColonyLife.NAME);
+        }
     }
 }
