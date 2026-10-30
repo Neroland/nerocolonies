@@ -6,12 +6,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.entity.player.Player;
 
 import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * The claim rules: where a colony or an outpost may be founded, who may dissolve one, and who may
@@ -35,7 +35,7 @@ public final class ColonyClaims {
     /** Operator override: permission level 2 ({@code Commands.LEVEL_GAMEMASTERS}) or better. */
     public static boolean isGamemaster(@Nullable Player player) {
         return player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-                && serverPlayer.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+                && VersionCompat.isGamemaster(serverPlayer);
     }
 
     /**

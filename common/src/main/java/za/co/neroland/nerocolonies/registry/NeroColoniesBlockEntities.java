@@ -1,12 +1,12 @@
 package za.co.neroland.nerocolonies.registry;
 
 import java.util.List;
-import java.util.Set;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
+import za.co.neroland.nerolandcore.registry.BlockEntityTypeCompat;
 import za.co.neroland.nerolandcore.registry.RegistrationProvider;
 import za.co.neroland.nerolandcore.registry.RegistrationProvider.RegistryEntry;
 
@@ -39,28 +39,28 @@ public final class NeroColoniesBlockEntities {
 
     public static final RegistryEntry<BlockEntityType<ColonyBeaconBlockEntity>> COLONY_BEACON =
             BLOCK_ENTITIES.register("colony_beacon",
-                    key -> new BlockEntityType<>(ColonyBeaconBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.COLONY_BEACON.get())));
+                    key -> BlockEntityTypeCompat.create(ColonyBeaconBlockEntity::new,
+                            NeroColoniesBlocks.COLONY_BEACON.get()));
 
     public static final RegistryEntry<BlockEntityType<OxygenGeneratorBlockEntity>> OXYGEN_GENERATOR =
             BLOCK_ENTITIES.register("oxygen_generator",
-                    key -> new BlockEntityType<>(OxygenGeneratorBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.OXYGEN_GENERATOR.get())));
+                    key -> BlockEntityTypeCompat.create(OxygenGeneratorBlockEntity::new,
+                            NeroColoniesBlocks.OXYGEN_GENERATOR.get()));
 
     public static final RegistryEntry<BlockEntityType<OutpostBeaconBlockEntity>> OUTPOST_BEACON =
             BLOCK_ENTITIES.register("outpost_beacon",
-                    key -> new BlockEntityType<>(OutpostBeaconBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.OUTPOST_BEACON.get())));
+                    key -> BlockEntityTypeCompat.create(OutpostBeaconBlockEntity::new,
+                            NeroColoniesBlocks.OUTPOST_BEACON.get()));
 
     public static final RegistryEntry<BlockEntityType<ColonyDepotBlockEntity>> COLONY_DEPOT =
             BLOCK_ENTITIES.register("colony_depot",
-                    key -> new BlockEntityType<>(ColonyDepotBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.COLONY_DEPOT.get())));
+                    key -> BlockEntityTypeCompat.create(ColonyDepotBlockEntity::new,
+                            NeroColoniesBlocks.COLONY_DEPOT.get()));
 
     public static final RegistryEntry<BlockEntityType<ResearchStationBlockEntity>> RESEARCH_STATION =
             BLOCK_ENTITIES.register("research_station",
-                    key -> new BlockEntityType<>(ResearchStationBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.RESEARCH_STATION.get())));
+                    key -> BlockEntityTypeCompat.create(ResearchStationBlockEntity::new,
+                            NeroColoniesBlocks.RESEARCH_STATION.get()));
 
     /**
      * One block-entity type for every job station block. What a station <em>does</em> comes from the
@@ -69,11 +69,11 @@ public final class NeroColoniesBlockEntities {
      */
     public static final RegistryEntry<BlockEntityType<JobStationBlockEntity>> JOB_STATION =
             BLOCK_ENTITIES.register("job_station",
-                    key -> new BlockEntityType<>(JobStationBlockEntity::new,
-                            Set.of(NeroColoniesBlocks.FARM_STATION.get(),
-                                    NeroColoniesBlocks.HYDROPONICS_STATION.get(),
-                                    NeroColoniesBlocks.REFINERY_STATION.get(),
-                                    NeroColoniesBlocks.FABRICATOR_STATION.get())));
+                    key -> BlockEntityTypeCompat.create(JobStationBlockEntity::new,
+                            NeroColoniesBlocks.FARM_STATION.get(),
+                            NeroColoniesBlocks.HYDROPONICS_STATION.get(),
+                            NeroColoniesBlocks.REFINERY_STATION.get(),
+                            NeroColoniesBlocks.FABRICATOR_STATION.get()));
 
     private NeroColoniesBlockEntities() {
     }

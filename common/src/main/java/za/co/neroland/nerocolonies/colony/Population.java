@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.registry.NeroColoniesEntityTypes;
 
 /**
@@ -184,7 +185,7 @@ public final class Population {
         BlockPos beacon = colony.beaconPos();
         AABB box = new AABB(
                 beacon.getX() - radius, level.getMinY(), beacon.getZ() - radius,
-                beacon.getX() + radius + 1, level.getMaxY() + 1, beacon.getZ() + radius + 1);
+                beacon.getX() + radius + 1, VersionCompat.maxY(level) + 1, beacon.getZ() + radius + 1);
         List<ColonistEntity> found = List.copyOf(level.getEntitiesOfClass(ColonistEntity.class, box,
                 colonist -> colonist.isAlive() && colony.colonyId().equals(colonist.colonyId())));
         ROSTERS.put(colony.colonyId(), new Roster(level, now, found));
@@ -340,7 +341,7 @@ public final class Population {
 
     /** Whether a Neran standing at {@code pos} could path to the beacon. */
     private static boolean canWalkToBeacon(ServerLevel level, BlockPos pos, BlockPos beacon) {
-        ColonistEntity probe = NeroColoniesEntityTypes.COLONIST.get().create(level, EntitySpawnReason.EVENT);
+        ColonistEntity probe = VersionCompat.create(NeroColoniesEntityTypes.COLONIST.get(), level, EntitySpawnReason.EVENT);
         if (probe == null) {
             return false;
         }
@@ -353,8 +354,7 @@ public final class Population {
     @Nullable
     private static ColonistEntity place(ServerLevel level, Colony colony, BlockPos pos,
             boolean founder) {
-        ColonistEntity colonist = NeroColoniesEntityTypes.COLONIST.get()
-                .create(level, EntitySpawnReason.EVENT);
+        ColonistEntity colonist = VersionCompat.create(NeroColoniesEntityTypes.COLONIST.get(), level, EntitySpawnReason.EVENT);
         if (colonist == null) {
             return null;
         }

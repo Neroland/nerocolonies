@@ -103,7 +103,11 @@ public class OxygenGeneratorBlock extends BaseEntityBlock {
     }
 
     @Override
+    //? if >=1.21.9 {
     protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
+    //?} else {
+    /*protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+    *///?}
         return level.getBlockEntity(pos) instanceof OxygenGeneratorBlockEntity generator
                 ? generator.comparatorSignal() : 0;
     }

@@ -370,7 +370,11 @@ public class ColonistEntity extends PathfinderMob {
                     : ColonyStorage.insert(level.getServer(), this.colonyId, stack.copy(),
                             ColonyStorage.usableSlots(level, colony));
             if (left > 0) {
+                //? if >=1.21.2 {
                 this.spawnAtLocation(level, stack.copyWithCount(left));
+                //?} else {
+                /*this.spawnAtLocation(stack.copyWithCount(left));
+                *///?}
             }
         }
     }
@@ -404,9 +408,16 @@ public class ColonistEntity extends PathfinderMob {
         return this.memberNearby || this.quietPulse > 0;
     }
 
+    //? if >=1.21.2 {
     @Override
     protected void customServerAiStep(ServerLevel level) {
         super.customServerAiStep(level);
+    //?} else {
+    /*@Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+        ServerLevel level = (ServerLevel) this.level();
+    *///?}
         if (--this.presenceCountdown <= 0) {
             this.presenceCountdown = PRESENCE_CHECK_INTERVAL;
             this.memberNearby = anyMemberNearby(level);
@@ -503,9 +514,16 @@ public class ColonistEntity extends PathfinderMob {
 
     // --- persistence --------------------------------------------------------
 
+    //? if >=1.21.6 {
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
+    //?} else {
+    /*@Override
+    public void addAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        ValueOutput output = ValueOutput.of(tag, this.registryAccess());
+    *///?}
         if (this.colonyId != null) {
             output.putString("ColonyId", this.colonyId.toString());
         }
@@ -522,12 +540,23 @@ public class ColonistEntity extends PathfinderMob {
         output.putInt("ProfessionXp", this.professionXp);
         output.putBoolean("Child", isChildNeran());
         output.putLong("BornAt", this.bornAt);
+        //? if >=1.21.6 {
         this.inventory.storeAsItemList(output.list("Inventory", ItemStack.CODEC));
+        //?} else {
+        /*output.tag().put("Inventory", this.inventory.createTag(this.registryAccess()));
+        *///?}
     }
 
+    //? if >=1.21.6 {
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
+    //?} else {
+    /*@Override
+    public void readAdditionalSaveData(net.minecraft.nbt.CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        ValueInput input = ValueInput.of(tag, this.registryAccess());
+    *///?}
         String rawColony = input.getStringOr("ColonyId", "");
         this.colonyId = rawColony.isEmpty() ? null : parseUuid(rawColony);
         this.homePos = readPos(input, "Home");
@@ -545,7 +574,13 @@ public class ColonistEntity extends PathfinderMob {
         this.professionXp = input.getIntOr("ProfessionXp", 0);
         this.entityData.set(DATA_CHILD, input.getBooleanOr("Child", false));
         this.bornAt = input.getLongOr("BornAt", -1L);
+        //? if >=1.21.6 {
         input.list("Inventory", ItemStack.CODEC).ifPresent(this.inventory::fromItemList);
+        //?} else if >=1.21.5 {
+        /*this.inventory.fromTag(input.tag().getListOrEmpty("Inventory"), this.registryAccess());
+        *///?} else {
+        /*this.inventory.fromTag(input.tag().getList("Inventory", net.minecraft.nbt.Tag.TAG_COMPOUND), this.registryAccess());
+        *///?}
     }
 
     @Nullable
@@ -568,7 +603,11 @@ public class ColonistEntity extends PathfinderMob {
 
     @Nullable
     private static BlockPos readPos(ValueInput input, String prefix) {
+        //? if >=1.21.6 {
         if (input.getInt(prefix + "X").isEmpty()) {
+        //?} else {
+        /*if (!input.tag().contains(prefix + "X")) {
+        *///?}
             return null;
         }
         return new BlockPos(input.getIntOr(prefix + "X", 0), input.getIntOr(prefix + "Y", 0),

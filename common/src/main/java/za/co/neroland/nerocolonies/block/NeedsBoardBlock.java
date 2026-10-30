@@ -21,6 +21,7 @@ import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyNeeds;
 import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * The Needs Board: where a colony posts what it is short of, and where members hand it over.
@@ -78,8 +79,21 @@ public class NeedsBoardBlock extends Block {
     }
 
     @Override
+    //? if >=1.21.2 {
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hit) {
+        return contribute(stack, level, pos, player);
+    }
+    //?} else {
+    /*protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+            BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        contribute(stack, level, pos, player);
+        return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide());
+    }
+    *///?}
+
+    /** Hands the held stack to the board: the colony takes what it currently needs. */
+    private static InteractionResult contribute(ItemStack stack, Level level, BlockPos pos, Player player) {
         if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
             return InteractionResult.SUCCESS;
         }
@@ -89,7 +103,7 @@ public class NeedsBoardBlock extends Block {
         }
         Component name = stack.getHoverName();
         int accepted = ColonyNeeds.contribute(serverLevel, colony, stack);
-        serverPlayer.sendOverlayMessage(accepted > 0
+        VersionCompat.overlayMessage(serverPlayer, accepted > 0
                 ? Component.translatable("message.nerocolonies.needs.thanks", accepted, name)
                 : Component.translatable("message.nerocolonies.needs.not_needed", name));
         return InteractionResult.SUCCESS;

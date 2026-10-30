@@ -9,7 +9,12 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.EntityRenderersEvent;
+//? if >=1.21.6 {
 import net.minecraftforge.eventbus.api.bus.BusGroup;
+//?} else {
+/*import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
+*///?}
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import za.co.neroland.nerocolonies.client.ClientEntityRenderers;
@@ -26,8 +31,13 @@ public final class ForgeClientSetup {
     private ForgeClientSetup() {
     }
 
+    //? if >=1.21.6 {
     public static void init(BusGroup modBusGroup) {
         FMLClientSetupEvent.getBus(modBusGroup).addListener(event -> event.enqueueWork(() ->
+    //?} else {
+    /*public static void init(IEventBus modBusGroup) {
+        modBusGroup.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() ->
+    *///?}
                 // One canonical menu->screen table in common; adapted onto vanilla
                 // MenuScreens.register here.
                 ScreenBindings.registerAll(new ScreenBindings.Registrar() {
@@ -37,13 +47,24 @@ public final class ForgeClientSetup {
                         MenuScreens.register(type, factory::create);
                     }
                 })));
+        //? if >=1.21.9 {
         EntityRenderersEvent.RegisterRenderers.BUS.addListener(ForgeClientSetup::onRegisterEntityRenderers);
+        //?} else if >=1.21.6 {
+        /*EntityRenderersEvent.RegisterRenderers.getBus(modBusGroup).addListener(ForgeClientSetup::onRegisterEntityRenderers);
+        *///?} else {
+        /*modBusGroup.addListener(ForgeClientSetup::onRegisterEntityRenderers);
+        *///?}
         // Drop the synced colony mirrors on leaving a world/server. Forge 26.x has no global event
         // bus — each event class owns a static BUS — and a statement-bodied lambda keeps the
         // Consumer/Predicate overloads unambiguous.
+        //? if >=1.21.6 {
         ClientPlayerNetworkEvent.LoggingOut.BUS.addListener(event -> {
             ColonyNetwork.clearClientCaches();
         });
+        //?} else {
+        /*MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) ->
+                ColonyNetwork.clearClientCaches());
+        *///?}
     }
 
     private static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {

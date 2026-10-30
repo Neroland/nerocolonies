@@ -19,6 +19,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.data.SavedDataCompat;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerolandcore.data.SavedDataRecovery;
@@ -40,7 +41,7 @@ public final class ColonyLife extends SavedData {
     public static final Identifier ID = Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "life");
 
     public static final SavedDataType<ColonyLife> TYPE =
-            new SavedDataType<>(ID, ColonyLife::new, codec(), null);
+            SavedDataCompat.type(ID, ColonyLife::new, codec());
 
     /** Gratitude Cache slots. Stocking pauses when full; nothing is ever voided. */
     public static final int CACHE_SLOTS = 27;

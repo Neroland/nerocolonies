@@ -3,7 +3,9 @@ package za.co.neroland.nerocolonies.client.renderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
+//? if >=1.21.2 {
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
+//?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Mob;
@@ -23,7 +25,11 @@ import za.co.neroland.nerocolonies.entity.NeranStatus;
  * when a player is close. Everything else a player needs to know belongs to the <em>colony</em> and
  * is shown in the beacon's GUI, which keeps the client dumb and the mod server-authoritative.
  */
+//? if >=1.21.2 {
 public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, ColonistModel> {
+//?} else {
+/*public class ColonistRenderer extends MobRenderer<Mob, ColonistModel> {
+*///?}
 
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(
             NeroColoniesCommon.MOD_ID, "textures/entity/colonist.png");
@@ -36,9 +42,14 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
     @SuppressWarnings("this-escape") // idiomatic Minecraft constructor wiring
     public ColonistRenderer(EntityRendererProvider.Context context, ColonistModel model) {
         super(context, model, SHADOW_RADIUS);
+        //? if >=1.21.2 {
         this.addLayer(new ItemInHandLayer<>(this));
+        //?} else {
+        /*this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
+        *///?}
     }
 
+    //? if >=1.21.11 {
     @Override
     public ArmedEntityRenderState createRenderState() {
         return new ArmedEntityRenderState();
@@ -49,7 +60,49 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
         super.extractRenderState(entity, state, partialTicks);
         ArmedEntityRenderState.extractArmedEntityRenderState(entity, state, this.itemModelResolver, partialTicks);
     }
+    //?} else if >=1.21.2 {
+    /*@Override
+    public ArmedEntityRenderState createRenderState() {
+        return new ArmedEntityRenderState();
+    }
 
+    @Override
+    public void extractRenderState(Mob entity, ArmedEntityRenderState state, float partialTicks) {
+        super.extractRenderState(entity, state, partialTicks);
+        ArmedEntityRenderState.extractArmedEntityRenderState(entity, state, this.itemModelResolver);
+    }
+    *///?} else {
+    /*// 1.21.1 has no render states and no getNameTag hook: the status range is checked against the camera
+    // here, and the status symbol is added where the name tag is drawn.
+    @Override
+    protected boolean shouldShowName(Mob entity) {
+        if (entity instanceof ColonistEntity neran && neran.status() != NeranStatus.NONE
+                && this.entityRenderDispatcher.distanceToSqr(entity) <= STATUS_RANGE_SQ) {
+            return true;
+        }
+        return super.shouldShowName(entity);
+    }
+
+    @Override
+    protected void renderNameTag(Mob entity, Component name, com.mojang.blaze3d.vertex.PoseStack poseStack,
+            net.minecraft.client.renderer.MultiBufferSource buffers, int light, float partialTick) {
+        Component shown = name;
+        if (entity instanceof ColonistEntity neran) {
+            String symbol = neran.status().symbol();
+            if (!symbol.isEmpty()) {
+                shown = Component.literal(symbol + " ").append(name);
+            }
+        }
+        super.renderNameTag(entity, shown, poseStack, buffers, light, partialTick);
+    }
+
+    @Override
+    public Identifier getTextureLocation(Mob entity) {
+        return TEXTURE;
+    }
+    *///?}
+
+    //? if >=1.21.2 {
     @Override
     protected boolean shouldShowName(Mob entity, double distanceToCameraSq) {
         if (entity instanceof ColonistEntity neran && neran.status() != NeranStatus.NONE
@@ -77,4 +130,5 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
     public Identifier getTextureLocation(ArmedEntityRenderState state) {
         return TEXTURE;
     }
+    //?}
 }

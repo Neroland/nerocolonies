@@ -27,9 +27,11 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.data.SavedDataCompat;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerolandcore.data.SavedDataRecovery;
 
 /**
@@ -72,7 +74,7 @@ public final class ColonyState extends SavedData {
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colonies");
 
     public static final SavedDataType<ColonyState> TYPE =
-            new SavedDataType<>(ID, ColonyState::new, codec(), null);
+            SavedDataCompat.type(ID, ColonyState::new, codec());
 
     /**
      * The server whose retention sweep has already run, so the lazy check in {@link #get} fires at
@@ -198,8 +200,8 @@ public final class ColonyState extends SavedData {
             if (!colony.hasOwner()) {
                 legacy = true;
             } else {
-                legacy = server.services().nameToIdCache().get(colony.ownerId())
-                        .map(profile -> Colony.sanitiseName(profile.name() + LEGACY_NAME_SUFFIX)
+                legacy = VersionCompat.cachedName(server, colony.ownerId())
+                        .map(name -> Colony.sanitiseName(name + LEGACY_NAME_SUFFIX)
                                 .equals(colony.name()))
                         .orElse(false);
             }

@@ -43,10 +43,19 @@ public final class ForgeColonyCapabilities {
     }
 
     public static void register() {
+        //? if >=1.21.6 {
         AttachCapabilitiesEvent.BlockEntities.BUS.addListener(ForgeColonyCapabilities::attach);
+        //?} else {
+        /*net.minecraftforge.common.MinecraftForge.EVENT_BUS.addGenericListener(
+                net.minecraft.world.level.block.entity.BlockEntity.class, ForgeColonyCapabilities::attach);
+        *///?}
     }
 
+    //? if >=1.21.6 {
     private static void attach(AttachCapabilitiesEvent.BlockEntities event) {
+    //?} else {
+    /*private static void attach(AttachCapabilitiesEvent<net.minecraft.world.level.block.entity.BlockEntity> event) {
+    *///?}
         if (event.getObject() instanceof AbstractMachineBlockEntity machine
                 && NeroColoniesBlockEntities.machineTypes().contains(machine.getType())) {
             MachineCaps caps = new MachineCaps(machine);

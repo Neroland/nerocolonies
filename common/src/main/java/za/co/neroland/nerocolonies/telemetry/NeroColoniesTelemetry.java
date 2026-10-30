@@ -144,7 +144,7 @@ public final class NeroColoniesTelemetry {
             // No performance tracing: nothing in this mod opens a transaction, and a transaction would
             // bypass beforeSend's scrubbing.
             options.setTracesSampleRate(0.0D);
-            options.setBeforeSend((event, hint) -> filterAndScrub(event));
+            options.setBeforeSend((event, hint) -> ForeignMixinFailure.matches(event) ? null : filterAndScrub(event));
         });
         Sentry.configureScope(scope -> {
             scope.setTag("loader", Services.PLATFORM.getPlatformName().toLowerCase(Locale.ROOT));

@@ -9,6 +9,8 @@ import net.minecraft.world.entity.player.Player;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerocolonies.platform.VersionCompat;
+
 /**
  * The one place a colony decides what a player may do. Every block, menu, Neran interaction, cache,
  * needs board, planner, command and link action asks here, server-side.
@@ -113,7 +115,7 @@ public final class ColonyPermissions {
         boolean allowed = can(player, colony, action);
         if (!allowed && player != null) {
             boolean member = colony != null && effectiveRole(player, colony).member();
-            player.sendOverlayMessage(Component.translatable(member
+            VersionCompat.overlayMessage(player, Component.translatable(member
                     ? "message.nerocolonies.permission.rank" : "message.nerocolonies.permission.stranger"));
         }
         return allowed;

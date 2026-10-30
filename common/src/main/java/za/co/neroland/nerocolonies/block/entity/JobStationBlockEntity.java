@@ -2,6 +2,8 @@ package za.co.neroland.nerocolonies.block.entity;
 
 import java.util.UUID;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -402,15 +404,29 @@ public class JobStationBlockEntity extends AbstractMachineBlockEntity
 
     // --- persistence --------------------------------------------------------
 
+    //? if >=1.21.6 {
     @Override
-    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+    protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+    //?} else {
+    /*@Override
+    protected void saveAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        ValueOutput output = ValueOutput.of(tag, registries);
+    *///?}
         output.putBoolean("Export", this.exportOutput);
     }
 
+    //? if >=1.21.6 {
     @Override
-    protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+    protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+    //?} else {
+    /*@Override
+    protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        ValueInput input = ValueInput.of(tag, registries);
+    *///?}
         this.exportOutput = input.getBooleanOr("Export", false);
         // Binding is derived from the claim, never stored: a station that was moved, or whose colony
         // was dissolved while it was unloaded, must re-resolve rather than remember.

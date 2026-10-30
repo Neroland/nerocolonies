@@ -70,10 +70,18 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
 
     protected NeroColoniesScreen(T menu, Inventory playerInventory, Component title, int accent,
             int width, int height) {
+        //? if >=26.1 {
         super(menu, playerInventory, title, width, height);
+        //?} else {
+        /*super(menu, playerInventory, title);
+        this.imageWidth = width;
+        this.imageHeight = height;
+        this.inventoryLabelY = height - 94;
+        *///?}
         this.accent = accent;
     }
 
+    //? if >=26.1 {
     @Override
     public void extractContents(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick) {
         this.hoverX = mouseX - this.leftPos;
@@ -82,6 +90,57 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
         super.extractContents(extractor, mouseX, mouseY, partialTick);
         extractForeground(extractor);
     }
+    //?} else {
+    /*// Before 26.1 the container screen paints its background in renderBg and draws the hovered-slot
+    // tooltip only when asked; the readouts go on top of the slot pass, before that tooltip.
+    @Override
+    public void render(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick) {
+        this.hoverX = mouseX - this.leftPos;
+        this.hoverY = mouseY - this.topPos;
+        super.render(extractor, mouseX, mouseY, partialTick);
+        extractForeground(extractor);
+        this.renderTooltip(extractor, mouseX, mouseY);
+    }
+
+    @Override
+    protected void renderBg(GuiGraphicsExtractor extractor, float partialTick, int mouseX, int mouseY) {
+        drawPanel(extractor);
+    }
+    *///?}
+
+    //? if <1.21.9 {
+    /*// Before 1.21.9 input arrives as loose values. These stand-ins carry them under the 1.21.9+ names, and
+    // the bridges below route the old overrides into the event-shaped ones the subclasses implement.
+    protected record MouseButtonEvent(double x, double y, int button) {
+        public boolean hasShiftDown() {
+            return net.minecraft.client.gui.screens.Screen.hasShiftDown();
+        }
+    }
+
+    protected record KeyEvent(int key, int scancode, int modifiers) {
+        public boolean isEscape() {
+            return this.key == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE;
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return mouseClicked(new MouseButtonEvent(mouseX, mouseY, button), false);
+    }
+
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        return super.mouseClicked(event.x(), event.y(), event.button());
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return keyPressed(new KeyEvent(keyCode, scanCode, modifiers));
+    }
+
+    public boolean keyPressed(KeyEvent event) {
+        return super.keyPressed(event.key(), event.scancode(), event.modifiers());
+    }
+    *///?}
 
     // --- panel --------------------------------------------------------------
 

@@ -2,6 +2,9 @@ package za.co.neroland.nerocolonies.forge;
 
 import java.util.function.Consumer;
 
+//? if <1.21.6 {
+/*import net.minecraftforge.common.MinecraftForge;
+*///?}
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -29,6 +32,7 @@ public final class ForgeColonyEvents {
     }
 
     /** Called once from the Forge entry point. */
+    //? if >=1.21.6 {
     public static void register() {
         ServerStartedEvent.BUS.addListener(event -> ServerStateReset.serverStarted(event.getServer()));
         ServerStoppedEvent.BUS.addListener(event -> ServerStateReset.serverStopped());
@@ -45,4 +49,18 @@ public final class ForgeColonyEvents {
         PlayerEvent.PlayerLoggedOutEvent.BUS.addListener(event ->
                 ColonyPlanner.forget(event.getEntity().getUUID()));
     }
+    //?} else {
+    /*public static void register() {
+        // Forge before 1.21.6 (EventBus 6): one shared bus, listeners typed by their lambda parameter.
+        MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent event) -> ServerStateReset.serverStarted(event.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> ServerStateReset.serverStopped());
+        MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->
+                NeroColoniesCommands.register(event.getDispatcher()));
+        Consumer<LivingDeathEvent> death = event ->
+                ColonyDefence.onLivingDeath(event.getEntity(), event.getSource());
+        MinecraftForge.EVENT_BUS.addListener(death);
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) ->
+                ColonyPlanner.forget(event.getEntity().getUUID()));
+    }
+    *///?}
 }

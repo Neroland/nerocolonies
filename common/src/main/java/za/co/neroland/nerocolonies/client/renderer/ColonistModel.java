@@ -10,7 +10,9 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
+//? if >=1.21.2 {
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 
@@ -25,7 +27,17 @@ import net.minecraft.world.entity.HumanoidArm;
  * {@code walkAnimationPos}, the head tracks {@code yRot}/{@code xRot}, and the working arm chops down
  * with the swing animation when the server swings the Neran's hand.
  */
+//? if >=1.21.9 {
 public class ColonistModel extends EntityModel<ArmedEntityRenderState> implements ArmedModel<ArmedEntityRenderState> {
+//?} else if >=1.21.2 {
+/*public class ColonistModel extends EntityModel<ArmedEntityRenderState> implements ArmedModel {
+*///?} else {
+/*public class ColonistModel extends net.minecraft.client.model.HierarchicalModel<net.minecraft.world.entity.Mob>
+        implements ArmedModel {
+
+    // 1.21.1 has no render states: the model is driven by the entity and walks its own root.
+    private final ModelPart root;
+*///?}
 
     private static final float LIMB_SWING = 1.0F;
     private static final float TOOL_SWING = 1.6F;
@@ -38,7 +50,11 @@ public class ColonistModel extends EntityModel<ArmedEntityRenderState> implement
 
     @SuppressWarnings("this-escape") // idiomatic Minecraft constructor wiring
     public ColonistModel(ModelPart root) {
+        //? if >=1.21.2 {
         super(root);
+        //?} else {
+        /*this.root = root;
+        *///?}
         this.head = root.getChild("head");
         this.leftArm = root.getChild("left_arm");
         this.rightArm = root.getChild("right_arm");
@@ -76,6 +92,7 @@ public class ColonistModel extends EntityModel<ArmedEntityRenderState> implement
         return LayerDefinition.create(mesh, 64, 64);
     }
 
+    //? if >=1.21.2 {
     @Override
     public void setupAnim(ArmedEntityRenderState state) {
         super.setupAnim(state);
@@ -84,6 +101,22 @@ public class ColonistModel extends EntityModel<ArmedEntityRenderState> implement
 
         float walkPos = state.walkAnimationPos;
         float walkSpeed = Math.min(1.0F, state.walkAnimationSpeed);
+    //?} else {
+    /*@Override
+    public net.minecraft.client.model.geom.ModelPart root() {
+        return this.root;
+    }
+
+    @Override
+    public void setupAnim(net.minecraft.world.entity.Mob entity, float limbSwing, float limbSwingAmount,
+            float ageInTicks, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
+        this.head.yRot = netHeadYaw * Mth.DEG_TO_RAD;
+        this.head.xRot = headPitch * Mth.DEG_TO_RAD;
+
+        float walkPos = limbSwing;
+        float walkSpeed = Math.min(1.0F, limbSwingAmount);
+    *///?}
         float swing = Mth.cos(walkPos * 0.6662F) * LIMB_SWING * walkSpeed;
         this.rightLeg.xRot = swing;
         this.leftLeg.xRot = -swing;
@@ -96,12 +129,25 @@ public class ColonistModel extends EntityModel<ArmedEntityRenderState> implement
             float chop = Mth.sin(state.swingAnimation * Mth.PI) * TOOL_SWING;
             arm(state.currentSwing.hand().asArm(state.mainArm)).xRot -= chop;
         }
-        *///?} else {
+        *///?} else if >=26.1 {
         if (state.attackTime > 0.0F) {
             float chop = Mth.sin(state.attackTime * Mth.PI) * TOOL_SWING;
             arm(state.attackArm).xRot -= chop;
         }
-        //?}
+        //?} else if >=1.21.11 {
+        /*if (state.attackTime > 0.0F) {
+            float chop = Mth.sin(state.attackTime * Mth.PI) * TOOL_SWING;
+            arm(state.mainArm).xRot -= chop;
+        }
+        *///?} else if >=1.21.2 {
+        /*// 1.21.2 - 1.21.10 carry no swing progress in the armed render state, so the tool chop is not drawn.
+        *///?} else {
+        /*float attack = entity.getAttackAnim(ageInTicks - entity.tickCount);
+        if (attack > 0.0F) {
+            float chop = Mth.sin(attack * Mth.PI) * TOOL_SWING;
+            arm(entity.getMainArm()).xRot -= chop;
+        }
+        *///?}
     }
 
     private ModelPart arm(HumanoidArm arm) {
@@ -109,7 +155,11 @@ public class ColonistModel extends EntityModel<ArmedEntityRenderState> implement
     }
 
     @Override
+    //? if >=1.21.9 {
     public void translateToHand(ArmedEntityRenderState state, HumanoidArm arm, PoseStack poseStack) {
+    //?} else {
+    /*public void translateToHand(HumanoidArm arm, PoseStack poseStack) {
+    *///?}
         this.root().translateAndRotate(poseStack);
         arm(arm).translateAndRotate(poseStack);
     }

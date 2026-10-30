@@ -97,7 +97,11 @@ public class ColonyDepotBlock extends BaseEntityBlock {
 
     /** Comparator output tracks how full the colony's storage is, so redstone can react to a glut. */
     @Override
+    //? if >=1.21.9 {
     protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
+    //?} else {
+    /*protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+    *///?}
         if (!(level.getBlockEntity(pos) instanceof ColonyDepotBlockEntity depot)) {
             return 0;
         }

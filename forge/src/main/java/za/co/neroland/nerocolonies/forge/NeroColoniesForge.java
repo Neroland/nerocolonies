@@ -20,13 +20,21 @@ public final class NeroColoniesForge {
         NeroColoniesCommon.init();
         // Common init created NeroColonies' DeferredRegisters through Core's registration seam;
         // this attaches them to OUR mod bus group.
+        //? if >=1.21.6 {
         RegistrationProvider.attach(context.getModBusGroup());
+        //?} else {
+        /*RegistrationProvider.attach(context.getModEventBus());
+        *///?}
         ForgeColonyNetwork.register();
         ForgeColonyCapabilities.register();
         ForgeColonyEvents.register();
         // Client-only: screens. Gated so the client classes never load on a dedicated server.
         if (FMLEnvironment.dist == Dist.CLIENT) {
+            //? if >=1.21.6 {
             ForgeClientSetup.init(context.getModBusGroup());
+            //?} else {
+            /*ForgeClientSetup.init(context.getModEventBus());
+            *///?}
         }
     }
 }

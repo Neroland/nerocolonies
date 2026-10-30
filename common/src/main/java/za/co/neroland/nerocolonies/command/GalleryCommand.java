@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.colony.ColonyGallery;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * {@code /nerocolonies gallery}: a creative-mode showcase for operators.
@@ -40,7 +41,7 @@ public final class GalleryCommand {
     /** The {@code gallery} subtree, for {@link NeroColoniesCommands} to hang under {@code /nerocolonies}. */
     public static LiteralArgumentBuilder<CommandSourceStack> node() {
         return Commands.literal("gallery")
-                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .requires(VersionCompat.gamemasters())
                 .executes(ctx -> NeroColoniesCommands.runSafely(ctx.getSource(), "gallery",
                         () -> build(ctx.getSource())))
                 .then(Commands.literal("clear")

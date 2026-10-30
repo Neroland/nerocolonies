@@ -40,6 +40,7 @@ import za.co.neroland.nerocolonies.content.Blueprint;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.content.ProfessionDefinition;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlocks;
 
 /**
@@ -181,7 +182,7 @@ public final class ColonyGallery {
      * already checked that this is an operator in creative mode.
      */
     public static BuildResult build(ServerPlayer player) {
-        ServerLevel level = player.level();
+        ServerLevel level = VersionCompat.level(player);
         MinecraftServer server = level.getServer();
         ColonyDefinitions.refreshIfReloaded(server);
         Map<Identifier, Blueprint> blueprints = ColonyDefinitions.blueprintsForServer(server);
@@ -207,7 +208,7 @@ public final class ColonyGallery {
         for (Blueprint blueprint : exhibits) {
             tallest = Math.max(tallest, blueprint.height());
         }
-        if (centre.getY() + tallest + 2 > level.getMaxY() || feet.getY() <= level.getMinY()) {
+        if (centre.getY() + tallest + 2 > VersionCompat.maxY(level) || feet.getY() <= level.getMinY()) {
             return BuildResult.refused(Outcome.TOO_HIGH, plan);
         }
         if (unloadedChunks(level, centre, radius) > 0) {
@@ -447,7 +448,7 @@ public final class ColonyGallery {
         BlockPos centre = colony.beaconPos();
         int span = colony.claimRadius() + margin;
         return new AABB(centre.getX() - span, level.getMinY(), centre.getZ() - span,
-                centre.getX() + span + 1, level.getMaxY() + 1,
+                centre.getX() + span + 1, VersionCompat.maxY(level) + 1,
                 centre.getZ() + span + GalleryCourt.STRIP_OUT + 1);
     }
 
@@ -544,10 +545,15 @@ public final class ColonyGallery {
             BlockPos centre = colony.beaconPos();
             int radius = colony.claimRadius();
             int floorY = centre.getY() - 1;
-            int ceiling = Math.min(level.getMaxY(), centre.getY() + Blueprint.MAX_HEIGHT + CLEAR_MARGIN);
+            int ceiling = Math.min(VersionCompat.maxY(level), centre.getY() + Blueprint.MAX_HEIGHT + CLEAR_MARGIN);
             // Nothing drops and nothing reacts: no neighbour updates, no shape updates, and no
             // block-entity side effects (a container would otherwise spill its contents).
+            //? if >=1.21.5 {
             int flags = GalleryKit.QUIET | Block.UPDATE_SKIP_BLOCK_ENTITY_SIDEEFFECTS;
+            //?} else {
+            /*// Before 1.21.5 there is no flag for skipping block-entity side effects; QUIET is the closest.
+            int flags = GalleryKit.QUIET;
+            *///?}
             BlockState air = Blocks.AIR.defaultBlockState();
             Set<Long> missing = new HashSet<>();
             BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();

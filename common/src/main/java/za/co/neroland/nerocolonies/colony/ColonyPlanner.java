@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.Blueprint;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * Hand-placed buildings: the server half of the Colony Planner item and the Planning Table.
@@ -160,7 +161,7 @@ public final class ColonyPlanner {
         }
         List<Blueprint> options = options(level.getServer(), colony);
         if (options.isEmpty()) {
-            player.sendOverlayMessage(Component.translatable("message.nerocolonies.plan.nothing"));
+            VersionCompat.overlayMessage(player, Component.translatable("message.nerocolonies.plan.nothing"));
             return;
         }
         Session session = session(player, colony);
@@ -176,7 +177,7 @@ public final class ColonyPlanner {
             session.rotation = Rotation.NONE;
         }
         session.previewed = null;
-        player.sendOverlayMessage(Component.translatable("message.nerocolonies.plan.selected",
+        VersionCompat.overlayMessage(player, Component.translatable("message.nerocolonies.plan.selected",
                 Component.translatable(selected.nameKey()), selected.width(session.rotation),
                 selected.depth(session.rotation)));
     }
@@ -195,7 +196,7 @@ public final class ColonyPlanner {
         List<Blueprint> options = options(server, colony);
         int index = indexOf(options, session.blueprint);
         if (index < 0) {
-            player.sendOverlayMessage(Component.translatable(options.isEmpty()
+            VersionCompat.overlayMessage(player, Component.translatable(options.isEmpty()
                     ? "message.nerocolonies.plan.nothing" : "message.nerocolonies.plan.pick_first"));
             return;
         }
@@ -212,7 +213,7 @@ public final class ColonyPlanner {
             session.previewed = origin == null ? null : spot.immutable();
             session.previewedAt = level.getGameTime();
             outline(level, origin == null ? corner : origin, width, depth, blueprint.height(), origin != null);
-            player.sendOverlayMessage(Component.translatable(origin == null
+            VersionCompat.overlayMessage(player, Component.translatable(origin == null
                     ? "message.nerocolonies.plan.no_fit" : "message.nerocolonies.plan.preview",
                     Component.translatable(blueprint.nameKey())));
             return;
@@ -223,13 +224,13 @@ public final class ColonyPlanner {
         int limit = Math.min(ColonyConstruction.MAX_PLANS, NeroColoniesConfig.MAX_CONCURRENT_PLANS.get());
         if (plan.queue().size() >= limit
                 || !plan.enqueue(new ColonyConstruction.Planned(blueprint.id(), origin, rotation))) {
-            player.sendOverlayMessage(Component.translatable("message.nerocolonies.plan.queue_full", limit));
+            VersionCompat.overlayMessage(player, Component.translatable("message.nerocolonies.plan.queue_full", limit));
             return;
         }
         store.touch();
         session.previewed = null;
         outline(level, origin, width, depth, blueprint.height(), true);
-        player.sendOverlayMessage(Component.translatable("message.nerocolonies.plan.confirmed",
+        VersionCompat.overlayMessage(player, Component.translatable("message.nerocolonies.plan.confirmed",
                 Component.translatable(blueprint.nameKey())));
     }
 
@@ -250,7 +251,7 @@ public final class ColonyPlanner {
     private static Colony colonyFor(ServerLevel level, ServerPlayer player, BlockPos pos) {
         Colony colony = ColonyState.get(level.getServer()).colonyAt(level.dimension(), pos);
         if (colony == null) {
-            player.sendOverlayMessage(Component.translatable("message.nerocolonies.plan.outside"));
+            VersionCompat.overlayMessage(player, Component.translatable("message.nerocolonies.plan.outside"));
             return null;
         }
         return ColonyPermissions.check(player, colony, ColonyPermissions.Action.PLAN) ? colony : null;

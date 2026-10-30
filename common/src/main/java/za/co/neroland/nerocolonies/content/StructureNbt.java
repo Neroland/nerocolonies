@@ -61,10 +61,10 @@ public final class StructureNbt {
 
     /** Converts a parsed structure compound into a grid. Pure apart from NBT types; unit-tested. */
     public static DataResult<Blueprint.Grid> convert(CompoundTag root) {
-        ListTag size = root.getListOrEmpty("size");
-        int width = size.getIntOr(0, 0);
-        int height = size.getIntOr(1, 0);
-        int depth = size.getIntOr(2, 0);
+        ListTag size = listOrEmpty(root, "size");
+        int width = intOr(size, 0, 0);
+        int height = intOr(size, 1, 0);
+        int depth = intOr(size, 2, 0);
         if (width <= 0 || height <= 0 || depth <= 0) {
             return DataResult.error(() -> "structure has no size");
         }
@@ -73,13 +73,13 @@ public final class StructureNbt {
                     + ", larger than the blueprint ceiling");
         }
 
-        ListTag paletteTag = root.getListOrEmpty("palette");
+        ListTag paletteTag = listOrEmpty(root, "palette");
         if (paletteTag.isEmpty()) {
-            paletteTag = root.getListOrEmpty("palettes").getListOrEmpty(0);
+            paletteTag = listOrEmpty(listOrEmpty(root, "palettes"), 0);
         }
         List<String> stateTexts = new ArrayList<>(paletteTag.size());
         for (int i = 0; i < paletteTag.size(); i++) {
-            stateTexts.add(stateText(paletteTag.getCompoundOrEmpty(i)));
+            stateTexts.add(stateText(compoundOrEmpty(paletteTag, i)));
         }
 
         char[][][] cells = new char[height][depth][width];
@@ -90,14 +90,14 @@ public final class StructureNbt {
         }
         Map<String, Character> keys = new HashMap<>();
         Map<Character, String> palette = new LinkedHashMap<>();
-        ListTag blocks = root.getListOrEmpty("blocks");
+        ListTag blocks = listOrEmpty(root, "blocks");
         for (int i = 0; i < blocks.size(); i++) {
-            CompoundTag block = blocks.getCompoundOrEmpty(i);
-            ListTag pos = block.getListOrEmpty("pos");
-            int x = pos.getIntOr(0, -1);
-            int y = pos.getIntOr(1, -1);
-            int z = pos.getIntOr(2, -1);
-            int state = block.getIntOr("state", -1);
+            CompoundTag block = compoundOrEmpty(blocks, i);
+            ListTag pos = listOrEmpty(block, "pos");
+            int x = intOr(pos, 0, -1);
+            int y = intOr(pos, 1, -1);
+            int z = intOr(pos, 2, -1);
+            int state = intOr(block, "state", -1);
             if (x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= depth
                     || state < 0 || state >= stateTexts.size()) {
                 continue;
@@ -128,20 +128,89 @@ public final class StructureNbt {
 
     /** {@code {Name, Properties}} as a block-state string. */
     static String stateText(CompoundTag entry) {
-        String name = entry.getStringOr("Name", "minecraft:air");
-        CompoundTag properties = entry.getCompoundOrEmpty("Properties");
+        String name = stringOr(entry, "Name", "minecraft:air");
+        CompoundTag properties = compoundOrEmpty(entry, "Properties");
         if (properties.isEmpty()) {
             return name;
         }
-        List<String> keys = new ArrayList<>(properties.keySet());
+        List<String> keys = new ArrayList<>(keys(properties));
         java.util.Collections.sort(keys);
         StringBuilder text = new StringBuilder(name).append('[');
         for (int i = 0; i < keys.size(); i++) {
             if (i > 0) {
                 text.append(',');
             }
-            text.append(keys.get(i)).append('=').append(properties.getStringOr(keys.get(i), ""));
+            text.append(keys.get(i)).append('=').append(stringOr(properties, keys.get(i), ""));
         }
         return text.append(']').toString();
+    }
+
+    // --- NBT reads, one copy across Minecraft lines -------------------------------------------
+    // 1.21.5 gave CompoundTag/ListTag their getXOr / getXOrEmpty readers; before it the same lookups
+    // return 0 / empty on a missing or mistyped entry, so the defaults are applied by hand here.
+
+    private static ListTag listOrEmpty(CompoundTag tag, String key) {
+        //? if >=1.21.5 {
+        return tag.getListOrEmpty(key);
+        //?} else {
+        /*return tag.get(key) instanceof ListTag list ? list : new ListTag();
+        *///?}
+    }
+
+    private static ListTag listOrEmpty(ListTag list, int index) {
+        //? if >=1.21.5 {
+        return list.getListOrEmpty(index);
+        //?} else {
+        /*return index < list.size() && list.get(index) instanceof ListTag inner ? inner : new ListTag();
+        *///?}
+    }
+
+    private static CompoundTag compoundOrEmpty(CompoundTag tag, String key) {
+        //? if >=1.21.5 {
+        return tag.getCompoundOrEmpty(key);
+        //?} else {
+        /*return tag.get(key) instanceof CompoundTag inner ? inner : new CompoundTag();
+        *///?}
+    }
+
+    private static CompoundTag compoundOrEmpty(ListTag list, int index) {
+        //? if >=1.21.5 {
+        return list.getCompoundOrEmpty(index);
+        //?} else {
+        /*return index < list.size() && list.get(index) instanceof CompoundTag inner ? inner : new CompoundTag();
+        *///?}
+    }
+
+    private static int intOr(CompoundTag tag, String key, int fallback) {
+        //? if >=1.21.5 {
+        return tag.getIntOr(key, fallback);
+        //?} else {
+        /*return tag.get(key) instanceof net.minecraft.nbt.NumericTag number ? number.getAsInt() : fallback;
+        *///?}
+    }
+
+    private static int intOr(ListTag list, int index, int fallback) {
+        //? if >=1.21.5 {
+        return list.getIntOr(index, fallback);
+        //?} else {
+        /*return index < list.size() && list.get(index) instanceof net.minecraft.nbt.NumericTag number
+                ? number.getAsInt() : fallback;
+        *///?}
+    }
+
+    private static String stringOr(CompoundTag tag, String key, String fallback) {
+        //? if >=1.21.5 {
+        return tag.getStringOr(key, fallback);
+        //?} else {
+        /*return tag.get(key) instanceof net.minecraft.nbt.StringTag text ? text.getAsString() : fallback;
+        *///?}
+    }
+
+    private static java.util.Set<String> keys(CompoundTag tag) {
+        //? if >=1.21.5 {
+        return tag.keySet();
+        //?} else {
+        /*return tag.getAllKeys();
+        *///?}
     }
 }

@@ -36,6 +36,7 @@ import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.Outpost;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.progression.ColonyGates;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 
@@ -176,7 +177,7 @@ public class OutpostBeaconBlock extends BaseEntityBlock {
             Outpost outpost = ColonyClaims.outpostAtBeacon(serverLevel, pos);
             if (outpost != null) {
                 ColonyState.get(serverLevel.getServer()).removeOutpost(outpost.outpostId());
-                player.sendSystemMessage(Component.translatable("message.nerocolonies.outpost.removed"));
+                VersionCompat.systemMessage(player, Component.translatable("message.nerocolonies.outpost.removed"));
             }
         }
         return super.playerWillDestroy(level, pos, state, player);

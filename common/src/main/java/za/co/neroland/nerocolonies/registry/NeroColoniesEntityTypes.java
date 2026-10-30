@@ -42,7 +42,11 @@ public final class NeroColoniesEntityTypes {
     public static final RegistryEntry<EntityType<ColonistEntity>> COLONIST = ENTITY_TYPES.register(
             "colonist",
             key -> EntityType.Builder.of(ColonistEntity::new, MobCategory.MISC)
+                    //? if >=1.21.2 {
                     .sized(0.6F, 1.95F).eyeHeight(1.62F).clientTrackingRange(10).build(key));
+                    //?} else {
+                    /*.sized(0.6F, 1.95F).eyeHeight(1.62F).clientTrackingRange(10).build(key.location().toString()));
+                    *///?}
 
     private NeroColoniesEntityTypes() {
     }

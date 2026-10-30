@@ -5,8 +5,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+//? if >=1.21.9 {
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 import net.neoforged.neoforge.transfer.item.WorldlyContainerWrapper;
+//?} else {
+/*import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
+*///?}
 
 import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 import za.co.neroland.nerolandcore.platform.NeoForgeEnergyLookup;
@@ -39,6 +44,7 @@ public final class NeoForgeColonyCapabilities {
                 : NeroColoniesBlockEntities.machineTypes()) {
             event.registerBlockEntity(NeoForgeEnergyLookup.ENERGY, type,
                     (be, side) -> be.sideConfig() == null ? be.getEnergy() : be.sideConfig().energyView(side));
+            //? if >=1.21.9 {
             event.registerBlockEntity(Capabilities.Item.BLOCK, type, (be, side) -> {
                 if (!(be instanceof WorldlyContainer container)) {
                     return null;
@@ -46,6 +52,15 @@ public final class NeoForgeColonyCapabilities {
                 return side == null ? VanillaContainerWrapper.of(container)
                         : new WorldlyContainerWrapper(container, side);
             });
+            //?} else {
+            /*// Before 1.21.9 NeoForge exposes items through IItemHandler (no transfer API yet).
+            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (be, side) -> {
+                if (!(be instanceof WorldlyContainer container)) {
+                    return null;
+                }
+                return side == null ? new InvWrapper(container) : new SidedInvWrapper(container, side);
+            });
+            *///?}
         }
         // Gas is only advertised on the machines that actually hold it.
         for (BlockEntityType<OxygenGeneratorBlockEntity> type : NeroColoniesBlockEntities.gasTypes()) {

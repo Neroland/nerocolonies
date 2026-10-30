@@ -27,13 +27,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+//? if >=1.21.6 {
 import net.minecraft.world.level.storage.TagValueInput;
+//?}
 
 import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.content.BlockStateText;
 import za.co.neroland.nerocolonies.content.ProfessionDefinition;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.registry.NeroColoniesEntityTypes;
 
 /**
@@ -153,7 +156,7 @@ final class GalleryKit {
      */
     static void label(Site site, Tally tally, double x, double y, double z, Component text, float scale) {
         ServerLevel level = site.level();
-        Display.TextDisplay display = textDisplayType().create(level, EntitySpawnReason.EVENT);
+        Display.TextDisplay display = VersionCompat.create(textDisplayType(), level, EntitySpawnReason.EVENT);
         if (display == null) {
             return;
         }
@@ -167,7 +170,11 @@ final class GalleryKit {
         if (scale != 1.0F) {
             tag.put("transformation", scaled(scale));
         }
+        //? if >=1.21.6 {
         display.load(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), tag));
+        //?} else {
+        /*display.load(tag);
+        *///?}
         display.setPos(x, y, z); // load() read an absent position as the origin
         display.addTag(TAG);
         if (level.addFreshEntity(display)) {
@@ -225,7 +232,7 @@ final class GalleryKit {
     @Nullable
     static ColonistEntity neran(Site site, Tally tally, int dx, int dz, @Nullable ProfessionDefinition trade) {
         ServerLevel level = site.level();
-        ColonistEntity neran = NeroColoniesEntityTypes.COLONIST.get().create(level, EntitySpawnReason.EVENT);
+        ColonistEntity neran = VersionCompat.create(NeroColoniesEntityTypes.COLONIST.get(), level, EntitySpawnReason.EVENT);
         if (neran == null) {
             return null;
         }
@@ -255,7 +262,7 @@ final class GalleryKit {
     @Nullable
     static <T extends Mob> T mob(Site site, EntityType<T> type, int dx, int dz) {
         ServerLevel level = site.level();
-        T mob = type.create(level, EntitySpawnReason.EVENT);
+        T mob = VersionCompat.create(type, level, EntitySpawnReason.EVENT);
         if (mob == null) {
             return null;
         }

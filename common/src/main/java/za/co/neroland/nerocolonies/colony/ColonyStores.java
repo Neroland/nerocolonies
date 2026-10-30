@@ -21,6 +21,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.data.SavedDataCompat;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerolandcore.data.SavedDataRecovery;
@@ -72,7 +73,7 @@ public final class ColonyStores extends SavedData {
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "stores");
 
     public static final SavedDataType<ColonyStores> TYPE =
-            new SavedDataType<>(ID, ColonyStores::new, codec(), null);
+            SavedDataCompat.type(ID, ColonyStores::new, codec());
 
     /** Backing size of the storage region. The usable part is gated by {@link ColonyStorage}. */
     public static final int STORAGE_SLOTS = 54;

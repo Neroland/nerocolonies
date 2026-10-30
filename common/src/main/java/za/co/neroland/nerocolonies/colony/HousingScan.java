@@ -200,7 +200,11 @@ public final class HousingScan {
         }
         int beaconY = colony.beaconPos().getY();
         int minY = Math.max(level.getMinY(), beaconY - BAND_BELOW);
+        //? if >=1.21.2 {
         int maxY = Math.min(level.getMaxY(), beaconY + BAND_ABOVE);
+        //?} else {
+        /*int maxY = Math.min(level.getMaxBuildHeight() - 1, beaconY + BAND_ABOVE);
+        *///?}
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int dx = 0; dx < 16; dx++) {
             int x = (chunkX << 4) + dx;

@@ -16,6 +16,9 @@ def neoVersion = project.findProperty("neo_version_${mc}")
 def jeiVersion = project.findProperty("jei_version_${mc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
 def nerolandcoreVersion = project.findProperty('nerolandcore_version')
+// Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
+def mcCeiling = project.findProperty("mc_ceiling_${mc}")
+def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
 
 // This node's projectDir is <loader>/versions/<v>; the authoritative loader source +
 // templates live in the BRANCH root (neoforge/). Resolve branch-root paths via the parent.
@@ -61,6 +64,11 @@ repositories {
 
 // Pull in the shared common source + resources.
 sourceSets.main.java.srcDir rootProject.ext.commonJava
+// EMI has no build for most 1.21.x lines (the pinned EMI port is 26.x-only), so a cell without an EMI
+// file leaves the EMI plugin out entirely (and, on Fabric, its entrypoint).
+if (!emiFile) {
+    sourceSets.main.java.exclude '**/compat/emi/**'
+}
 sourceSets.main.resources.srcDir rootProject.ext.commonResources
 
 dependencies {
@@ -130,7 +138,7 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
         mod_name               : rootProject.mod_name,
         mod_authors            : rootProject.mod_authors,
         mod_license            : rootProject.mod_license,
-        minecraft_version_range: "[${mc},)",
+        minecraft_version_range: mcCeiling ? "[${mcFloor},${mcCeiling})" : "[${mc},)",
         // Floor at the compiled Core version: a too-old Core would be missing APIs NeroColonies
         // links against, which surfaces as a NoSuchMethodError deep in gameplay instead of a clean
         // "update Neroland Core" loader message.
@@ -216,7 +224,7 @@ tasks.register('ecjCheck', JavaExec) {
                 .join(File.pathSeparator)
         def srcDirs = sourceSets.main.java.srcDirs.findAll { it.exists() }.collect { it.absolutePath }
         args = [
-                '--release', '25',
+                '--release', "${project.javaRelease}",
                 '-proc:none',
                 '-d', 'none',
                 '-properties', rootProject.file('tools/ecj.prefs').absolutePath,

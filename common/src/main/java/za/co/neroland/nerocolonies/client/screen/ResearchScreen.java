@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+//? if >=1.21.9 {
 import net.minecraft.client.input.MouseButtonEvent;
+//?}
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;

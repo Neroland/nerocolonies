@@ -31,6 +31,7 @@ import za.co.neroland.nerolandcore.machine.AbstractMachineBlockEntity;
 import za.co.neroland.nerolandcore.progression.CoreGates;
 import za.co.neroland.nerolandcore.progression.ProgressionGates;
 
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.progression.ColonyGates;
 import za.co.neroland.nerocolonies.progression.QuestHooks;
 
@@ -225,7 +226,7 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
                 // NeroColonies never demolishes anything it built.
                 Construction.forget(serverLevel.getServer(), colony.colonyId());
                 colonies.remove(colony.colonyId());
-                player.sendSystemMessage(
+                VersionCompat.systemMessage(player,
                         Component.translatable("message.nerocolonies.claim.dissolved", colony.name()));
                 NeroColoniesCommon.LOGGER.info("[NeroColonies] Colony dissolved ({} remaining).",
                         colonies.size());
@@ -241,7 +242,11 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
 
     /** Comparator output tracks colony morale, so redstone can react to a colony in trouble. */
     @Override
+    //? if >=1.21.9 {
     protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
+    //?} else {
+    /*protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+    *///?}
         if (!(level.getBlockEntity(pos) instanceof ColonyBeaconBlockEntity beacon)) {
             return 0;
         }

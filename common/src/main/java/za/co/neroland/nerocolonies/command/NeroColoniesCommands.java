@@ -26,7 +26,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.Permissions;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +54,7 @@ import za.co.neroland.nerocolonies.colony.ResearchEffects;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.content.ValidationIssue;
 import za.co.neroland.nerocolonies.network.ColonySync;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 import za.co.neroland.nerocolonies.telemetry.NeroColoniesTelemetry;
 
 /**
@@ -216,37 +216,37 @@ public final class NeroColoniesCommands {
                                                                 () -> needPrioritise(ctx, true)))))))
                         // --- operator level ---
                         .then(Commands.literal("dissolve")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .executes(ctx -> runSafely(ctx.getSource(), "colony dissolve",
                                                 () -> dissolve(ctx)))))
                         .then(Commands.literal("transfer")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .then(playerArgument()
                                                 .executes(ctx -> runSafely(ctx.getSource(),
                                                         "colony transfer", () -> transfer(ctx))))))
                         .then(Commands.literal("tp")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .executes(ctx -> runSafely(ctx.getSource(), "colony tp",
                                                 () -> teleport(ctx)))))
                         .then(Commands.literal("set-morale")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .then(Commands.argument("value",
                                                         DoubleArgumentType.doubleArg(0.0D, 100.0D))
                                                 .executes(ctx -> runSafely(ctx.getSource(),
                                                         "colony set-morale", () -> setMorale(ctx))))))
                         .then(Commands.literal("grant-research")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .then(nodeArgument()
                                                 .executes(ctx -> runSafely(ctx.getSource(),
                                                         "colony grant-research",
                                                         () -> grantResearch(ctx))))))
                         .then(Commands.literal("sell")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(VersionCompat.gamemasters())
                                 .then(colonyArgument()
                                         .executes(ctx -> runSafely(ctx.getSource(), "colony sell",
                                                 () -> sell(ctx))))))
@@ -258,7 +258,7 @@ public final class NeroColoniesCommands {
                                 .executes(ctx -> runSafely(ctx.getSource(), "data erase",
                                         () -> dataErase(ctx.getSource())))))
                 .then(Commands.literal("admin")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(VersionCompat.gamemasters())
                         .then(Commands.literal("list")
                                 .executes(ctx -> runSafely(ctx.getSource(), "admin list",
                                         () -> listAll(ctx.getSource(), null)))
@@ -273,11 +273,11 @@ public final class NeroColoniesCommands {
                                                     () -> listAll(ctx.getSource(), dimension));
                                         }))))
                 .then(Commands.literal("reload-check")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(VersionCompat.gamemasters())
                         .executes(ctx -> runSafely(ctx.getSource(), "reload-check",
                                 () -> reloadCheck(ctx.getSource()))))
                 .then(Commands.literal("purge-stale")
-                        .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .requires(VersionCompat.gamemasters())
                         .executes(ctx -> runSafely(ctx.getSource(), "purge-stale",
                                 () -> purgeStale(ctx.getSource()))))
                 .then(GalleryCommand.node()));
@@ -628,7 +628,7 @@ public final class NeroColoniesCommands {
         if (!ColonyPermissions.allows(acting.role(), ColonyPermissions.Action.PLAN, false)) {
             return refuse(source, ColonyMembership.Result.NOT_ALLOWED);
         }
-        ColonyPlanner.describe(player.level(), player, acting.colony());
+        ColonyPlanner.describe(VersionCompat.level(player), player, acting.colony());
         return Command.SINGLE_SUCCESS;
     }
 
@@ -867,8 +867,13 @@ public final class NeroColoniesCommands {
             return 0;
         }
         BlockPos pos = colony.beaconPos();
+        //? if >=1.21.2 {
         player.teleportTo(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
                 java.util.Set.of(), player.getYRot(), player.getXRot(), true);
+        //?} else {
+        /*player.teleportTo(level, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D,
+                java.util.Set.of(), player.getYRot(), player.getXRot());
+        *///?}
         source.sendSuccess(() -> Component.translatable("command.nerocolonies.tp.done", colony.name()),
                 false);
         return Command.SINGLE_SUCCESS;
@@ -1163,7 +1168,7 @@ public final class NeroColoniesCommands {
      * the check against the source's own permission set, which is what this does.
      */
     private static boolean isOperator(CommandSourceStack source) {
-        return source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+        return VersionCompat.isGamemaster(source);
     }
 
     /** The colonies this source may be offered in a suggestion list. */

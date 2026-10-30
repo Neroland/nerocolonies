@@ -14,7 +14,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.NameAndId;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerolandcore.economy.CurrencyApi;
@@ -38,6 +37,7 @@ import za.co.neroland.nerocolonies.colony.Population;
 import za.co.neroland.nerocolonies.colony.Research;
 import za.co.neroland.nerocolonies.colony.ResearchEffects;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * One player's view of the one colony they currently have open.
@@ -218,7 +218,11 @@ public record ColonySnapshotPayload(
         for (Identifier id : Research.affordable(server, colony)) {
             affordable.add(id.toString());
         }
+        //? if >=1.21.6 {
         int storageSlots = ColonyStorage.usableSlots(viewer.level(), colony);
+        //?} else {
+        /*int storageSlots = ColonyStorage.usableSlots(viewer.serverLevel(), colony);
+        *///?}
         int storageUsed = 0;
         for (int slot = 0; slot < storageSlots; slot++) {
             if (!ColonyStores.get(server).store(colony.colonyId()).storage().get(slot).isEmpty()) {
@@ -355,8 +359,7 @@ public record ColonySnapshotPayload(
         if (online != null) {
             return cleanName(online.getName().getString());
         }
-        return server.services().nameToIdCache().get(id)
-                .map(NameAndId::name)
+        return VersionCompat.cachedName(server, id)
                 .map(ColonySnapshotPayload::cleanName)
                 .orElse(UNKNOWN_NAME);
     }

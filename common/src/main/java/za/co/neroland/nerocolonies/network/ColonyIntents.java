@@ -26,6 +26,7 @@ import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.Outpost;
 import za.co.neroland.nerocolonies.colony.Research;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * The server-side handler for {@link ColonyIntentPayload} — the one place a NeroColonies client can
@@ -72,7 +73,7 @@ public final class ColonyIntents {
         if (!payload.validOp()) {
             return;
         }
-        ServerLevel level = player.level();
+        ServerLevel level = VersionCompat.level(player);
         MinecraftServer server = level.getServer();
         BlockPos pos = payload.pos();
         if (server == null || !level.isLoaded(pos)) {

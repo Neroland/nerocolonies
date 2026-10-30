@@ -14,6 +14,9 @@ def forgeVersion = project.findProperty("forge_version_${mc}")
 def jeiVersion = project.findProperty("jei_version_${mc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
 def nerolandcoreVersion = project.findProperty('nerolandcore_version')
+// Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
+def mcCeiling = project.findProperty("mc_ceiling_${mc}")
+def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
 
 if (!forgeVersion) {
     throw new GradleException("Missing forge_version_${mc} in gradle.properties")
@@ -63,6 +66,11 @@ jarJar.register()
 
 // Pull in the shared common source + resources.
 sourceSets.main.java.srcDir rootProject.ext.commonJava
+// EMI has no build for most 1.21.x lines (the pinned EMI port is 26.x-only), so a cell without an EMI
+// file leaves the EMI plugin out entirely (and, on Fabric, its entrypoint).
+if (!emiFile) {
+    sourceSets.main.java.exclude '**/compat/emi/**'
+}
 sourceSets.main.resources.srcDir rootProject.ext.commonResources
 
 // Forge 26's ModLauncher builds a JPMS layer from the dev runtime classpath. If classes and
@@ -101,7 +109,10 @@ repositories {
 
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${forgeVersion}")
-    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
+    // EventBus 7's compile-time validator; Forge before 1.21.6 ships EventBus 6, which it cannot validate.
+    if (stonecutter.eval(mc, '>=1.21.6')) {
+        annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.6'
+    }
 
     // Neroland Core — REQUIRED shared foundation (registration seam, config, creative tab, data
     // erasure, machine base, side config, energy/gas, progression gates). Core ships as its own mod
@@ -138,7 +149,7 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
         mod_authors               : rootProject.mod_authors,
         mod_license               : rootProject.mod_license,
         forge_loader_version_range: "[${forgeMajor},)",
-        minecraft_version_range   : "[${mc},)",
+        minecraft_version_range   : mcCeiling ? "[${mcFloor},${mcCeiling})" : "[${mc},)",
         // Floor at the compiled Core version — see the NeoForge build script for the reasoning.
         nerolandcore_version_range: "[${nerolandcoreVersion},2.0)",
     ]
@@ -179,7 +190,7 @@ tasks.register('ecjCheck', JavaExec) {
                 .join(File.pathSeparator)
         def srcDirs = sourceSets.main.java.srcDirs.findAll { it.exists() }.collect { it.absolutePath }
         args = [
-                '--release', '25',
+                '--release', "${project.javaRelease}",
                 '-proc:none',
                 '-d', 'none',
                 '-properties', rootProject.file('tools/ecj.prefs').absolutePath,

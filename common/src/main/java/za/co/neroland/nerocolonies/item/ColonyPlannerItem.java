@@ -12,7 +12,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+//? if >=1.21.5 {
 import net.minecraft.world.item.component.TooltipDisplay;
+//?}
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
@@ -37,19 +39,36 @@ public class ColonyPlannerItem extends Item {
     }
 
     @Override
+    //? if >=1.21.5 {
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
             Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
+    //?} else {
+    /*public void appendHoverText(ItemStack stack, Item.TooltipContext context, java.util.List<Component> lines,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, context, lines, flag);
+        Consumer<Component> tooltip = lines::add;
+    *///?}
         tooltip.accept(Component.translatable("item.nerocolonies.colony_planner.tooltip")
                 .withStyle(ChatFormatting.GRAY));
     }
 
     @Override
+    //? if >=1.21.2 {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    //?} else {
+    /*public net.minecraft.world.InteractionResultHolder<net.minecraft.world.item.ItemStack> use(Level level,
+            Player player, InteractionHand hand) {
+    *///?}
         if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
             ColonyPlanner.cycle(serverLevel, serverPlayer, player.isShiftKeyDown());
         }
+        //? if >=1.21.2 {
         return InteractionResult.SUCCESS;
+        //?} else {
+        /*return net.minecraft.world.InteractionResultHolder.sidedSuccess(player.getItemInHand(hand),
+                level.isClientSide());
+        *///?}
     }
 
     @Override

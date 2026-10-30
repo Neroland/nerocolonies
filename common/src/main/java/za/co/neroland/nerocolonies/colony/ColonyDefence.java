@@ -33,6 +33,7 @@ import za.co.neroland.nerocolonies.content.ItemTarget;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
 import za.co.neroland.nerocolonies.link.ColonyLinkEvents;
 import za.co.neroland.nerocolonies.link.ColonyLinkModule;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * Colony defence: who guards and guardian animals may attack, guardian upkeep, enemies in the claim,
@@ -159,7 +160,7 @@ public final class ColonyDefence {
         int reach = colony.claimRadius() + NeroColoniesConfig.GUARD_PURSUIT_MARGIN.get();
         BlockPos beacon = colony.beaconPos();
         AABB box = new AABB(beacon.getX() - reach, level.getMinY(), beacon.getZ() - reach,
-                beacon.getX() + reach + 1, level.getMaxY() + 1, beacon.getZ() + reach + 1);
+                beacon.getX() + reach + 1, VersionCompat.maxY(level) + 1, beacon.getZ() + reach + 1);
         List<Mob> guardians = level.getEntitiesOfClass(Mob.class, box.inflate(32.0D),
                 mob -> mob.isAlive() && mob.entityTags().contains(tag));
         int wolves = 0;
@@ -237,7 +238,7 @@ public final class ColonyDefence {
         if (at == null) {
             return;
         }
-        Mob mob = type.create(level, EntitySpawnReason.MOB_SUMMONED);
+        Mob mob = VersionCompat.create(type, level, EntitySpawnReason.MOB_SUMMONED);
         if (mob == null) {
             return;
         }
@@ -307,9 +308,15 @@ public final class ColonyDefence {
         if (attacker instanceof Player player) {
             return player.getUUID();
         }
+        //? if >=1.21.5 {
         if (attacker instanceof OwnableEntity pet && pet.getOwnerReference() != null) {
             return pet.getOwnerReference().getUUID();
         }
+        //?} else {
+        /*if (attacker instanceof OwnableEntity pet && pet.getOwnerUUID() != null) {
+            return pet.getOwnerUUID();
+        }
+        *///?}
         return null;
     }
 

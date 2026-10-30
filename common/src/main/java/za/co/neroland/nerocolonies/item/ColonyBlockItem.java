@@ -8,7 +8,9 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+//? if >=1.21.5 {
 import net.minecraft.world.item.component.TooltipDisplay;
+//?}
 import net.minecraft.world.level.block.Block;
 
 /**
@@ -29,9 +31,16 @@ public class ColonyBlockItem extends BlockItem {
     }
 
     @Override
+    //? if >=1.21.5 {
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display,
             Consumer<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
+    //?} else {
+    /*public void appendHoverText(ItemStack stack, Item.TooltipContext context, java.util.List<Component> lines,
+            TooltipFlag flag) {
+        super.appendHoverText(stack, context, lines, flag);
+        Consumer<Component> tooltip = lines::add;
+    *///?}
         tooltip.accept(Component.translatable(this.tooltipKey).withStyle(ChatFormatting.GRAY));
     }
 }

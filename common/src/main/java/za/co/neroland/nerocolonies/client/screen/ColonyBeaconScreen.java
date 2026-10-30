@@ -6,8 +6,10 @@ import java.util.Optional;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
+//? if >=1.21.9 {
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+//?}
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -1288,7 +1290,11 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (this.roleField != null && this.roleField.canConsumeInput() && !event.isEscape()) {
+            //? if >=1.21.9 {
             this.roleField.keyPressed(event);
+            //?} else {
+            /*this.roleField.keyPressed(event.key(), event.scancode(), event.modifiers());
+            *///?}
             return true;
         }
         return super.keyPressed(event);

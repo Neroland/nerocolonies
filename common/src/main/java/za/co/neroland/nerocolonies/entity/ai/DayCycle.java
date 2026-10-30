@@ -3,6 +3,7 @@ package za.co.neroland.nerocolonies.entity.ai;
 import net.minecraft.world.level.Level;
 
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
+import za.co.neroland.nerocolonies.platform.VersionCompat;
 
 /**
  * The Neran day, read from the dimension's clock rather than the sky.
@@ -47,7 +48,7 @@ public final class DayCycle {
         if (level.dimensionType().hasFixedTime()) {
             return !NeroColoniesConfig.FIXED_TIME_IS_DAY.get();
         }
-        return isNight(level.getDefaultClockTime(), wasNight);
+        return isNight(VersionCompat.clockTime(level), wasNight);
     }
 
     /** Pure form of {@link #isNight(Level, boolean)} over a raw clock value. */
@@ -64,7 +65,7 @@ public final class DayCycle {
         if (level.dimensionType().hasFixedTime()) {
             return NeroColoniesConfig.FIXED_TIME_IS_DAY.get() ? Phase.WORK : Phase.SLEEP;
         }
-        return phase(level.getDefaultClockTime(), previous);
+        return phase(VersionCompat.clockTime(level), previous);
     }
 
     /** Pure form of {@link #phase(Level, Phase)}. Unit-tested. */

@@ -26,7 +26,11 @@ public final class NeroColoniesNeoForge {
         NeoForgeColonyCapabilities.register(modEventBus);
         NeoForgeColonyEvents.register();
         // Client-only: screens. Gated so the client classes never load on a dedicated server.
+        //? if >=1.21.9 {
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
+        //?} else {
+        /*if (FMLEnvironment.dist == Dist.CLIENT) {
+        *///?}
             NeoForgeClientSetup.init(modEventBus);
         }
     }

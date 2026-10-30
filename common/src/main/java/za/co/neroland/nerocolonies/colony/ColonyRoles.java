@@ -18,6 +18,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 
 import org.jetbrains.annotations.Nullable;
 
+import za.co.neroland.nerolandcore.data.SavedDataCompat;
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.data.LenientCodecs;
 import za.co.neroland.nerolandcore.data.SavedDataRecovery;
@@ -54,7 +55,7 @@ public final class ColonyRoles extends SavedData {
     public static final Identifier ID = Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "roles");
 
     public static final SavedDataType<ColonyRoles> TYPE =
-            new SavedDataType<>(ID, ColonyRoles::new, codec(), null);
+            SavedDataCompat.type(ID, ColonyRoles::new, codec());
 
     private final Map<UUID, Lists> byColony = new LinkedHashMap<>();
 
