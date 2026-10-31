@@ -1,5 +1,7 @@
 # Project context for AI coding agents — nerocolonies
 
+> Modrinth is temporarily being removed from the upload and is no longer being referenced. Avoid making references to modrinth.
+
 > `CLAUDE.md` and `AGENTS.md` are kept **byte-identical**; update both together.
 
 ## The mod
@@ -15,7 +17,7 @@
   stay `*Colonist*`, so existing worlds and configs load. Never rename any of them.
 - Mod id: **`nerocolonies`** (matches the registry namespace + every loader manifest). Package root:
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
-- Version: **0.5.1-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
+- Version: **0.6.1-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
   roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the gallery); 0.4 added
   NeroEconomy payouts; 0.5 ships the Colony Chronicle quest chapter, nine record gates, three new
   threshold channels and the two quest-hook rewards. Verified by the nine-cell build, `ecjCheck`

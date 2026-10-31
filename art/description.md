@@ -58,8 +58,8 @@ NeroColonies records **player-linked data** for gameplay and anti-grief: colony 
 
 ## Requirements & compatibility
 
-- **Requires [Neroland Core](https://modrinth.com/mod/nerolandcore)** — install it alongside NeroColonies (it loads first).
-- **[Nerospace](https://modrinth.com/mod/nerospace)** is a strong companion — it provides the planets to colonise and the breathability data that drives life support. Without it, colonies degrade gracefully to Earth-only and lose the off-world experience the mod is built around.
+- **Requires [Neroland Core](https://nerolandmc.net/mods/neroland-core/)** — install it alongside NeroColonies (it loads first).
+- **[Nerospace](https://nerolandmc.net/mods/nerospace/)** is a strong companion — it provides the planets to colonise and the breathability data that drives life support. Without it, colonies degrade gracefully to Earth-only and lose the off-world experience the mod is built around.
 - Conventional `c:` tags and loader-native capabilities let Create, AE2, Mekanism, Ad Astra, and Energized Power interoperate for power, storage, and oxygen as the 26.x ecosystem fills in — no hard dependency on any of them.
 - **Modpacks are allowed and encouraged** — any platform, no need to ask. Use the official files and credit *NeroColonies by Neroland* with links to the [CurseForge page](https://www.curseforge.com/minecraft/mc-mods/nerocolonies) and the [GitHub repository](https://github.com/Neroland/nerocolonies). Full terms: [LICENSE](https://github.com/Neroland/nerocolonies/blob/main/LICENSE).
 
