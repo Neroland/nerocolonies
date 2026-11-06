@@ -242,3 +242,7 @@ za.co.neroland.nerocolonies
   player-facing text.
 - Grow the `Colony` record past 16 fields.
 - Add a hard dependency on any mod other than Neroland Core.
+
+## Translation workflow
+
+English is the source language for new and changed text. Community translations are intended to be contributed through Weblate; other-language translations are not required when implementing a feature. Preserve existing translations. This supersedes older instructions that require translating every change.
