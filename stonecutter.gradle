@@ -131,6 +131,17 @@ subprojects {
                 }
                 content { includeGroup 'za.co.neroland.neroeconomy' }
             }
+            // Nerospace (optional, compileOnly) from GitHub Packages. Same credential guard: a token-less
+            // build resolves it from mavenLocal() or sets nerospace_compat=false.
+            maven {
+                name = 'NerospaceGitHubPackages'
+                url = 'https://maven.pkg.github.com/Neroland/nerospace'
+                credentials {
+                    username = neGprUser
+                    password = neGprKey
+                }
+                content { includeGroup 'za.co.neroland.nerospace' }
+            }
         }
         mavenCentral()
         maven { url 'https://maven.fabricmc.net/' }

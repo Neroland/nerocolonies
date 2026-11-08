@@ -1,0 +1,7 @@
+{
+  "target": { "tag": "nerocolonies:planetary/voidglass_lens", "count": 1 },
+  "base_value": 12.0,
+  "stack_size": 16,
+  "research": "nerocolonies:planetary/twilight_enclave",
+  "colony_types": [ "twilight_enclave" ]
+}

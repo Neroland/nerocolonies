@@ -120,9 +120,9 @@ alert systems — can react. Switch it off with `thresholdEventsEnabled`.
 Two signals, in strict priority order.
 
 1. **A planet mod's own answer.** When the Neroland planet mod is installed, its `airless` flag for
-   the dimension is authoritative. NeroColonies reads it through a single reflective adapter,
-   resolved once at startup: the planet mod is a **soft dependency**, is not on the compile classpath
-   and is not required by any manifest.
+   the dimension is authoritative. NeroColonies reads it through a single adapter against that mod's
+   public API, chosen once at startup and only when the mod is present: the planet mod is a **soft
+   dependency**, is never bundled and is not required by any manifest.
 2. **Core's space dimension tag, as an advisory hint.** With that mod absent, a dimension carrying
    the shared Neroland space tag is treated as airless. Another mod's planet dimension may well
    carry that tag, and honouring it costs nothing and makes NeroColonies work with a planet mod it

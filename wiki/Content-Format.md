@@ -35,6 +35,23 @@ govern land clearing ([Buildings](Buildings.md#land-clearing)), the item tags th
 food ([Colony basics](Colony-Basics.md#feeding-a-colony)) and the Gratitude Cache's loot tables
 ([Gratitude cache](Gratitude-Cache.md#for-pack-makers)).
 
+## Limiting content to colony types
+
+Jobs, research nodes, export entries and blueprints accept one more optional field, `colony_types`: a
+list of colony type names (`generic`, `lunar_outpost`, `martian_settlement`, `ember_forge`,
+`cryo_station`, `canopy_commune`, `twilight_enclave`). Without it, or with an empty list, the
+definition is available to every colony. With it, only colonies of a listed type see it.
+
+```json
+"colony_types": [ "martian_settlement" ]
+```
+
+An unknown name is reported and ignored; a list naming no known type drops the definition. A
+`colony_types` value that is not a list of strings (for example a single string or a number) is a
+decode error and drops the **whole** definition, like any other malformed field. A
+definition with a `colony_types` list that names an item that is not installed is skipped quietly
+rather than reported. See [Planetary colonies](Planetary-Colonies.md).
+
 ## Item targets and item amounts
 
 Two small shapes appear throughout.

@@ -78,7 +78,8 @@ public final class ColonyPlanner {
      */
     public static boolean plannable(Colony colony, ColonyStage stage, @Nullable ColonyConstruction.Plan plan,
             Blueprint blueprint) {
-        if (!blueprint.hasGrid() || blueprint.level() > 1 || blueprint.max() <= 0) {
+        if (!blueprint.hasGrid() || blueprint.level() > 1 || blueprint.max() <= 0
+                || !blueprint.availableTo(colony.colonyType())) {
             return false;
         }
         if (!stage.atLeast(blueprint.stage()) && !blueprint.starter()) {

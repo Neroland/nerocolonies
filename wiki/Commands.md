@@ -224,6 +224,11 @@ useful for testing a threshold rather than for holding a colony happy.
 Unlocks a node with no cost, no power and no prerequisite check. It still refuses a node the colony
 already has, and still refuses an id that is not loaded.
 
+It does **not** check a node's `colony_types` filter (see [Planetary colonies](Planetary-Colonies.md)):
+an operator may grant a planetary node to any colony. Granting one to a colony of another type changes
+nothing, though: a node filtered to another type contributes no effect, unlocks no job and is not shown
+in that colony's research lists.
+
 ### `colony sell <colony>`
 
 Runs the same sale the beacon's Sell button does. It refuses, without taking anything, when the

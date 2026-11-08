@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:sulfur", "required": false },
+    "minecraft:netherrack"
+  ]
+}

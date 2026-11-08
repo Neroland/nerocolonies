@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -27,6 +28,7 @@ import za.co.neroland.nerocolonies.colony.ColonyRoles;
 import za.co.neroland.nerocolonies.colony.ColonyStage;
 import za.co.neroland.nerocolonies.colony.ColonyStorage;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
+import za.co.neroland.nerocolonies.colony.ColonyType;
 import za.co.neroland.nerocolonies.colony.Construction;
 import za.co.neroland.nerocolonies.colony.ExportBuffer;
 import za.co.neroland.nerocolonies.colony.GratitudeCache;
@@ -168,20 +170,27 @@ public record ColonySnapshotPayload(
      * @param enemies         a count
      * @param needs           at most {@value ColonySnapshotPayload#MAX_NEEDS} lines, most urgent first
      * @param members         empty unless the viewer may manage members; see the class notes
+     * @param colonyType      the colony's {@code ColonyType} stored name (since 0.7); not personal data
      */
     public record Life(int stage, int role, int nextPopulation, int nextStructures, int children,
             int etaSoloMinutes, int etaHelpMinutes, int allies, int chiefs, int enemies,
             boolean cacheShared, int cacheFilled, int cacheSlots, int stuckEvents,
-            List<NeedLine> needs, List<Member> members) {
+            List<NeedLine> needs, List<Member> members, String colonyType) {
 
         /** No colony, or nothing known about one. */
         public static final Life NONE = new Life(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0,
-                List.of(), List.of());
+                List.of(), List.of(), ColonyType.GENERIC.serializedName());
 
         public Life {
             needs = needs.size() > MAX_NEEDS ? List.copyOf(needs.subList(0, MAX_NEEDS)) : List.copyOf(needs);
             members = members.size() > MAX_MEMBERS
                     ? List.copyOf(members.subList(0, MAX_MEMBERS)) : List.copyOf(members);
+            colonyType = ColonyType.byNameOrGeneric(colonyType).serializedName();
+        }
+
+        /** The colony type this snapshot names ({@code GENERIC} when it names none this build knows). */
+        public ColonyType type() {
+            return ColonyType.byNameOrGeneric(this.colonyType);
         }
     }
 
@@ -330,7 +339,8 @@ public record ColonySnapshotPayload(
                 ColonyLife.CACHE_SLOTS,
                 (int) Math.min(Integer.MAX_VALUE, Math.max(0L, life.stuckEvents())),
                 needs,
-                members);
+                members,
+                colony.colonyType().serializedName());
     }
 
     /** Appends one role's members to the roster, by name, in name order. */
@@ -457,7 +467,8 @@ public record ColonySnapshotPayload(
                 readLife(buf));
     }
 
-    private static void writeLife(RegistryFriendlyByteBuf buf, Life life) {
+    /** Writes the living-colony half. Package-private and plain-buffer so a unit test can round-trip it. */
+    static void writeLife(FriendlyByteBuf buf, Life life) {
         buf.writeVarInt(life.stage());
         buf.writeVarInt(life.role());
         buf.writeVarInt(life.nextPopulation());
@@ -492,9 +503,11 @@ public record ColonySnapshotPayload(
             buf.writeUtf(member.name(), MAX_MEMBER_NAME_CHARS);
             buf.writeVarInt(member.role());
         }
+        buf.writeUtf(life.colonyType(), MAX_ID_CHARS);
     }
 
-    private static Life readLife(RegistryFriendlyByteBuf buf) {
+    /** Reads what {@link #writeLife} wrote. */
+    static Life readLife(FriendlyByteBuf buf) {
         int stage = buf.readVarInt();
         int role = buf.readVarInt();
         int nextPopulation = buf.readVarInt();
@@ -522,8 +535,9 @@ public record ColonySnapshotPayload(
         for (int i = 0; i < memberCount; i++) {
             members.add(new Member(buf.readUtf(MAX_MEMBER_NAME_CHARS), buf.readVarInt()));
         }
+        String colonyType = buf.readUtf(MAX_ID_CHARS);
         return new Life(stage, role, nextPopulation, nextStructures, children, etaSolo, etaHelp, allies,
-                chiefs, enemies, cacheShared, cacheFilled, cacheSlots, stuckEvents, needs, members);
+                chiefs, enemies, cacheShared, cacheFilled, cacheSlots, stuckEvents, needs, members, colonyType);
     }
 
     private static void writeIds(RegistryFriendlyByteBuf buf, List<String> ids) {

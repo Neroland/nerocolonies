@@ -1,0 +1,32 @@
+{
+  "name": "blueprint.nerocolonies.planetary.twilight_observatory",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 46,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 0 },
+  "colony_types": [ "twilight_enclave" ],
+  "palette": {
+    "#": "minecraft:deepslate_tiles",
+    "A": "minecraft:amethyst_block",
+    "D": "minecraft:polished_deepslate",
+    "P": "minecraft:purple_stained_glass",
+    "T": "minecraft:tinted_glass",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "DDDDD", "D___D", "D___D", "D___D", "DD_DD" ],
+    [ "DPPPD", "P___P", "P___P", "P___P", "DP_PD" ],
+    [ ".TTT.", "TTTTT", "TTATT", "TTTTT", ".TTT." ]
+  ],
+  "materials": [
+    { "item": "minecraft:deepslate_tiles", "count": 25 },
+    { "item": "minecraft:polished_deepslate", "count": 19 },
+    { "item": "minecraft:purple_stained_glass", "count": 10 },
+    { "item": "minecraft:tinted_glass", "count": 20 },
+    { "item": "minecraft:amethyst_block", "count": 1 }
+  ],
+  "rotate": true
+}

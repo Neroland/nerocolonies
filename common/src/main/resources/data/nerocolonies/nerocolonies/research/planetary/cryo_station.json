@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.cryo_station",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:copper_ingot", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/cryo_methane_power" },
+    { "type": "nerocolonies:job_slots", "amount": 1 }
+  ],
+  "colony_types": [ "cryo_station" ]
+}

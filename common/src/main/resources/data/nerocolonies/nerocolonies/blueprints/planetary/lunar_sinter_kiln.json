@@ -1,0 +1,28 @@
+{
+  "name": "blueprint.nerocolonies.planetary.lunar_sinter_kiln",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 46,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "lunar_outpost" ],
+  "palette": {
+    "#": "minecraft:stone_bricks",
+    "B": "minecraft:smooth_stone",
+    "S": "minecraft:smooth_stone_slab[type=bottom]",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "BBBBB", "B___B", "B___B", "B___B", "BB_BB" ],
+    [ "BBBBB", "B___B", "B___B", "B___B", "BB_BB" ],
+    [ "SSSSS", "SSSSS", "SS#SS", "SSSSS", "SSSSS" ]
+  ],
+  "materials": [
+    { "item": "minecraft:stone_bricks", "count": 26 },
+    { "item": "minecraft:smooth_stone", "count": 30 },
+    { "item": "minecraft:smooth_stone_slab", "count": 24 }
+  ],
+  "rotate": true
+}

@@ -78,14 +78,27 @@ public final class ColonyProgress {
         return ColonyStage.FOUNDING;
     }
 
-    /** Whether every Starter Works blueprint has been built at least once. */
+    /**
+     * The Starter Works this colony has to build, in the given order: founding-stage blueprints open to its
+     * colony type. A Starter Works filtered to another type (colony_types) is not this colony's to build,
+     * so it can never hold the colony in Founding. Pure; unit-tested.
+     */
+    public static java.util.List<Blueprint> starterWorksFor(Iterable<Blueprint> blueprints, ColonyType type) {
+        java.util.List<Blueprint> out = new java.util.ArrayList<>();
+        for (Blueprint blueprint : blueprints) {
+            if (blueprint.starter() && blueprint.availableTo(type)) {
+                out.add(blueprint);
+            }
+        }
+        return out;
+    }
+
+    /** Whether every Starter Works blueprint open to this colony has been built at least once. */
     public static boolean starterWorksDone(MinecraftServer server, Colony colony) {
         ColonyConstruction.Plan plan = ColonyConstruction.get(server).peek(colony.colonyId());
         boolean anyStarter = false;
-        for (Blueprint blueprint : ColonyDefinitions.blueprintsForServer(server).values()) {
-            if (!blueprint.starter()) {
-                continue;
-            }
+        for (Blueprint blueprint : starterWorksFor(ColonyDefinitions.blueprintsForServer(server).values(),
+                colony.colonyType())) {
             anyStarter = true;
             if (plan == null || plan.builtCount(blueprint.id()) <= 0 && !upgradedFrom(server, plan, blueprint)) {
                 return false;
@@ -112,9 +125,10 @@ public final class ColonyProgress {
     public static java.util.List<Blueprint> missingStarterWorks(MinecraftServer server, Colony colony) {
         ColonyConstruction.Plan plan = ColonyConstruction.get(server).peek(colony.colonyId());
         java.util.List<Blueprint> missing = new java.util.ArrayList<>();
-        for (Blueprint blueprint : ColonyDefinitions.blueprintsByPriority(server)) {
-            if (blueprint.starter() && (plan == null
-                    || plan.builtCount(blueprint.id()) <= 0 && !upgradedFrom(server, plan, blueprint))) {
+        for (Blueprint blueprint : starterWorksFor(ColonyDefinitions.blueprintsByPriority(server),
+                colony.colonyType())) {
+            if (plan == null
+                    || plan.builtCount(blueprint.id()) <= 0 && !upgradedFrom(server, plan, blueprint)) {
                 missing.add(blueprint);
             }
         }

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -23,6 +24,7 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.colony.ColonyType;
 import za.co.neroland.nerocolonies.content.effect.ResearchEffect;
 import za.co.neroland.nerocolonies.content.effect.ResearchEffectTypes;
 
@@ -274,23 +276,27 @@ public final class ColonyDefinitions {
                             "housing tier", collected),
                     collected);
             loadedJobs = validateJobs(
-                    read(resources, JOB_DIRECTORY, JobDefinition.CODEC, JobDefinition::withId,
-                            "job", collected),
-                    collected);
+                    cleanColonyTypes(read(resources, JOB_DIRECTORY, JobDefinition.CODEC, JobDefinition::withId,
+                            "job", collected), JobDefinition::colonyTypes, JobDefinition::withColonyTypes,
+                            collected),
+                    collected, Presence.LIVE);
             loadedExports = validateExports(
-                    read(resources, EXPORT_DIRECTORY, ExportEntry.CODEC, ExportEntry::withId,
-                            "export", collected),
-                    collected);
+                    cleanColonyTypes(read(resources, EXPORT_DIRECTORY, ExportEntry.CODEC, ExportEntry::withId,
+                            "export", collected), ExportEntry::colonyTypes, ExportEntry::withColonyTypes,
+                            collected),
+                    collected, Presence.LIVE);
             loadedResearch = validateResearch(
-                    read(resources, RESEARCH_DIRECTORY, ResearchNode.CODEC, ResearchNode::withId,
-                            "research node", collected),
+                    cleanColonyTypes(read(resources, RESEARCH_DIRECTORY, ResearchNode.CODEC,
+                            ResearchNode::withId, "research node", collected), ResearchNode::colonyTypes,
+                            ResearchNode::withColonyTypes, collected),
                     loadedJobs, loadedHousing, loadedExports, collected);
             // Blueprints last: their optional research prerequisite is checked against the research
             // that actually survived, so a blueprint gated behind a node that was dropped for a cycle
             // is reported rather than silently unbuildable.
             loadedBlueprints = validateBlueprints(resources,
-                    read(resources, BLUEPRINT_DIRECTORY, Blueprint.CODEC, Blueprint::withId,
-                            "blueprint", collected),
+                    cleanColonyTypes(read(resources, BLUEPRINT_DIRECTORY, Blueprint.CODEC, Blueprint::withId,
+                            "blueprint", collected), Blueprint::colonyTypes, Blueprint::withColonyTypes,
+                            collected),
                     loadedResearch, collected);
             loadedProfessions = validateProfessions(
                     read(resources, PROFESSION_DIRECTORY, ProfessionDefinition.CODEC,
@@ -387,6 +393,68 @@ public final class ColonyDefinitions {
 
     // --- validation ---------------------------------------------------------
 
+    /**
+     * Whether content a definition names exists in this launch. {@code LIVE} asks the game's registries;
+     * a unit test passes its own answers so the validation rules can be checked without a game.
+     */
+    interface Presence {
+
+        boolean station(JobDefinition job);
+
+        boolean target(ItemTarget target);
+
+        boolean amount(ItemAmount amount);
+
+        Presence LIVE = new Presence() {
+
+            @Override
+            public boolean station(JobDefinition job) {
+                return job.stationPresent();
+            }
+
+            @Override
+            public boolean target(ItemTarget target) {
+                return target.present();
+            }
+
+            @Override
+            public boolean amount(ItemAmount amount) {
+                return amount.present();
+            }
+        };
+    }
+
+    /**
+     * Checks every definition's optional {@code colony_types} filter. Unknown names are a validation issue,
+     * never a decode failure: they are reported and removed, and the definition keeps its known names. A
+     * filter that named <em>only</em> unknown types drops the definition, because an empty filter would turn
+     * content meant for one kind of colony into content for every colony.
+     */
+    static <T> Map<Identifier, T> cleanColonyTypes(Map<Identifier, T> parsed,
+            Function<T, List<String>> types, BiFunction<T, List<String>, T> withTypes,
+            List<ValidationIssue> collected) {
+        Map<Identifier, T> accepted = new LinkedHashMap<>();
+        for (Map.Entry<Identifier, T> entry : parsed.entrySet()) {
+            T definition = entry.getValue();
+            List<String> declared = types.apply(definition);
+            if (declared.isEmpty()) {
+                accepted.put(entry.getKey(), definition);
+                continue;
+            }
+            ColonyType.FilterCheck check = ColonyType.checkFilter(declared);
+            for (String unknown : check.unknown()) {
+                warn(collected, entry.getKey(), "names unknown colony type '" + unknown + "' (ignored)", false);
+            }
+            if (check.matchesNothing()) {
+                warn(collected, entry.getKey(), "names no known colony type and can never be used", true);
+                continue;
+            }
+            accepted.put(entry.getKey(), check.known().equals(declared) ? definition
+                    : withTypes.apply(definition, check.known()));
+        }
+        return accepted;
+    }
+
     /** Drops housing tiers whose block is not registered — an unmatchable tier is dead weight. */
     private static Map<Identifier, HousingTier> validateHousing(Map<Identifier, HousingTier> parsed,
             List<ValidationIssue> collected) {
@@ -410,40 +478,40 @@ public final class ColonyDefinitions {
      * content that is not installed. A job whose only problem is a missing input is dropped rather
      * than pruned: a recipe missing an ingredient is not a cheaper recipe, it is a broken one.
      */
-    private static Map<Identifier, JobDefinition> validateJobs(Map<Identifier, JobDefinition> parsed,
-            List<ValidationIssue> collected) {
+    static Map<Identifier, JobDefinition> validateJobs(Map<Identifier, JobDefinition> parsed,
+            List<ValidationIssue> collected, Presence presence) {
         Map<Identifier, JobDefinition> accepted = new LinkedHashMap<>();
         for (JobDefinition job : parsed.values()) {
             if (job.outputs().isEmpty()) {
                 warn(collected, job.id(), "produces nothing (no outputs)", true);
                 continue;
             }
-            if (!job.stationPresent()) {
+            if (!presence.station(job)) {
                 warn(collected, job.id(), "names unregistered station block " + job.station(), true);
                 continue;
             }
             ItemTarget missingInput = null;
             for (ItemTarget input : job.inputs()) {
-                if (!input.present()) {
+                if (!presence.target(input)) {
                     missingInput = input;
                     break;
                 }
             }
             if (missingInput != null) {
-                warn(collected, job.id(), "input " + missingInput.label()
-                        + " is not present in this launch", true);
+                dropMissing(collected, job.id(), "input " + missingInput.label()
+                        + " is not present in this launch", !job.colonyTypes().isEmpty());
                 continue;
             }
             ItemAmount missingOutput = null;
             for (ItemAmount output : job.outputs()) {
-                if (!output.present()) {
+                if (!presence.amount(output)) {
                     missingOutput = output;
                     break;
                 }
             }
             if (missingOutput != null) {
-                warn(collected, job.id(), "output " + missingOutput.item()
-                        + " is not registered in this launch", true);
+                dropMissing(collected, job.id(), "output " + missingOutput.item()
+                        + " is not registered in this launch", !job.colonyTypes().isEmpty());
                 continue;
             }
             accepted.put(job.id(), job);
@@ -452,13 +520,14 @@ public final class ColonyDefinitions {
     }
 
     /** Drops export entries whose target resolves to nothing — an empty tag sells nothing. */
-    private static Map<Identifier, ExportEntry> validateExports(Map<Identifier, ExportEntry> parsed,
-            List<ValidationIssue> collected) {
+    static Map<Identifier, ExportEntry> validateExports(Map<Identifier, ExportEntry> parsed,
+            List<ValidationIssue> collected, Presence presence) {
         Map<Identifier, ExportEntry> accepted = new LinkedHashMap<>();
         for (ExportEntry entry : parsed.values()) {
-            if (!entry.target().present()) {
-                warn(collected, entry.id(),
-                        "target " + entry.target().label() + " resolves to no item in this launch", true);
+            if (!presence.target(entry.target())) {
+                dropMissing(collected, entry.id(),
+                        "target " + entry.target().label() + " resolves to no item in this launch",
+                        !entry.colonyTypes().isEmpty());
                 continue;
             }
             accepted.put(entry.id(), entry);
@@ -472,19 +541,22 @@ public final class ColonyDefinitions {
      * Kahn's algorithm — anything left is in, or behind, a cycle and can never be unlocked, so it is
      * dropped. The surviving map is in dependency order.
      */
-    private static Map<Identifier, ResearchNode> validateResearch(Map<Identifier, ResearchNode> parsed,
+    static Map<Identifier, ResearchNode> validateResearch(Map<Identifier, ResearchNode> parsed,
             Map<Identifier, JobDefinition> validJobs, Map<Identifier, HousingTier> validHousing,
             Map<Identifier, ExportEntry> validExports, List<ValidationIssue> collected) {
 
         // Pass 1: report effects that reference content which is not loaded. They stay in the node
         // (they simply match nothing) so that removing one mod does not silently reshape a tree.
         for (ResearchNode node : parsed.values()) {
+            // Colony-type content may unlock a job that names another mod's items and was skipped with it
+            // (see dropMissing); that is expected, so it is not reported.
+            boolean typeFiltered = !node.colonyTypes().isEmpty();
             for (ResearchEffect effect : node.effects()) {
                 switch (effect) {
                     case ResearchEffect.Unknown unknown -> warn(collected, node.id(),
                             "unknown effect type " + unknown.unresolvedType() + " (ignored)", false);
                     case ResearchEffect.JobUnlock unlock -> {
-                        if (!validJobs.containsKey(unlock.job())) {
+                        if (!validJobs.containsKey(unlock.job()) && !typeFiltered) {
                             warn(collected, node.id(),
                                     "unlocks unknown job " + unlock.job() + " (ignored)", false);
                         }
@@ -496,7 +568,7 @@ public final class ColonyDefinitions {
                         }
                     }
                     case ResearchEffect.ExportUnlock unlock -> {
-                        if (!validExports.containsKey(unlock.export())) {
+                        if (!validExports.containsKey(unlock.export()) && !typeFiltered) {
                             warn(collected, node.id(),
                                     "unlocks unknown export " + unlock.export() + " (ignored)", false);
                         }
@@ -576,9 +648,11 @@ public final class ColonyDefinitions {
                 }
                 blueprint = declared.withGrid(grid.result().get());
             }
+            // Colony-type content may name another mod's blocks and items on purpose; reported quietly.
+            boolean typeFiltered = !blueprint.colonyTypes().isEmpty();
             for (Identifier missing : blueprint.missingBlocks()) {
-                warn(collected, blueprint.id(),
-                        "names unregistered block " + missing + " (those cells are left empty)", false);
+                noteMissing(collected, blueprint.id(),
+                        "names unregistered block " + missing + " (those cells are left empty)", typeFiltered);
             }
             if (blueprint.blockCount() <= 0) {
                 warn(collected, blueprint.id(), "places no blocks at all", true);
@@ -591,8 +665,8 @@ public final class ColonyDefinitions {
             }
             for (ItemTarget material : blueprint.materials()) {
                 if (!material.present()) {
-                    warn(collected, blueprint.id(), "material " + material.label()
-                            + " is not present in this launch (it will always build unsupplied)", false);
+                    noteMissing(collected, blueprint.id(), "material " + material.label()
+                            + " is not present in this launch (it will always build unsupplied)", typeFiltered);
                 }
             }
             accepted.put(blueprint.id(), blueprint);
@@ -669,6 +743,34 @@ public final class ColonyDefinitions {
             }
         }
         return Collections.unmodifiableMap(index);
+    }
+
+    /**
+     * Drops a definition that names content missing from this launch. Content filtered to particular colony
+     * types (the planetary profiles) names another mod's items on purpose and is expected to vanish when that
+     * mod is absent, so it is dropped quietly: a debug line and no validation issue. Everything else is
+     * reported as before.
+     */
+    private static void dropMissing(List<ValidationIssue> collected, Identifier id, String detail,
+            boolean typeFiltered) {
+        if (typeFiltered) {
+            NeroColoniesCommon.LOGGER.debug("[NeroColonies] {} {}; colony-type content, skipped.", id, detail);
+            return;
+        }
+        warn(collected, id, detail, true);
+    }
+
+    /**
+     * The non-dropping counterpart of {@link #dropMissing}: a part of a definition that names missing
+     * content is ignored, quietly for colony-type content and as an IGNORED issue otherwise.
+     */
+    private static void noteMissing(List<ValidationIssue> collected, Identifier id, String detail,
+            boolean typeFiltered) {
+        if (typeFiltered) {
+            NeroColoniesCommon.LOGGER.debug("[NeroColonies] {} {}; colony-type content, ignored.", id, detail);
+            return;
+        }
+        warn(collected, id, detail, false);
     }
 
     private static void warn(List<ValidationIssue> collected, Identifier id, String detail,

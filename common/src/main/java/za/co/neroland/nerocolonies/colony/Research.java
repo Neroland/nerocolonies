@@ -67,9 +67,13 @@ public final class Research {
         return true;
     }
 
-    /** Whether a node is unlockable right now: not already taken, and its prerequisites met. */
+    /**
+     * Whether a node is unlockable right now: open to this colony's type, not already taken, and its
+     * prerequisites met.
+     */
     public static boolean isAvailable(Colony colony, ResearchNode node) {
-        return !isUnlocked(colony, node.id()) && prerequisitesMet(colony, node);
+        return node.availableTo(colony.colonyType()) && !isUnlocked(colony, node.id())
+                && prerequisitesMet(colony, node);
     }
 
     /** Whether the colony's storage holds this node's whole cost. */
@@ -109,7 +113,8 @@ public final class Research {
     public static Result unlock(MinecraftServer server, Colony colony, Identifier nodeId, long energy,
             long energyCost) {
         ResearchNode node = ColonyDefinitions.researchForServer(server).get(nodeId);
-        if (node == null) {
+        if (node == null || !node.availableTo(colony.colonyType())) {
+            // A node filtered to another kind of colony does not exist as far as this one is concerned.
             return Result.UNKNOWN_NODE;
         }
         if (isUnlocked(colony, nodeId)) {

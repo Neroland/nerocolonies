@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.BlockPos;
@@ -69,6 +70,11 @@ import za.co.neroland.nerocolonies.colony.ColonyStage;
  * <p>{@code stage} is the colony stage the blueprint needs. Blueprints at {@code founding} are the
  * <b>Starter Works</b>: while the colony is founding they build only from player-supplied materials.
  *
+ * <p>{@code colony_types} (optional) limits the blueprint to colonies of the listed
+ * {@link za.co.neroland.nerocolonies.colony.ColonyType}s, by stored name; absent or empty means every colony.
+ * The 0.6 format already used sixteen fields, DFU's ceiling for one {@code group}, so the codec reads the
+ * sixteen through one map codec and {@code colony_types} through a second over the same flat object.
+ *
  * <p><b>Privacy (POPIA/GDPR):</b> nothing here is player-shaped. A blueprint is content.
  */
 public record Blueprint(
@@ -91,7 +97,8 @@ public record Blueprint(
         Capacity capacity,
         List<String> roles,
         Optional<Identifier> structure,
-        boolean rotate) {
+        boolean rotate,
+        List<String> colonyTypes) {
 
     public static final Identifier UNNAMED =
             Identifier.fromNamespaceAndPath("nerocolonies", "unnamed_blueprint");
@@ -163,7 +170,7 @@ public record Blueprint(
             List<String> roles, Optional<Identifier> structure, boolean rotate) {
     }
 
-    private static final Codec<Raw> RAW_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+    private static final MapCodec<Raw> RAW_CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
             Codec.STRING.optionalFieldOf("name", "").forGetter(Raw::name),
             CATEGORY_CODEC.optionalFieldOf("category", Category.OTHER).forGetter(Raw::category),
             Codec.INT.optionalFieldOf("priority", 100).forGetter(Raw::priority),
@@ -184,19 +191,30 @@ public record Blueprint(
             Codec.BOOL.optionalFieldOf("rotate", true).forGetter(Raw::rotate)
     ).apply(inst, Raw::new));
 
-    public static final Codec<Blueprint> CODEC = RAW_CODEC.comapFlatMap(
-            Blueprint::normalise, Blueprint::toRaw);
+    /** The sixteen 0.6 fields plus {@code colony_types}, read from and written to one flat object. */
+    private record Typed(Raw raw, List<String> colonyTypes) {
+    }
 
-    private static DataResult<Blueprint> normalise(Raw raw) {
+    private static final Codec<Typed> TYPED_CODEC = RecordCodecBuilder.create(inst -> inst.group(
+            RAW_CODEC.forGetter(Typed::raw),
+            Codec.STRING.listOf().optionalFieldOf("colony_types", List.of()).forGetter(Typed::colonyTypes)
+    ).apply(inst, Typed::new));
+
+    public static final Codec<Blueprint> CODEC = TYPED_CODEC.comapFlatMap(
+            Blueprint::normalise, Blueprint::toTyped);
+
+    private static DataResult<Blueprint> normalise(Typed typed) {
+        Raw raw = typed.raw();
+        List<String> types = typed.colonyTypes();
         if (raw.layers().isEmpty()) {
             if (raw.structure().isEmpty()) {
                 return DataResult.error(() -> "a blueprint needs layers or a structure");
             }
             // The grid arrives from the structure file once the resource manager is in reach.
-            return DataResult.success(fromRaw(raw, Map.of(), List.of(), 0, 0, 0));
+            return DataResult.success(fromRaw(raw, Map.of(), List.of(), 0, 0, 0, types));
         }
         return grid(raw.palette(), raw.layers()).map(g -> fromRaw(raw, g.palette(), g.layout(),
-                g.width(), g.depth(), g.height()));
+                g.width(), g.depth(), g.height(), types));
     }
 
     /** A validated, padded character grid. */
@@ -242,11 +260,11 @@ public record Blueprint(
     }
 
     private static Blueprint fromRaw(Raw raw, Map<Character, String> palette, List<String> layout,
-            int width, int depth, int height) {
+            int width, int depth, int height, List<String> colonyTypes) {
         return new Blueprint(UNNAMED, raw.name(), raw.category(), raw.priority(), raw.max(),
                 raw.research(), palette, layout, List.copyOf(raw.materials()), width, depth, height,
                 raw.stage(), raw.upgradeTo(), raw.level(), raw.unlocks(), raw.capacity(), raw.roles(),
-                raw.structure(), raw.rotate());
+                raw.structure(), raw.rotate(), colonyTypes);
     }
 
     private static String pad(String row, int width) {
@@ -255,6 +273,10 @@ public record Blueprint(
             padded.append(' ');
         }
         return padded.toString();
+    }
+
+    private Typed toTyped() {
+        return new Typed(toRaw(), this.colonyTypes);
     }
 
     private Raw toRaw() {
@@ -281,19 +303,42 @@ public record Blueprint(
         roles = roles == null ? List.of() : List.copyOf(roles);
         capacity = capacity == null ? Capacity.NONE : capacity;
         stage = stage == null ? ColonyStage.SETTLED : stage;
+        colonyTypes = colonyTypes == null ? List.of() : List.copyOf(colonyTypes);
+    }
+
+    /** A blueprint with no {@code colony_types} filter (available to every colony). */
+    public Blueprint(Identifier id, String name, Category category, int priority, int max,
+            Optional<Identifier> research, Map<Character, String> palette, List<String> layout,
+            List<ItemTarget> materials, int width, int depth, int height, ColonyStage stage,
+            Optional<Identifier> upgradeTo, int level, List<Identifier> unlocks, Capacity capacity,
+            List<String> roles, Optional<Identifier> structure, boolean rotate) {
+        this(id, name, category, priority, max, research, palette, layout, materials, width, depth, height,
+                stage, upgradeTo, level, unlocks, capacity, roles, structure, rotate, List.of());
     }
 
     public Blueprint withId(Identifier newId) {
         return new Blueprint(newId, name, category, priority, max, research, palette, layout,
                 materials, width, depth, height, stage, upgradeTo, level, unlocks, capacity, roles,
-                structure, rotate);
+                structure, rotate, colonyTypes);
     }
 
     /** A copy with its grid replaced, used when a structure file supplies the cells. */
     public Blueprint withGrid(Grid grid) {
         return new Blueprint(id, name, category, priority, max, research, grid.palette(),
                 grid.layout(), materials, grid.width(), grid.depth(), grid.height(), stage, upgradeTo,
-                level, unlocks, capacity, roles, structure, rotate);
+                level, unlocks, capacity, roles, structure, rotate, colonyTypes);
+    }
+
+    /** The same blueprint with a cleaned {@code colony_types} filter. */
+    public Blueprint withColonyTypes(List<String> types) {
+        return new Blueprint(id, name, category, priority, max, research, palette, layout,
+                materials, width, depth, height, stage, upgradeTo, level, unlocks, capacity, roles,
+                structure, rotate, types);
+    }
+
+    /** Whether a colony of this type may build this blueprint (the {@code colony_types} filter). */
+    public boolean availableTo(za.co.neroland.nerocolonies.colony.ColonyType type) {
+        return za.co.neroland.nerocolonies.colony.ColonyType.admits(this.colonyTypes, type);
     }
 
     // --- facts ----------------------------------------------------------------

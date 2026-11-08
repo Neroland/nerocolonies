@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.martian_water_works",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 46,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "martian_settlement" ],
+  "palette": {
+    "#": "minecraft:terracotta",
+    "C": "minecraft:water_cauldron[level=3]",
+    "G": "minecraft:light_blue_stained_glass",
+    "T": "minecraft:red_terracotta",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "TTTTT", "T___T", "T_C_T", "T___T", "TT_TT" ],
+    [ "TGGGT", "G___G", "G___G", "G___G", "TG_GT" ],
+    [ "#####", "#####", "#####", "#####", "#####" ]
+  ],
+  "materials": [
+    { "item": "minecraft:terracotta", "count": 50 },
+    { "item": "minecraft:red_terracotta", "count": 19 },
+    { "item": "minecraft:light_blue_stained_glass", "count": 10 },
+    { "item": "minecraft:cauldron", "count": 1 }
+  ],
+  "rotate": true
+}

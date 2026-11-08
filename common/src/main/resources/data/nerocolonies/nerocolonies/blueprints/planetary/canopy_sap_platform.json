@@ -1,0 +1,28 @@
+{
+  "name": "blueprint.nerocolonies.planetary.canopy_sap_platform",
+  "category": "farm",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "canopy_commune" ],
+  "palette": {
+    "#": "minecraft:oak_planks",
+    "L": "minecraft:oak_leaves[persistent=true]",
+    "O": "minecraft:oak_log[axis=y]",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "O___O", "_____", "_____", "_____", "O___O" ],
+    [ "O___O", "_____", "_____", "_____", "O___O" ],
+    [ "LLLLL", "LLLLL", "LLLLL", "LLLLL", "LLLLL" ]
+  ],
+  "materials": [
+    { "item": "minecraft:oak_planks", "count": 25 },
+    { "item": "minecraft:oak_log", "count": 8 },
+    { "item": "minecraft:oak_leaves", "count": 25 }
+  ],
+  "rotate": true
+}

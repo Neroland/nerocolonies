@@ -41,6 +41,14 @@ Colony **research** is stored on the colony record as a set of node ids. It is c
 than per-player, is shared by everyone with access to the colony, and is discarded when the colony
 is dissolved. It is not personal data.
 
+| Field | Where | Personal data? |
+| --- | --- | --- |
+| `colony_type` (0.7) | the colony record | **No.** The kind of colony (`generic`, `lunar_outpost`, ...), derived once from the dimension the beacon stands in. It describes a place, never a person, is not used to identify anyone, and is not touched by erasure or export. |
+
+The terraform claim policy NeroColonies installs into Nerospace (0.7) is handed the acting player
+only to answer "may this player change terraforming here?". The player is **never stored and never
+logged**; the one line logged when the policy is installed carries no player data.
+
 ### Role lists
 
 A colony has an owner and three lists: **Allies**, **Chiefs** and **Enemies**.

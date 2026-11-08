@@ -1206,7 +1206,15 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     private void drawResearch(GuiGraphicsExtractor g) {
         int y = CONTENT_Y;
         int unlocked = this.menu.researchCount();
-        int total = Math.max(unlocked, ClientColonyDefinitions.research().size());
+        // Only the nodes this colony's type can research count (colony_types), so a generic colony sees
+        // exactly the 0.6 total.
+        int open = 0;
+        for (ResearchNode node : ClientColonyDefinitions.research()) {
+            if (node.availableTo(ClientColonySnapshot.colonyType())) {
+                open++;
+            }
+        }
+        int total = Math.max(unlocked, open);
         y = gauge(g, y, "gui.nerocolonies.row.research", ratio(unlocked, total), TITLE,
                 total <= 0 ? 0.0F : Math.min(1.0F, unlocked / (float) total), ACCENT, false);
         ColonySnapshotPayload snapshot = ClientColonySnapshot.get();
@@ -1236,7 +1244,8 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     private static List<ResearchNode> readyResearch() {
         List<ResearchNode> ready = new ArrayList<>();
         for (ResearchNode node : ClientColonyDefinitions.research()) {
-            if (ClientColonySnapshot.isUnlocked(node.id()) || !ClientColonySnapshot.isAffordable(node.id())) {
+            if (!node.availableTo(ClientColonySnapshot.colonyType())
+                    || ClientColonySnapshot.isUnlocked(node.id()) || !ClientColonySnapshot.isAffordable(node.id())) {
                 continue;
             }
             boolean available = true;

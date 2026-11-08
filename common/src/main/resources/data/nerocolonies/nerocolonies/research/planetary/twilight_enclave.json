@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.twilight_enclave",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:amethyst_shard", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/twilight_lens_crafting" },
+    { "type": "nerocolonies:morale_bonus", "amount": 1.0 }
+  ],
+  "colony_types": [ "twilight_enclave" ]
+}

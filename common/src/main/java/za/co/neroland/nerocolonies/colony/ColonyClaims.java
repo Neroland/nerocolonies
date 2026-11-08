@@ -67,6 +67,23 @@ public final class ColonyClaims {
     }
 
     /**
+     * May this player change a reversible terraforming overlay (Nerospace's claim hook) on the disc of
+     * {@code radius} blocks around {@code center}? Only when the whole disc lies inside <b>one</b> colony's
+     * claim in this dimension and the player may build there ({@link #canAccess}: owner, Chief, Ally or
+     * operator, never an Enemy). Unclaimed ground, a disc that crosses a claim edge and a disc that spans two
+     * claims are all refused: overlay terraforming is fail-closed. The player is only asked, never stored or
+     * logged.
+     */
+    public static boolean mayTerraform(@Nullable Player player, ServerLevel level, BlockPos center, int radius) {
+        if (player == null || level == null || center == null || radius < 0) {
+            return false;
+        }
+        Colony colony = ColonyState.get(level.getServer()).colonyAt(level.dimension(), center);
+        return colony != null && colony.dimension().equals(level.dimension())
+                && colony.containsDisc(center, radius) && canAccess(player, colony);
+    }
+
+    /**
      * May this player dissolve the beacon standing at {@code pos}? Owner or operator only, and only
      * while crouching — the "are you sure?" prompt is the sneak, because a colony beacon knocked out
      * by a stray pickaxe swing would take the whole colony record with it.

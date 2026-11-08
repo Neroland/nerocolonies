@@ -1,0 +1,16 @@
+{
+  "station": "nerocolonies:fabricator_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/methane", "count": 4 },
+    { "item": "minecraft:copper_ingot", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:redstone", "count": 3 }
+  ],
+  "ticks": 480,
+  "colonists": 2,
+  "morale_floor": 30.0,
+  "research": "nerocolonies:planetary/cryo_station",
+  "export": false,
+  "colony_types": [ "cryo_station" ]
+}

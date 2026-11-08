@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:regolith", "required": false },
+    { "id": "nerospace:red_regolith", "required": false },
+    "minecraft:gravel"
+  ]
+}

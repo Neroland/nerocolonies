@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.canopy_commune",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 6 },
+    { "item": "minecraft:bone_meal", "count": 16 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/canopy_amber_biotech" },
+    { "type": "nerocolonies:morale_bonus", "amount": 2.0 }
+  ],
+  "colony_types": [ "canopy_commune" ]
+}

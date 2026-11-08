@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0-beta.1] - 2026-11-08
+
+Planetary colonies: a colony founded on a Nerospace planet takes that planet's colony type and gets its
+own buildings, trades and research. Existing worlds load unchanged. **Client and server must both run
+0.7.0** (the colony screen now carries the colony type, so a 0.6 client cannot join a 0.7 server).
+
+### Added
+
+- **Colony types.** A colony founded on Luna, Mars, Cindara, Glacira, Greenxertz or Nyxara (Nerospace
+  2.0 or later) becomes a Lunar Outpost, Martian Settlement, Ember Forge, Cryo Station, Canopy Commune
+  or Twilight Enclave. Everywhere else (Earth, the orbital station, other mods' dimensions, or any
+  world without Nerospace) a colony stays a plain colony, exactly as before. The type is chosen once,
+  when the beacon founds the colony. Outposts follow their parent colony's type.
+- **Six planetary profiles**, each with two buildings, two jobs and one research node in a new
+  *Planetary* research branch: regolith sintering and Helium-3 extraction on Luna, water extraction
+  and hematite smelting on Mars, sulfur refining and ember smelting on Cindara, methane cracking and
+  methane power on Glacira, sap tapping and amber biotech on Greenxertz, voidglass grinding and lens
+  crafting on Nyxara, plus Helium-3 and voidglass-lens exports. Inputs are item tags with plain
+  Minecraft fallbacks; the two jobs and exports that make a Nerospace item are skipped quietly when
+  Nerospace is not installed. See the new wiki page *Planetary Colonies*.
+- **`colony_types` datapack filter.** Blueprints, jobs, research nodes and export entries accept an
+  optional `colony_types` list. Without it, content is available to every colony (all existing
+  content). An unknown type name is reported by `/nerocolonies reload-check`, never a load failure.
+- **Terraform claims.** With Nerospace 2.0 installed, Nerospace's reversible terraforming overlays are
+  allowed only wholly inside one colony's claim, by a player who may build there.
+- NeroLink: the `colonies` section reports each colony's `colony_type` (link schema version 3).
+
+### Changed
+
+- Nerospace is now compiled against its public API (2.0.1) instead of being probed by reflection. It
+  stays optional; without it nothing changes. Nerospace 1.x still works: colonies there stay plain.
+
+### Notes
+
+- **Colonies founded before this update stay plain colonies**, even on a planet: a type is only ever
+  chosen at founding, never re-derived for an existing colony.
+
 ## [0.6.1-beta.1] - 2026-10-31
 
 ### Changed

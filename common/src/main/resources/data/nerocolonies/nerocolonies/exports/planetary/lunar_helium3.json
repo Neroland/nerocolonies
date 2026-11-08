@@ -1,0 +1,7 @@
+{
+  "target": { "tag": "nerocolonies:planetary/helium3", "count": 1 },
+  "base_value": 14.0,
+  "stack_size": 16,
+  "research": "nerocolonies:planetary/lunar_outpost",
+  "colony_types": [ "lunar_outpost" ]
+}

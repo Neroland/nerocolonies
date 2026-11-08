@@ -46,8 +46,11 @@ registered and no event is ever published.
 | Alert | the colony needs your help | Raised for each colony member |
 | Alert | the Gratitude Cache is full | Raised for each colony member |
 
-Module id `nerocolonies`, **schema version 2**. The schema version is bumped whenever the shape of a
+Module id `nerocolonies`, **schema version 3**. The schema version is bumped whenever the shape of a
 section changes, so an app can tell what it is parsing.
+
+Version 3 (0.7) **added** one field to each `colonies` row, `colony_type`: `generic`, or the planetary
+type the colony was founded as (see [Planetary colonies](Planetary-Colonies.md)). Nothing else changed.
 
 Version 2 **added** six sections, two actions and six events. The five version 1 sections are still
 served with the same fields they always had, so an app written against version 1 keeps working; the

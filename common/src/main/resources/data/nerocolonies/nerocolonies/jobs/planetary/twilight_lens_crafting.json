@@ -1,0 +1,16 @@
+{
+  "station": "nerocolonies:fabricator_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/voidglass", "count": 2 },
+    { "item": "minecraft:copper_ingot", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "nerospace:voidglass_lens", "count": 1 }
+  ],
+  "ticks": 600,
+  "colonists": 2,
+  "morale_floor": 35.0,
+  "research": "nerocolonies:planetary/twilight_enclave",
+  "export": true,
+  "colony_types": [ "twilight_enclave" ]
+}

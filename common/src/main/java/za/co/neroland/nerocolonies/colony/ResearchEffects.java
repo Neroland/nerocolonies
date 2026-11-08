@@ -77,11 +77,15 @@ public final class ResearchEffects {
     }
 
     /**
-     * Whether a job may be worked in this colony. A job with no research prerequisite is always
-     * available; a job that names one needs either that node unlocked or an explicit
-     * {@code job_unlock} effect from a node the colony has.
+     * Whether a job may be worked in this colony. A job whose {@code colony_types} filter leaves this
+     * colony's type out never is. Otherwise a job with no research prerequisite is always available; a job
+     * that names one needs either that node unlocked or an explicit {@code job_unlock} effect from a node
+     * the colony has. An outpost's stations run under the parent colony, so they follow its type.
      */
     public static boolean jobUnlocked(Colony colony, Identifier jobId) {
+        if (ColonyDefinitions.job(jobId).map(job -> !job.availableTo(colony.colonyType())).orElse(false)) {
+            return false;
+        }
         Optional<Identifier> prerequisite = ColonyDefinitions.job(jobId)
                 .flatMap(job -> job.research());
         if (prerequisite.isEmpty()) {
@@ -102,6 +106,10 @@ public final class ResearchEffects {
 
     /** Whether an export entry may be sold from this colony. Same rule as {@link #jobUnlocked}. */
     public static boolean exportUnlocked(Colony colony, Identifier exportId) {
+        if (ColonyDefinitions.exportEntry(exportId)
+                .map(entry -> !entry.availableTo(colony.colonyType())).orElse(false)) {
+            return false;
+        }
         Optional<Identifier> prerequisite = ColonyDefinitions.exportEntry(exportId)
                 .flatMap(entry -> entry.research());
         if (prerequisite.isEmpty()) {
@@ -121,7 +129,11 @@ public final class ResearchEffects {
         return false;
     }
 
-    /** The loaded nodes this colony has unlocked, skipping ids no longer present in any pack. */
+    /**
+     * The loaded nodes this colony has unlocked, skipping ids no longer present in any pack and nodes
+     * filtered to another colony type. An operator may still grant such a node (grant-research is not
+     * filtered), but it contributes nothing to a colony of the wrong type.
+     */
     private static Iterable<ResearchNode> unlockedNodes(Colony colony) {
         java.util.List<ResearchNode> nodes = new java.util.ArrayList<>();
         if (colony.researchUnlocked().isEmpty()) {
@@ -132,7 +144,9 @@ public final class ResearchEffects {
             if (id == null) {
                 continue;
             }
-            ColonyDefinitions.researchNode(id).ifPresent(nodes::add);
+            ColonyDefinitions.researchNode(id)
+                    .filter(node -> node.availableTo(colony.colonyType()))
+                    .ifPresent(nodes::add);
         }
         return nodes;
     }

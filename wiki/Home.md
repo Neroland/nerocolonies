@@ -52,6 +52,9 @@ produced is ever silently voided.** A colony that has gone wrong is a problem to
   job board, the research station and the research node graph.
 - [Exports & outposts](Exports-and-Outposts.md) — the export buffer as a plain item capability,
   selling for credits, the export tables, and planetary outposts.
+- [Planetary colonies](Planetary-Colonies.md) — the six colony types a colony founded on a planet
+  takes, their buildings, jobs and research, terraforming inside a claim, and the `colony_types`
+  datapack filter.
 
 ### Running a server
 

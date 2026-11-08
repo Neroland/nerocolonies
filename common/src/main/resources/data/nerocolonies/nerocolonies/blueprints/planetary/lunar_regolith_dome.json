@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.lunar_regolith_dome",
+  "category": "life_support",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 0 },
+  "colony_types": [ "lunar_outpost" ],
+  "palette": {
+    "#": "minecraft:smooth_stone",
+    "G": "minecraft:glass",
+    "L": "minecraft:lantern[hanging=false]",
+    "W": "minecraft:white_concrete",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "WWWWW", "W___W", "W_L_W", "W___W", "WW_WW" ],
+    [ "WGGGW", "G___G", "G___G", "G___G", "WG_GW" ],
+    [ ".WWW.", "WWWWW", "WWWWW", "WWWWW", ".WWW." ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_stone", "count": 25 },
+    { "item": "minecraft:white_concrete", "count": 37 },
+    { "item": "minecraft:glass", "count": 10 },
+    { "item": "minecraft:lantern", "count": 1 }
+  ],
+  "rotate": true
+}

@@ -1,0 +1,32 @@
+{
+  "name": "blueprint.nerocolonies.planetary.cryo_methane_plant",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 46,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "cryo_station" ],
+  "palette": {
+    "#": "minecraft:light_gray_concrete",
+    "C": "minecraft:light_blue_concrete",
+    "G": "minecraft:glass",
+    "K": "minecraft:copper_block",
+    "S": "minecraft:smooth_stone_slab[type=bottom]",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "CCCCC", "C___C", "C_K_C", "C___C", "CC_CC" ],
+    [ "CGGGC", "G___G", "G___G", "G___G", "CG_GC" ],
+    [ "SSSSS", "SSSSS", "SSSSS", "SSSSS", "SSSSS" ]
+  ],
+  "materials": [
+    { "item": "minecraft:light_gray_concrete", "count": 25 },
+    { "item": "minecraft:light_blue_concrete", "count": 19 },
+    { "item": "minecraft:glass", "count": 10 },
+    { "item": "minecraft:copper_block", "count": 1 },
+    { "item": "minecraft:smooth_stone_slab", "count": 25 }
+  ],
+  "rotate": true
+}

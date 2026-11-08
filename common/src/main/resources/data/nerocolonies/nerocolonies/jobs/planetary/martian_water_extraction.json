@@ -1,0 +1,15 @@
+{
+  "station": "nerocolonies:hydroponics_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/martian_ice", "count": 1 },
+    { "item": "minecraft:bucket", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:water_bucket", "count": 1 }
+  ],
+  "ticks": 240,
+  "colonists": 1,
+  "morale_floor": 20.0,
+  "export": false,
+  "colony_types": [ "martian_settlement" ]
+}

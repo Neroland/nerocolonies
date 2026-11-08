@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.canopy_biolab",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 46,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "canopy_commune" ],
+  "palette": {
+    "#": "minecraft:mossy_stone_bricks",
+    "G": "minecraft:green_stained_glass",
+    "H": "minecraft:honeycomb_block",
+    "W": "minecraft:stripped_oak_log[axis=y]",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "WWWWW", "W___W", "W___W", "W___W", "WW_WW" ],
+    [ "WHHHW", "H___H", "H___H", "H___H", "WH_HW" ],
+    [ "GGGGG", "GGGGG", "GGGGG", "GGGGG", "GGGGG" ]
+  ],
+  "materials": [
+    { "item": "minecraft:mossy_stone_bricks", "count": 25 },
+    { "item": "minecraft:stripped_oak_log", "count": 19 },
+    { "item": "minecraft:honeycomb_block", "count": 10 },
+    { "item": "minecraft:green_stained_glass", "count": 25 }
+  ],
+  "rotate": true
+}

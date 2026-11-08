@@ -1,0 +1,14 @@
+{
+  "station": "nerocolonies:refinery_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/voidglass", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:tinted_glass", "count": 1 }
+  ],
+  "ticks": 360,
+  "colonists": 1,
+  "morale_floor": 20.0,
+  "export": false,
+  "colony_types": [ "twilight_enclave" ]
+}

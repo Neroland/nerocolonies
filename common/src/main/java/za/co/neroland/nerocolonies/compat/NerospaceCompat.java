@@ -3,14 +3,18 @@ package za.co.neroland.nerocolonies.compat;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+import za.co.neroland.nerocolonies.colony.ColonyType;
+
 /**
  * Everything NeroColonies is allowed to know about Nerospace, expressed in NeroColonies' own types.
  *
- * <p>Nerospace is a <b>soft dependency</b>. It is not on the compile classpath, it is not required
- * by any manifest, and exactly one class in this mod ever names a Nerospace type
- * ({@code compat.nerospace.NerospaceBridge}, reflectively). Everything else — the oxygen generator,
- * life support, the morale hazard term — talks to this façade, so removing Nerospace changes one
- * implementation and nothing else.
+ * <p>Nerospace is a <b>soft dependency</b>. It is compiled {@code compileOnly} against its public
+ * {@code api} package, it is not required by any manifest, and only the {@code compat.nerospace} package
+ * names a Nerospace type. That package is found through {@code META-INF/services} by
+ * {@link CompatRegistry} after the loader reports Nerospace present, and a build with
+ * {@code nerospace_compat=false} leaves it out entirely. Everything else — the oxygen generator, life
+ * support, the morale hazard term, the colony type chosen at founding — talks to this façade, so removing
+ * Nerospace changes one implementation and nothing else.
  *
  * <h2>Fallback semantics</h2>
  *
@@ -45,6 +49,23 @@ public interface NerospaceCompat {
 
     /** Whether this implementation is actually talking to Nerospace. */
     boolean active();
+
+    /**
+     * The colony type a colony founded in this dimension gets: the planet's Nerospace colony profile mapped
+     * by {@link ColonyType#fromNerospaceProfile}, or {@link ColonyType#GENERIC} for Earth, any non-Nerospace
+     * dimension, an unknown profile, a Nerospace without colony profiles (1.x), or any failure. Asked once,
+     * at founding.
+     */
+    default ColonyType colonyProfile(ResourceKey<Level> dimension) {
+        return ColonyType.GENERIC;
+    }
+
+    /**
+     * Called once by {@link CompatRegistry} after this implementation is chosen: a Nerospace bridge installs
+     * its terraform claim policy here. The no-Nerospace implementation does nothing.
+     */
+    default void installHooks() {
+    }
 
     /** The no-Nerospace implementation: everywhere breathable, nowhere hazardous. */
     NerospaceCompat NONE = new NerospaceCompat() {

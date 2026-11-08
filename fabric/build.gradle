@@ -29,6 +29,18 @@ def nerolandcoreVersion = project.findProperty('nerolandcore_version')
 // resources live in the BRANCH root (fabric/). Resolve branch-root paths via the parent.
 def branchDir = project.parent.projectDir
 
+// --- Optional Nerospace (compat facade) -----------------------------------------------------------------------
+// Nerospace is compileOnly behind compat/NerospaceCompat: only compat/nerospace/ imports it, found through a
+// META-INF/services seam after isModLoaded("nerospace"). `nerospace_compat=false` (gradle.properties or -P) drops
+// the dependency and excludes that package and its services line, so the mod builds with no Nerospace artifact
+// at all. A per-Minecraft-version flag (`nerospace_compat_<mc>`) overrides the global one for this cell only.
+def compatOn = { String flag -> (rootProject.findProperty("${flag}_${mc}") ?: rootProject.findProperty(flag) ?: 'true').toString().trim() == 'true' }
+def nerospaceOn = compatOn('nerospace_compat')
+if (!nerospaceOn) {
+    sourceSets.main.java.exclude 'za/co/neroland/nerocolonies/compat/nerospace/**'
+    sourceSets.main.resources.exclude 'META-INF/services/za.co.neroland.nerocolonies.compat.NerospaceCompat'
+}
+
 // Distinct, descriptive jar name per cell (the node project is named after the MC version, so the
 // default jar would be "<mc>-<version>.jar" and COLLIDE with the neoforge cell of the same version).
 base { archivesName = "nerocolonies-fabric-${mc}" }
@@ -107,6 +119,25 @@ dependencies {
         modCompileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${rootProject.neroeconomy_version}"
     } else {
         compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${rootProject.neroeconomy_version}"
+    }
+
+    // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). On 1.21.x
+    // the sibling Nero mods are intermediary-named mod jars, so Loom must remap them (mod*). Dev clients load
+    // it only with -PwithNerospace.
+    if (nerospaceOn) {
+        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-fabric-${mc}:${rootProject.nerospace_version}"
+        if (obfuscated) {
+            modCompileOnly nerospaceCoord
+        } else {
+            compileOnly nerospaceCoord
+        }
+        if (project.hasProperty('withNerospace')) {
+            if (obfuscated) {
+                modRuntimeOnly nerospaceCoord
+            } else {
+                runtimeOnly nerospaceCoord
+            }
+        }
     }
 
     // Sentry SDK (telemetry/NeroColoniesTelemetry): compile against it + embed it as a jar-in-jar so the
@@ -229,7 +260,12 @@ tasks.register('ecjCheck', JavaExec) {
         def analysisCp = (sourceSets.main.compileClasspath.files + sourceSets.main.output.files)
                 .findAll { it.exists() }
                 .join(File.pathSeparator)
-        def srcDirs = sourceSets.main.java.srcDirs.findAll { it.exists() }.collect { it.absolutePath }
+        // The source FILES, not the source dirs, so the `nerospace_compat=false` and EMI excludes apply here
+        // exactly as in compileJava. Passed through an @argfile (forward slashes) to keep the command line short.
+        def ecjSources = project.layout.buildDirectory.file('tmp/ecjCheck/sources.txt').get().asFile
+        ecjSources.parentFile.mkdirs()
+        ecjSources.text = sourceSets.main.java.files.collect { it.absolutePath.replace('\\', '/') }.join('\n') + '\n'
+        def srcDirs = ['@' + ecjSources.absolutePath.replace('\\', '/')]
         args = [
                 '--release', "${project.javaRelease}",
                 '-proc:none',

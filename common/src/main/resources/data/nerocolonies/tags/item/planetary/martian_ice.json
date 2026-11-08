@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:dry_ice", "required": false },
+    "minecraft:ice"
+  ]
+}

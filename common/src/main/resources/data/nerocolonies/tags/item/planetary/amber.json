@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:amber_sap", "required": false },
+    "minecraft:honeycomb"
+  ]
+}

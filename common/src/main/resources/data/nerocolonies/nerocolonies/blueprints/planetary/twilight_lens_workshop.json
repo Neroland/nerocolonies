@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.twilight_lens_workshop",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "twilight_enclave" ],
+  "palette": {
+    "#": "minecraft:polished_deepslate",
+    "A": "minecraft:amethyst_block",
+    "K": "minecraft:deepslate_bricks",
+    "T": "minecraft:tinted_glass",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "KKKKK", "K___K", "K_A_K", "K___K", "KK_KK" ],
+    [ "KTTTK", "T___T", "T___T", "T___T", "KT_TK" ],
+    [ "KKKKK", "KKKKK", "KKKKK", "KKKKK", "KKKKK" ]
+  ],
+  "materials": [
+    { "item": "minecraft:polished_deepslate", "count": 25 },
+    { "item": "minecraft:deepslate_bricks", "count": 44 },
+    { "item": "minecraft:tinted_glass", "count": 10 },
+    { "item": "minecraft:amethyst_block", "count": 1 }
+  ],
+  "rotate": true
+}

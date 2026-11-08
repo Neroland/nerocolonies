@@ -58,6 +58,7 @@ import za.co.neroland.nerocolonies.platform.Services;
  * <p><b>Schema version 2.</b> Bump {@link #SCHEMA_VERSION} whenever the shape of a snapshot section
  * changes, so a companion client can tell what it is parsing. Version 2 <em>added</em> six sections
  * and two actions and changed none of the version 1 sections, so a version 1 client keeps working.
+ * Version 3 (0.7) added the {@code colony_type} field to the {@code colonies} rows, additively.
  */
 public final class ColonyLinkModule {
 
@@ -65,7 +66,7 @@ public final class ColonyLinkModule {
     public static final String MODULE_ID = NeroColoniesCommon.MOD_ID;
 
     /** The snapshot schema revision. Bump on any change to a section's shape. */
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
 
     /** Section: the colonies the requesting player owns or belongs to, with their state. */
     public static final String SECTION_COLONIES = "colonies";

@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:helium3_canister", "required": false }
+  ]
+}

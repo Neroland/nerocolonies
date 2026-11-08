@@ -1,0 +1,16 @@
+{
+  "station": "nerocolonies:fabricator_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/sulfur", "count": 1 },
+    { "item": "minecraft:coal", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:blaze_powder", "count": 1 }
+  ],
+  "ticks": 480,
+  "colonists": 2,
+  "morale_floor": 30.0,
+  "research": "nerocolonies:planetary/ember_forge",
+  "export": true,
+  "colony_types": [ "ember_forge" ]
+}

@@ -7,6 +7,7 @@ import net.minecraft.resources.Identifier;
 
 import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyStage;
+import za.co.neroland.nerocolonies.colony.ColonyType;
 import za.co.neroland.nerocolonies.network.ColonySnapshotPayload;
 
 /**
@@ -80,6 +81,11 @@ public final class ClientColonySnapshot {
     /** The colony's growth stage, as of the last snapshot. */
     public static ColonyStage stage() {
         return ColonyStage.byOrdinal(current.life().stage());
+    }
+
+    /** The open colony's type, as of the last snapshot ({@code GENERIC} when no colony is open). */
+    public static ColonyType colonyType() {
+        return current.present() ? current.life().type() : ColonyType.GENERIC;
     }
 
     /** The viewing player's own role. An ordinal this jar does not know reads as a stranger. */

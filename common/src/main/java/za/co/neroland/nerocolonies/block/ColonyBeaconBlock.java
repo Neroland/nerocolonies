@@ -43,8 +43,10 @@ import za.co.neroland.nerocolonies.colony.ColonyClaims;
 import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
+import za.co.neroland.nerocolonies.colony.ColonyType;
 import za.co.neroland.nerocolonies.colony.Construction;
 import za.co.neroland.nerocolonies.colony.Population;
+import za.co.neroland.nerocolonies.compat.CompatRegistry;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
 import za.co.neroland.nerocolonies.network.ColonySync;
@@ -152,8 +154,11 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
             return;
         }
         ColonyState colonies = ColonyState.get(serverLevel.getServer());
+        // The colony type is derived here, once, from the planet the beacon stands on (GENERIC without
+        // Nerospace, on Earth, or on any planet with no profile). Nothing derives it again later.
+        ColonyType type = CompatRegistry.nerospace().colonyProfile(serverLevel.dimension());
         Colony colony = Colony.found(UUID.randomUUID(), colonies.nextNeutralName(), serverLevel.dimension(), pos,
-                NeroColoniesConfig.CLAIM_RADIUS.get(), owner, serverLevel.getGameTime());
+                NeroColoniesConfig.CLAIM_RADIUS.get(), owner, serverLevel.getGameTime(), type);
         colonies.put(colony);
         colonies.log(colony.colonyId(), owner, AccessLog.Action.FOUND);
         beacon.bind(colony.colonyId());
@@ -174,8 +179,12 @@ public class ColonyBeaconBlock extends BaseEntityBlock {
         QuestHooks.onFounded(serverLevel.getServer(), colony);
         player.sendSystemMessage(
                 Component.translatable("message.nerocolonies.claim.founded", colony.name()));
-        NeroColoniesCommon.LOGGER.info("[NeroColonies] Colony founded in {} ({} total).",
-                serverLevel.dimension().identifier(), colonies.size());
+        if (colony.colonyType().planetary()) {
+            player.sendSystemMessage(Component.translatable("message.nerocolonies.claim.founded_type",
+                    Component.translatable(colony.colonyType().translationKey())));
+        }
+        NeroColoniesCommon.LOGGER.info("[NeroColonies] Colony founded in {} as {} ({} total).",
+                serverLevel.dimension().identifier(), colony.colonyType().serializedName(), colonies.size());
     }
 
     /** Undoes a refused placement: remove the block, hand the item back, explain why. */

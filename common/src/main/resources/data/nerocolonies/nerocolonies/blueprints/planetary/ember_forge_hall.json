@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.ember_forge_hall",
+  "category": "civic",
+  "stage": "settled",
+  "priority": 47,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "ember_forge" ],
+  "palette": {
+    "#": "minecraft:smooth_basalt",
+    "B": "minecraft:polished_blackstone_bricks",
+    "G": "minecraft:orange_stained_glass",
+    "N": "minecraft:chiseled_polished_blackstone",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#######", "#######", "#######", "#######", "#######" ],
+    [ "BBBBBBB", "B_____B", "B_N_N_B", "B_____B", "BBB_BBB" ],
+    [ "BGGBGGB", "B_____B", "G_____G", "B_____B", "BBB_BBB" ],
+    [ "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB", "BBBBBBB" ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_basalt", "count": 35 },
+    { "item": "minecraft:polished_blackstone_bricks", "count": 66 },
+    { "item": "minecraft:orange_stained_glass", "count": 6 },
+    { "item": "minecraft:chiseled_polished_blackstone", "count": 2 }
+  ],
+  "rotate": true
+}

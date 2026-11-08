@@ -114,7 +114,11 @@ public class ResearchScreen extends NeroColoniesScreen<ResearchMenu> {
         List<ResearchNode> nodes = ClientColonyDefinitions.research();
         java.util.Map<Identifier, Integer> depths = new java.util.HashMap<>();
         java.util.Map<String, List<Row>> byBranch = new java.util.LinkedHashMap<>();
+        za.co.neroland.nerocolonies.colony.ColonyType type = ClientColonySnapshot.colonyType();
         for (ResearchNode node : nodes) {
+            if (!node.availableTo(type)) {
+                continue; // filtered to another kind of colony (colony_types)
+            }
             int depth = 0;
             for (Identifier prerequisite : node.requires()) {
                 depth = Math.max(depth, depths.getOrDefault(prerequisite, 0) + 1);

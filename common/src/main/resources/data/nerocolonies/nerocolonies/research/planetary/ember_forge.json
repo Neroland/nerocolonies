@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.ember_forge",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:coal", "count": 16 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/ember_smelting" },
+    { "type": "nerocolonies:morale_bonus", "amount": 1.0 }
+  ],
+  "colony_types": [ "ember_forge" ]
+}

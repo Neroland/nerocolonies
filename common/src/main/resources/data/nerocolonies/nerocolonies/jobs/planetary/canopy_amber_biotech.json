@@ -1,0 +1,16 @@
+{
+  "station": "nerocolonies:hydroponics_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/amber", "count": 2 },
+    { "item": "minecraft:bone_meal", "count": 2 }
+  ],
+  "outputs": [
+    { "item": "minecraft:moss_block", "count": 2 }
+  ],
+  "ticks": 420,
+  "colonists": 2,
+  "morale_floor": 30.0,
+  "research": "nerocolonies:planetary/canopy_commune",
+  "export": true,
+  "colony_types": [ "canopy_commune" ]
+}

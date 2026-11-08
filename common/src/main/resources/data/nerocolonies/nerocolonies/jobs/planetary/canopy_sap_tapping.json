@@ -1,0 +1,14 @@
+{
+  "station": "nerocolonies:farm_station",
+  "inputs": [
+    { "item": "minecraft:glass_bottle", "count": 1 }
+  ],
+  "outputs": [
+    { "item": "minecraft:honey_bottle", "count": 1 }
+  ],
+  "ticks": 400,
+  "colonists": 1,
+  "morale_floor": 20.0,
+  "export": false,
+  "colony_types": [ "canopy_commune" ]
+}

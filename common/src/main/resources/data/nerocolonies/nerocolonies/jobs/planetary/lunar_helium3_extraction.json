@@ -1,0 +1,15 @@
+{
+  "station": "nerocolonies:fabricator_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/regolith", "count": 8 }
+  ],
+  "outputs": [
+    { "item": "nerospace:helium3_canister", "count": 1 }
+  ],
+  "ticks": 600,
+  "colonists": 2,
+  "morale_floor": 30.0,
+  "research": "nerocolonies:planetary/lunar_outpost",
+  "export": true,
+  "colony_types": [ "lunar_outpost" ]
+}

@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.martian_settlement",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:copper_ingot", "count": 6 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/martian_hematite_smelting" },
+    { "type": "nerocolonies:morale_bonus", "amount": 1.0 }
+  ],
+  "colony_types": [ "martian_settlement" ]
+}

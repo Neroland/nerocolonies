@@ -1,0 +1,14 @@
+{
+  "branch": "planetary",
+  "title": "research.nerocolonies.planetary.lunar_outpost",
+  "requires": [ "nerocolonies:habitation/shelter" ],
+  "cost": [
+    { "item": "minecraft:iron_ingot", "count": 8 },
+    { "item": "minecraft:glass", "count": 8 }
+  ],
+  "effects": [
+    { "type": "nerocolonies:job_unlock", "job": "nerocolonies:planetary/lunar_helium3_extraction" },
+    { "type": "nerocolonies:morale_bonus", "amount": 1.0 }
+  ],
+  "colony_types": [ "lunar_outpost" ]
+}

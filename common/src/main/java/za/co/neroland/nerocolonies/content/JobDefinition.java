@@ -31,6 +31,10 @@ import net.minecraft.resources.Identifier;
  *
  * <p>The {@code id} field is optional in JSON and ignored: the id is the file's namespace + path
  * without the extension, so a datapack overrides a job simply by shipping the same path.
+ *
+ * <p>{@code colony_types} (optional) limits the job to colonies of the listed
+ * {@link za.co.neroland.nerocolonies.colony.ColonyType}s, by stored name. Absent or empty means every
+ * colony. An unknown name is reported by the loader.
  */
 public record JobDefinition(
         Identifier id,
@@ -41,7 +45,8 @@ public record JobDefinition(
         int colonists,
         double moraleFloor,
         Optional<Identifier> research,
-        boolean export) {
+        boolean export,
+        List<String> colonyTypes) {
 
     /** Stands in until the loader replaces it with the file-derived id. */
     public static final Identifier UNNAMED =
@@ -53,6 +58,13 @@ public record JobDefinition(
         ticks = Math.clamp(ticks, 1, 72_000);
         colonists = Math.clamp(colonists, 0, 64);
         moraleFloor = Math.clamp(moraleFloor, 0.0D, 100.0D);
+        colonyTypes = colonyTypes == null ? List.of() : List.copyOf(colonyTypes);
+    }
+
+    /** A job with no {@code colony_types} filter (available to every colony). */
+    public JobDefinition(Identifier id, Identifier station, List<ItemTarget> inputs, List<ItemAmount> outputs,
+            int ticks, int colonists, double moraleFloor, Optional<Identifier> research, boolean export) {
+        this(id, station, inputs, outputs, ticks, colonists, moraleFloor, research, export, List.of());
     }
 
     public static final Codec<JobDefinition> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -64,13 +76,26 @@ public record JobDefinition(
             Codec.INT.optionalFieldOf("colonists", 1).forGetter(JobDefinition::colonists),
             Codec.DOUBLE.optionalFieldOf("morale_floor", 20.0D).forGetter(JobDefinition::moraleFloor),
             Identifier.CODEC.optionalFieldOf("research").forGetter(JobDefinition::research),
-            Codec.BOOL.optionalFieldOf("export", false).forGetter(JobDefinition::export)
+            Codec.BOOL.optionalFieldOf("export", false).forGetter(JobDefinition::export),
+            Codec.STRING.listOf().optionalFieldOf("colony_types", List.of())
+                    .forGetter(JobDefinition::colonyTypes)
     ).apply(inst, JobDefinition::new));
 
     /** The same job under its file-derived id. */
     public JobDefinition withId(Identifier newId) {
         return new JobDefinition(newId, station, inputs, outputs, ticks, colonists, moraleFloor,
-                research, export);
+                research, export, colonyTypes);
+    }
+
+    /** The same job with a cleaned {@code colony_types} filter. */
+    public JobDefinition withColonyTypes(List<String> types) {
+        return new JobDefinition(id, station, inputs, outputs, ticks, colonists, moraleFloor,
+                research, export, types);
+    }
+
+    /** Whether a colony of this type may run this job (the {@code colony_types} filter). */
+    public boolean availableTo(za.co.neroland.nerocolonies.colony.ColonyType type) {
+        return za.co.neroland.nerocolonies.colony.ColonyType.admits(this.colonyTypes, type);
     }
 
     /** Whether the station block this job runs on is registered in this launch. */

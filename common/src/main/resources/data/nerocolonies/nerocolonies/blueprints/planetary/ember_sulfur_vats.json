@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.ember_sulfur_vats",
+  "category": "industry",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 1 },
+  "colony_types": [ "ember_forge" ],
+  "palette": {
+    "#": "minecraft:polished_blackstone",
+    "B": "minecraft:polished_blackstone_bricks",
+    "P": "minecraft:blackstone",
+    "Y": "minecraft:yellow_concrete",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "PPPPP", "P___P", "P_Y_P", "P___P", "PP_PP" ],
+    [ "PPPPP", "P___P", "P___P", "P___P", "PP_PP" ],
+    [ "BBBBB", "BBBBB", "BBBBB", "BBBBB", "BBBBB" ]
+  ],
+  "materials": [
+    { "item": "minecraft:polished_blackstone", "count": 25 },
+    { "item": "minecraft:blackstone", "count": 30 },
+    { "item": "minecraft:polished_blackstone_bricks", "count": 25 },
+    { "item": "minecraft:yellow_concrete", "count": 1 }
+  ],
+  "rotate": true
+}

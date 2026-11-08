@@ -50,6 +50,10 @@ import za.co.neroland.nerocolonies.content.ResearchNode;
  * {@code needs}, {@code buildings}, {@code professions}, {@code roles} and {@code cache}. The five
  * above are unchanged, so a client written against version 1 keeps working.
  *
+ * <p>Schema version 3 added one field, {@code colony_type}, to each {@code colonies} row: the colony's
+ * planetary profile ({@code generic} unless it was founded on a Nerospace planet that names one). Nothing
+ * was removed or renamed.
+ *
  * <p>Any other section name yields an empty object, as Core's contract prescribes. Every section
  * accepts an optional {@code colony} parameter to narrow to one of them.
  *
@@ -151,6 +155,8 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
             at.addProperty("z", beacon.getZ());
             row.add("beacon", at);
             row.addProperty("claim_radius", colony.claimRadius());
+            // Schema 3. A property of the place, not of anyone in it.
+            row.addProperty("colony_type", colony.colonyType().serializedName());
             row.addProperty("morale", Math.round(colony.morale()));
             row.addProperty("work_stopped", Morale.workStopped(colony));
             row.addProperty("output_multiplier", Morale.outputMultiplier(colony));
@@ -274,6 +280,9 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
             JsonArray unlocked = new JsonArray();
             JsonArray available = new JsonArray();
             for (ResearchNode node : nodes.values()) {
+                if (!node.availableTo(colony.colonyType())) {
+                    continue; // filtered to another kind of colony (colony_types)
+                }
                 if (Research.isUnlocked(colony, node.id())) {
                     unlocked.add(node.id().toString());
                 } else if (Research.isAvailable(colony, node)) {
@@ -292,10 +301,20 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
             rows.add(row);
         }
 
-        // The catalogue is world content, identical for every player, and is what lets an app draw a
-        // tree rather than a list of opaque ids.
+        // The catalogue is world content and is what lets an app draw a tree rather than a list of opaque
+        // ids. It holds the nodes open to at least one of the requested colonies' types, so a player
+        // with only generic colonies sees exactly the 0.6 catalogue.
         JsonArray catalogue = new JsonArray();
         for (ResearchNode node : nodes.values()) {
+            // No colonies at all: show what a generic colony would see, as 0.6 did.
+            boolean open = colonies.isEmpty()
+                    && node.availableTo(za.co.neroland.nerocolonies.colony.ColonyType.GENERIC);
+            for (Colony colony : colonies) {
+                open |= node.availableTo(colony.colonyType());
+            }
+            if (!open) {
+                continue;
+            }
             JsonObject entry = new JsonObject();
             entry.addProperty("id", node.id().toString());
             entry.addProperty("branch", node.branch());
@@ -337,6 +356,9 @@ public final class ColonyLinkSnapshots implements LinkSnapshotProvider {
         for (Colony colony : colonies) {
             JsonArray manifest = new JsonArray();
             for (ExportEntry entry : entries.values()) {
+                if (!entry.availableTo(colony.colonyType())) {
+                    continue; // this colony can never sell it (colony_types)
+                }
                 JsonObject line = new JsonObject();
                 line.addProperty("id", entry.id().toString());
                 line.addProperty("name", ColonyLinkAccess.readablePath(entry.id().getPath()));

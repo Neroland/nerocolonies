@@ -508,6 +508,7 @@ public final class Construction {
             }
             Blueprint next = ColonyDefinitions.blueprintsForServer(server).get(current.upgradeTo().get());
             if (next == null || !next.hasGrid() || !stage.atLeast(next.stage())
+                    || !next.availableTo(colony.colonyType())
                     || next.width() != current.width() || next.depth() != current.depth()
                     || !researched(colony, next)) {
                 continue;
@@ -603,6 +604,9 @@ public final class Construction {
             Blueprint blueprint) {
         if (!blueprint.hasGrid() || blueprint.max() <= 0 || plan.builtCount(blueprint.id()) >= blueprint.max()) {
             return false;
+        }
+        if (!blueprint.availableTo(colony.colonyType())) {
+            return false; // filtered to another kind of colony (colony_types)
         }
         if (stage == ColonyStage.FOUNDING ? !blueprint.starter() : !stage.atLeast(blueprint.stage())) {
             return false;

@@ -17,10 +17,12 @@
   stay `*Colonist*`, so existing worlds and configs load. Never rename any of them.
 - Mod id: **`nerocolonies`** (matches the registry namespace + every loader manifest). Package root:
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
-- Version: **0.6.1-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
+- Version: **0.7.0-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
   roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the gallery); 0.4 added
   NeroEconomy payouts; 0.5 ships the Colony Chronicle quest chapter, nine record gates, three new
-  threshold channels and the two quest-hook rewards. Verified by the nine-cell build, `ecjCheck`
+  threshold channels and the two quest-hook rewards; 0.7 adds planetary colony types (`ColonyType`,
+  derived once at founding from Nerospace's `colonyProfile()`), the `colony_types` content filter,
+  six planetary profiles, the terraform claim policy and link schema 3. Verified by the nine-cell build, `ecjCheck`
   and the JUnit suite; **not yet run in a game client**, so never write that it was.
 - Targets **MC 26.1.2, 26.2 AND 26.3** on **NeoForge, MinecraftForge/Forge, and Fabric** → the **"9 cells"**.
   **Java 25.** Mappings = official Mojang names (26.x ships de-obfuscated; no Parchment).
@@ -67,7 +69,9 @@
   review failure, and the erasure hook calls `SavedDataRecovery.backupNow` for every store it
   purges so the erasure reaches Core's last-known-good backup too.
 - **Every `openMenu` call goes through `menu/MenuOpener`.**
-- **`Colony` is at the 16-field `RecordCodecBuilder` ceiling and stays at 16 fields.** New
+- **`Colony` has 17 components and its codec is split** (`BASE_MAP_CODEC` with the sixteen 0.6
+  fields, plus `colony_type`, both over one flat map; `ColonyCodecCompatTest` guards it). The
+  seventeenth, `colonyType`, was the owner-approved exception (D10). Do not add more: new
   per-colony state goes in a side store, not on the record: `ColonyStores` (goods),
   `ColonyConstruction` (builds, finished structures, plans), `ColonyRoles` (Chiefs and Enemies) and
   `ColonyLife` (stage, counters, Gratitude Cache, prioritised need, sandbox flag). Every dissolve
@@ -121,7 +125,7 @@
   never removed as a punishment (losing housing is the only removal path); produced goods are
   never voided, and a Gratitude Cache roll that does not fit is skipped whole, never half added.
 - **The link module is registered LAST in `NeroColoniesCommon.init()`, wholly inside a `try/catch`.**
-  Bump `ColonyLinkModule.SCHEMA_VERSION` (now 2) whenever a section's shape changes.
+  Bump `ColonyLinkModule.SCHEMA_VERSION` (now 3) whenever a section's shape changes.
 
 ## Build & verify
 
@@ -131,7 +135,7 @@
 - Static analysis: `./gradlew :fabric:26.2:ecjCheck` (the VS Code Problems panel, via `tools/ecj.prefs`).
   The task only FAILS on errors.
 - Tests: `./gradlew :neoforge:26.2:test` runs the pure-JVM JUnit suite in `common/src/test/java`
-  (149 tests in 14 classes; also part of every `:neoforge:<mc>:build`). `common` is source-only, so
+  (179 tests in 22 classes; also part of every `:neoforge:<mc>:build`). `common` is source-only, so
   the NeoForge nodes own test execution. Model tests only: no server or client is started. Put the
   pure half of new logic where a test can reach it.
 - A Cowork agent sandbox cannot decompile Minecraft — run builds natively (or via the local gradle MCP)
@@ -181,8 +185,9 @@ za.co.neroland.nerocolonies
 ├── link/                         ColonyLinkModule/Snapshots/Sections/Actions/Events/Access
 ├── progression/                  ColonyGates (soft + record gates, written and never read),
 │                                 QuestHooks (the two mod_hook reward gates)
-└── compat/                       CompatRegistry, the one reflective Nerospace bridge, and the
-                                  JEI/EMI information pages
+└── compat/                       CompatRegistry, the NerospaceCompat façade, the compile-time
+                                  Nerospace bridge (compat/nerospace, found via META-INF/services,
+                                  left out with nerospace_compat=false), and the JEI/EMI pages
 ```
 
 ## Conventions (cross-loader)
@@ -240,7 +245,7 @@ za.co.neroland.nerocolonies
 - Store or log a player name, a killer's identity or a planner selection.
 - Rename the `nerocolonies:colonist` entity id or the `Colonist*` classes, or say "colonist" in
   player-facing text.
-- Grow the `Colony` record past 16 fields.
+- Grow the `Colony` record past its 17 components (the codec is already split once).
 - Add a hard dependency on any mod other than Neroland Core.
 
 ## Translation workflow

@@ -1,5 +1,8 @@
 package za.co.neroland.nerocolonies.compat;
 
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
+
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -42,9 +45,25 @@ public final class CompatRegistry {
         detected = true;
 
         if (Services.PLATFORM.isModLoaded("nerospace")) {
-            NerospaceCompat bridge = za.co.neroland.nerocolonies.compat.nerospace.NerospaceBridge.probe();
-            if (bridge != null) {
-                nerospace = bridge;
+            // The compile-time bridge (compat.nerospace) is found through META-INF/services, so a build made
+            // with nerospace_compat=false (no bridge at all) still links. Touched only now that the loader
+            // said Nerospace is present; any linkage problem leaves the NONE façade in place.
+            try {
+                NerospaceCompat bridge = ServiceLoader.load(NerospaceCompat.class,
+                        CompatRegistry.class.getClassLoader()).findFirst().orElse(null);
+                if (bridge == null) {
+                    NeroColoniesCommon.LOGGER.info(
+                            "[NeroColonies] Nerospace is installed but this build has no Nerospace "
+                                    + "integration; dimensions are breathable and colonies generic.");
+                } else {
+                    nerospace = bridge;
+                    bridge.installHooks();
+                }
+            } catch (ServiceConfigurationError | RuntimeException | LinkageError e) {
+                nerospace = NerospaceCompat.NONE;
+                NeroColoniesCommon.LOGGER.warn(
+                        "[NeroColonies] The Nerospace bridge could not load ({}); dimensions are breathable "
+                                + "and colonies generic.", e.getClass().getSimpleName());
             }
         }
         neroAgriculture = Services.PLATFORM.isModLoaded("neroagriculture");

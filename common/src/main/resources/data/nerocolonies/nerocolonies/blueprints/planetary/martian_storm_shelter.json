@@ -1,0 +1,28 @@
+{
+  "name": "blueprint.nerocolonies.planetary.martian_storm_shelter",
+  "category": "defence",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 0 },
+  "colony_types": [ "martian_settlement" ],
+  "palette": {
+    "#": "minecraft:smooth_red_sandstone",
+    "G": "minecraft:red_stained_glass",
+    "R": "minecraft:cut_red_sandstone",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "RRRRR", "R___R", "R___R", "R___R", "RR_RR" ],
+    [ "RGGGR", "G___G", "G___G", "G___G", "RG_GR" ],
+    [ "RRRRR", "RRRRR", "RRRRR", "RRRRR", "RRRRR" ]
+  ],
+  "materials": [
+    { "item": "minecraft:smooth_red_sandstone", "count": 25 },
+    { "item": "minecraft:cut_red_sandstone", "count": 44 },
+    { "item": "minecraft:red_stained_glass", "count": 10 }
+  ],
+  "rotate": true
+}

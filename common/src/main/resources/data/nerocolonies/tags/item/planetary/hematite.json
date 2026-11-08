@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "nerospace:raw_hematite", "required": false },
+    "minecraft:raw_iron"
+  ]
+}

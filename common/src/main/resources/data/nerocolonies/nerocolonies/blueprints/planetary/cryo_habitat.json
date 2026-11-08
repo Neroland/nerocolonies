@@ -1,0 +1,30 @@
+{
+  "name": "blueprint.nerocolonies.planetary.cryo_habitat",
+  "category": "life_support",
+  "stage": "settled",
+  "priority": 45,
+  "max": 1,
+  "level": 1,
+  "capacity": { "housing": 0, "storage": 0, "jobs": 0 },
+  "colony_types": [ "cryo_station" ],
+  "palette": {
+    "#": "minecraft:white_concrete",
+    "G": "minecraft:glass",
+    "L": "minecraft:lantern[hanging=false]",
+    "P": "minecraft:packed_ice",
+    "_": "minecraft:air"
+  },
+  "layers": [
+    [ "#####", "#####", "#####", "#####", "#####" ],
+    [ "PPPPP", "P___P", "P_L_P", "P___P", "PP_PP" ],
+    [ "PGGGP", "G___G", "G___G", "G___G", "PG_GP" ],
+    [ "PPPPP", "PPPPP", "PPPPP", "PPPPP", "PPPPP" ]
+  ],
+  "materials": [
+    { "item": "minecraft:white_concrete", "count": 25 },
+    { "item": "minecraft:packed_ice", "count": 44 },
+    { "item": "minecraft:glass", "count": 10 },
+    { "item": "minecraft:lantern", "count": 1 }
+  ],
+  "rotate": true
+}

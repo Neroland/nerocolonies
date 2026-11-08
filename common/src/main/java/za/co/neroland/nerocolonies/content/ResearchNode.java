@@ -28,6 +28,10 @@ import za.co.neroland.nerocolonies.content.effect.ResearchEffect;
  *
  * <p>{@code branch} is presentational only — it groups nodes in the research screen. The actual
  * graph is {@code requires}, which the loader validates for dangling references and cycles.
+ *
+ * <p>{@code colony_types} (optional) limits the node to colonies of the listed
+ * {@link za.co.neroland.nerocolonies.colony.ColonyType}s, by stored name. Absent or empty means every
+ * colony.
  */
 public record ResearchNode(
         Identifier id,
@@ -35,7 +39,8 @@ public record ResearchNode(
         String title,
         List<Identifier> requires,
         List<ItemAmount> cost,
-        List<ResearchEffect> effects) {
+        List<ResearchEffect> effects,
+        List<String> colonyTypes) {
 
     public static final Identifier UNNAMED =
             Identifier.fromNamespaceAndPath("nerocolonies", "unnamed_research");
@@ -45,6 +50,13 @@ public record ResearchNode(
         requires = requires == null ? List.of() : List.copyOf(requires);
         cost = cost == null ? List.of() : List.copyOf(cost);
         effects = effects == null ? List.of() : List.copyOf(effects);
+        colonyTypes = colonyTypes == null ? List.of() : List.copyOf(colonyTypes);
+    }
+
+    /** A node with no {@code colony_types} filter (available to every colony). */
+    public ResearchNode(Identifier id, String branch, String title, List<Identifier> requires,
+            List<ItemAmount> cost, List<ResearchEffect> effects) {
+        this(id, branch, title, requires, cost, effects, List.of());
     }
 
     public static final Codec<ResearchNode> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -55,16 +67,28 @@ public record ResearchNode(
                     .forGetter(ResearchNode::requires),
             ItemAmount.CODEC.listOf().optionalFieldOf("cost", List.of()).forGetter(ResearchNode::cost),
             ResearchEffect.CODEC.listOf().optionalFieldOf("effects", List.of())
-                    .forGetter(ResearchNode::effects)
+                    .forGetter(ResearchNode::effects),
+            Codec.STRING.listOf().optionalFieldOf("colony_types", List.of())
+                    .forGetter(ResearchNode::colonyTypes)
     ).apply(inst, ResearchNode::new));
 
     public ResearchNode withId(Identifier newId) {
-        return new ResearchNode(newId, branch, title, requires, cost, effects);
+        return new ResearchNode(newId, branch, title, requires, cost, effects, colonyTypes);
     }
 
     /** The same node with a pruned prerequisite list (dangling references removed). */
     public ResearchNode withRequires(List<Identifier> pruned) {
-        return new ResearchNode(id, branch, title, pruned, cost, effects);
+        return new ResearchNode(id, branch, title, pruned, cost, effects, colonyTypes);
+    }
+
+    /** The same node with a cleaned {@code colony_types} filter. */
+    public ResearchNode withColonyTypes(List<String> types) {
+        return new ResearchNode(id, branch, title, requires, cost, effects, types);
+    }
+
+    /** Whether a colony of this type may research this node (the {@code colony_types} filter). */
+    public boolean availableTo(za.co.neroland.nerocolonies.colony.ColonyType type) {
+        return za.co.neroland.nerocolonies.colony.ColonyType.admits(this.colonyTypes, type);
     }
 
     /** The translation key for this node's title, falling back to a key derived from its id. */

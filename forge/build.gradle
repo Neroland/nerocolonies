@@ -28,6 +28,18 @@ def branchDir = project.parent.projectDir
 def forgeBuild = forgeVersion.toString().split('-', 2)[1]
 def forgeMajor = forgeBuild.split('\\.')[0]
 
+// --- Optional Nerospace (compat facade) -----------------------------------------------------------------------
+// Nerospace is compileOnly behind compat/NerospaceCompat: only compat/nerospace/ imports it, found through a
+// META-INF/services seam after isModLoaded("nerospace"). `nerospace_compat=false` (gradle.properties or -P) drops
+// the dependency and excludes that package and its services line, so the mod builds with no Nerospace artifact
+// at all. A per-Minecraft-version flag (`nerospace_compat_<mc>`) overrides the global one for this cell only.
+def compatOn = { String flag -> (rootProject.findProperty("${flag}_${mc}") ?: rootProject.findProperty(flag) ?: 'true').toString().trim() == 'true' }
+def nerospaceOn = compatOn('nerospace_compat')
+if (!nerospaceOn) {
+    sourceSets.main.java.exclude 'za/co/neroland/nerocolonies/compat/nerospace/**'
+    sourceSets.main.resources.exclude 'META-INF/services/za.co.neroland.nerocolonies.compat.NerospaceCompat'
+}
+
 // Distinct, descriptive jar name per cell.
 base { archivesName = "nerocolonies-forge-${mc}" }
 
@@ -123,6 +135,16 @@ dependencies {
     // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
     compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${mc}:${rootProject.neroeconomy_version}"
+
+    // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). Dev clients
+    // load it only with -PwithNerospace.
+    if (nerospaceOn) {
+        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-forge-${mc}:${rootProject.nerospace_version}"
+        compileOnly nerospaceCoord
+        if (project.hasProperty('withNerospace')) {
+            runtimeOnly nerospaceCoord
+        }
+    }
 
     implementation 'io.sentry:sentry:8.60.0'
     jarJar(group: 'io.sentry', name: 'sentry', version: '8.45.0')

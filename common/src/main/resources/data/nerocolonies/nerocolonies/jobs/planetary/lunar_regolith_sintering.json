@@ -1,0 +1,14 @@
+{
+  "station": "nerocolonies:refinery_station",
+  "inputs": [
+    { "tag": "nerocolonies:planetary/regolith", "count": 4 }
+  ],
+  "outputs": [
+    { "item": "minecraft:smooth_stone", "count": 2 }
+  ],
+  "ticks": 300,
+  "colonists": 1,
+  "morale_floor": 20.0,
+  "export": false,
+  "colony_types": [ "lunar_outpost" ]
+}
