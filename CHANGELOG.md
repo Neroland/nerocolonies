@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1-beta.1] - 2026-11-14
+
+### Fixed
+
+- **EMI: crash while EMI reloads ("Rendersystem called from wrong thread").** Seen on Forge 26.1.2 with EMI. The
+  colony info pages laid out their text while EMI was building its lists on a background thread, which touched
+  the renderer and crashed the game. The text is now laid out the first time a page is shown, on the render
+  thread. The pages look the same. JEI was not affected.
+
 ## [0.7.0-beta.1] - 2026-11-08
 
 Planetary colonies: a colony founded on a Nerospace planet takes that planet's colony type and gets its
