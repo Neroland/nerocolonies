@@ -45,7 +45,7 @@ own buildings, trades and research. Existing worlds load unchanged. **Client and
 
 ### Changed
 
-- Nerospace is now compiled against its public API (2.0.1) instead of being probed by reflection. It
+- Nerospace is now compiled against its public API (2.1.1-beta.1) instead of being probed by reflection. It
   stays optional; without it nothing changes. Nerospace 1.x still works: colonies there stay plain.
 
 ### Notes
