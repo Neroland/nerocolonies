@@ -1,14 +1,17 @@
 package za.co.neroland.nerocolonies.client.screen;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+//? if >=1.21.9 {
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import za.co.neroland.nerocolonies.menu.ColonyStorageMenu;
 
 /**
- * The colony depot's screen: the colony's shared stock, with the slots it has not unlocked greyed
- * out.
+ * The screen of a Colony Depot or Storage Crate: one page of the colony's shared stock, with the slots
+ * it has not unlocked greyed out, and page buttons when the stock runs to more than one page.
  *
  * <p>Greying rather than hiding is the point — a locked slot is a visible reason to build a capacity
  * module, and a storage window whose shape changed when a module was swapped would be disorienting.
@@ -26,6 +29,15 @@ public class ColonyStorageScreen extends NeroColoniesScreen<ColonyStorageMenu> {
 
     /** Wash drawn over a slot the colony has not unlocked. */
     private static final int LOCKED = 0xC00E1520;
+
+    /** The page buttons, right-aligned on the status row. */
+    private static final int PAGE_BUTTON_WIDTH = 12;
+    private static final int PAGE_BUTTON_HEIGHT = 10;
+    private static final int PAGE_LABEL_WIDTH = 34;
+    private static final int NEXT_X = WIDTH - CONTENT_X - PAGE_BUTTON_WIDTH;
+    private static final int PAGE_LABEL_X = NEXT_X - 2 - PAGE_LABEL_WIDTH;
+    private static final int PREVIOUS_X = PAGE_LABEL_X - 2 - PAGE_BUTTON_WIDTH;
+    private static final int BUTTON_Y = ColonyStorageMenu.STATUS_Y - 1;
 
     public ColonyStorageScreen(ColonyStorageMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, ACCENT, WIDTH, HEIGHT);
@@ -51,18 +63,54 @@ public class ColonyStorageScreen extends NeroColoniesScreen<ColonyStorageMenu> {
             wrappedLabel(g, Component.translatable("gui.nerocolonies.depot.unclaimed"),
                     CONTENT_X, ColonyStorageMenu.STATUS_Y, CONTENT_WIDTH, 1, BAD);
         } else {
-            clampedLabel(g, Component.translatable("gui.nerocolonies.depot.slots",
-                    this.menu.usableSlots(), ColonyStorageMenu.SLOTS),
-                    CONTENT_X, ColonyStorageMenu.STATUS_Y, CONTENT_WIDTH, SUBTLE);
+            int pages = this.menu.pageCount();
+            int labelWidth = pages > 1 ? PREVIOUS_X - 4 - CONTENT_X : CONTENT_WIDTH;
+            Component slots = this.menu.usableSlots() == 0
+                    ? Component.translatable("gui.nerocolonies.depot.no_storage")
+                    : Component.translatable("gui.nerocolonies.depot.slots", this.menu.usableSlots(),
+                            ColonyStorageMenu.SLOTS);
+            clampedLabel(g, slots, CONTENT_X, ColonyStorageMenu.STATUS_Y, labelWidth, SUBTLE);
+            if (pages > 1) {
+                int page = this.menu.page();
+                button(g, PREVIOUS_X, BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT,
+                        Component.literal("<"), page > 0);
+                clampedCentered(g, Component.translatable("gui.nerocolonies.depot.page", page + 1, pages),
+                        PAGE_LABEL_X, PAGE_LABEL_WIDTH, ColonyStorageMenu.STATUS_Y, SUBTLE);
+                button(g, NEXT_X, BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT,
+                        Component.literal(">"), page < pages - 1);
+            }
         }
 
         int usable = this.menu.usableSlots();
-        for (int slot = usable; slot < ColonyStorageMenu.SLOTS; slot++) {
+        for (int slot = 0; slot < ColonyStorageMenu.PAGE_SLOTS; slot++) {
+            if (this.menu.absolute(slot) < usable) {
+                continue;
+            }
             int col = slot % ColonyStorageMenu.COLUMNS;
             int row = slot / ColonyStorageMenu.COLUMNS;
             int x = this.leftPos + ColonyStorageMenu.GRID_X + col * 18 - 1;
             int y = this.topPos + ColonyStorageMenu.GRID_Y + row * 18 - 1;
             g.fill(x, y, x + 18, y + 18, LOCKED);
         }
+    }
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double localX = event.x() - this.leftPos;
+        double localY = event.y() - this.topPos;
+        if (this.menu.bound() && this.menu.pageCount() > 1 && this.minecraft != null
+                && this.minecraft.gameMode != null) {
+            int button = -1;
+            if (within(localX, localY, PREVIOUS_X, BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT)) {
+                button = ColonyStorageMenu.BUTTON_PREVIOUS;
+            } else if (within(localX, localY, NEXT_X, BUTTON_Y, PAGE_BUTTON_WIDTH, PAGE_BUTTON_HEIGHT)) {
+                button = ColonyStorageMenu.BUTTON_NEXT;
+            }
+            if (button >= 0) {
+                // The server owns the page; this only asks it to turn.
+                this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, button);
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
     }
 }

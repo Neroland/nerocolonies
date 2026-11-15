@@ -45,7 +45,7 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
      * change here moves the frame with the slot rather than leaving the two out of step.
      *
      * <p>The supply and module slots sit <em>beside</em> the player inventory rather than above it,
-     * the six food slots as a 3x2 block level with the inventory's top rows and the three modules
+     * the six food slots as a 3x2 block level with the inventory's top rows and the four modules
      * level with the hotbar. They are the only things on this screen a player puts an item into, so
      * they are on every tab; putting them beside the inventory leaves the whole upper half of the
      * panel for the colony's readouts.
@@ -75,7 +75,7 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
         this.data = data;
 
         // Slot order is part of this menu's contract (quickMoveStack and the client's stand-in
-        // container both index off it): three modules, then six supply, then the player inventory.
+        // container both index off it): four modules, then six supply, then the player inventory.
         for (int slot = 0; slot < UPGRADE_SLOTS; slot++) {
             this.addSlot(new Slot(container, slot, UPGRADE_X + slot * 18, UPGRADE_Y) {
                 @Override

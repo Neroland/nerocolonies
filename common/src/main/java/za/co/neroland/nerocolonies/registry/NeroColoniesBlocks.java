@@ -86,6 +86,14 @@ public final class NeroColoniesBlocks {
                     .requiresCorrectToolForDrops()
                     .sound(SoundType.METAL)));
 
+    /** Where a colony keeps its goods: a depot with more room. Each crate adds storage capacity. */
+    public static final RegistryEntry<Block> STORAGE_CRATE = BLOCKS.register("storage_crate",
+            key -> new za.co.neroland.nerocolonies.block.StorageCrateBlock(BlockBehaviour.Properties.of()
+                    .setId(key)
+                    .mapColor(MapColor.COLOR_BROWN)
+                    .strength(2.5F, 6.0F)
+                    .sound(SoundType.WOOD)));
+
     /** Spends colony goods and power to unlock research nodes on the colony record. */
     public static final RegistryEntry<Block> RESEARCH_STATION = BLOCKS.register("research_station",
             key -> new ResearchStationBlock(BlockBehaviour.Properties.of()
@@ -154,7 +162,7 @@ public final class NeroColoniesBlocks {
 
     /** Every block that gets a plain {@code BlockItem} and a creative-tab entry. */
     public static final List<RegistryEntry<? extends Block>> ALL = List.of(
-            COLONY_BEACON, OUTPOST_BEACON, OXYGEN_GENERATOR, COLONY_DEPOT, RESEARCH_STATION,
+            COLONY_BEACON, OUTPOST_BEACON, OXYGEN_GENERATOR, COLONY_DEPOT, STORAGE_CRATE, RESEARCH_STATION,
             HABITAT_POD, HABITAT_MODULE, HABITAT_BLOCK,
             FARM_STATION, HYDROPONICS_STATION, REFINERY_STATION, FABRICATOR_STATION,
             NEEDS_BOARD, GRATITUDE_CACHE, PLANNING_TABLE);

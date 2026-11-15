@@ -51,6 +51,12 @@ Four buildings stand between Founding and Settled. They are the blueprints whose
 
 An entry starting with `#` is an item tag: any planks, any logs.
 
+Before any of them, place a **Storage Crate** (or Colony Depot) inside the claim: what you hand the
+colony is kept there, and the Starter Works wait until there is somewhere to keep it. The materials
+stay in the crate until the blocks that use them go up, so you can take them back out; a Starter Work
+whose materials are taken out pauses until they are returned. See
+[Construction](Construction.md#colony-storage).
+
 **Why they need your materials.** From Settled onwards a colony with nothing in store still builds,
 slowly, by fabricating from scrap. While it is founding it does not: the Starter Works go up from
 supplied materials or not at all, so the first four buildings are your contribution to the colony.

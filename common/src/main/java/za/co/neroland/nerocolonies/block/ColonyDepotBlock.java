@@ -4,6 +4,7 @@ import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -25,6 +26,8 @@ import za.co.neroland.nerocolonies.block.entity.ColonyDepotBlockEntity;
 import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyState;
+import za.co.neroland.nerocolonies.colony.ColonyStorage;
+import za.co.neroland.nerocolonies.colony.ColonyStorageBlocks;
 import za.co.neroland.nerocolonies.menu.MenuOpener;
 import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 
@@ -35,8 +38,9 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  * depot placed inside somebody else's claim is their storage, not a way into it. On unclaimed ground
  * it opens empty and does nothing, which is exactly what it is.
  *
- * <p>Breaking it drops the block and nothing else. See {@code ColonyDepotBlockEntity} for why: the
- * goods belong to the colony, and a colony's stock must not be lootable by breaking a door to it.
+ * <p>Breaking it takes its capacity away: the colony's goods are packed into the depots and crates
+ * that remain, and only what no longer fits drops here — everything, if it was the colony's last
+ * box. See {@code ColonyStorageBlocks}.
  */
 public class ColonyDepotBlock extends BaseEntityBlock {
 
@@ -46,7 +50,7 @@ public class ColonyDepotBlock extends BaseEntityBlock {
         super(properties);
     }
 
-    protected MapCodec<ColonyDepotBlock> codec() {
+    protected MapCodec<? extends ColonyDepotBlock> codec() {
         return CODEC;
     }
 
@@ -88,6 +92,26 @@ public class ColonyDepotBlock extends BaseEntityBlock {
         }
         MenuOpener.open(serverPlayer, depot);
         return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * The box is going: forget it, pack the colony's goods into the boxes that remain, and drop here
+     * only what no longer fits. A box removed some other way (an explosion) is caught by the beacon's
+     * {@link ColonyStorageBlocks#prune} instead.
+     */
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (level instanceof ServerLevel serverLevel) {
+            java.util.UUID colonyId = ColonyStorageBlocks.get(serverLevel.getServer())
+                    .unregister(serverLevel.dimension(), pos);
+            if (colonyId != null) {
+                Colony colony = ColonyState.get(serverLevel.getServer()).colony(colonyId);
+                if (colony != null) {
+                    ColonyStorage.settle(serverLevel, pos, colonyId, ColonyStorage.usableSlots(serverLevel, colony));
+                }
+            }
+        }
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override

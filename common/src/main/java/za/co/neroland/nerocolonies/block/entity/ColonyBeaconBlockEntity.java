@@ -64,7 +64,8 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
  *   <li>a small energy buffer with an idle trickle — a beacon with no power is not projecting a
  *       claim field, which is the in-fiction reason the GUI shows a power gauge;</li>
  *   <li>the colony's shared {@link UpgradeType} modules — {@code RANGE} widens the claim,
- *       {@code EFFICIENCY} trims life-support burn, {@code CAPACITY} enlarges storage;</li>
+ *       {@code EFFICIENCY} trims life-support burn, {@code CAPACITY} enlarges storage and
+ *       {@code SPEED} quickens construction;</li>
  *   <li>the <b>food supply slots</b>, where any hopper, pipe or player can put food and the colony
  *       tick converts it into rations;</li>
  *   <li>the colony's {@link ColonyTicker.State} — the housing sweep cursor and the catch-up flag —
@@ -83,8 +84,12 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
         implements WorldlyContainer, MenuProvider {
 
-    /** Upgrade-module slots. Core clamps the real count to its own server-side cap. */
-    public static final int UPGRADE_SLOTS = 3;
+    /**
+     * Upgrade-module slots: one per {@link UpgradeType}, so every kind of module can be installed at
+     * once (speed, efficiency, range and capacity). Core clamps the real count to its own server-side
+     * cap ({@code upgradeModuleSlotCap}, default 4); a slot past that cap refuses modules.
+     */
+    public static final int UPGRADE_SLOTS = 4;
 
     /** Food supply slots — the colony's intake. Anything a colony eats may be put here. */
     public static final int SUPPLY_SLOTS = 6;
@@ -366,11 +371,19 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 // A different claim means a different set of chunks to sweep.
                 this.tickState.housing().restart();
             }
+            // A depot or crate that went without a player (an explosion) is noticed here, and the
+            // colony's goods are packed into what is left.
+            za.co.neroland.nerocolonies.colony.ColonyStorageBlocks.prune(server, this.colonyId,
+                    capacityModules());
         }
-        Construction.Readout build = Construction.readout(server, this.colonyId);
-        this.buildPercent = build.percent();
-        this.structuresBuilt = build.built();
-        this.buildSupplied = build.supplied();
+        // Whether the build's materials are in storage is a scan of colony storage, so it is sampled
+        // once a second rather than every tick.
+        if (this.refreshCountdown % 20 == 0) {
+            Construction.Readout build = Construction.readout(server, this.colonyId);
+            this.buildPercent = build.percent();
+            this.structuresBuilt = build.built();
+            this.buildSupplied = build.supplied();
+        }
         if (this.refreshCountdown == REFRESH_INTERVAL_TICKS) {
             this.growthStatus = Population.growthStatus(serverLevel, colony).ordinal();
         }
@@ -409,6 +422,11 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
     /** How many {@code CAPACITY} modules are installed — what sizes the colony's storage. */
     public int capacityModules() {
         return modifiers().count(UpgradeType.CAPACITY);
+    }
+
+    /** The construction-speed factor from {@code SPEED} modules in this beacon (1.0 with none). */
+    public double speedMultiplier() {
+        return modifiers().speedMultiplier();
     }
 
     /** The colony-storage window, or {@code null} while the beacon is unbound or on the client. */
@@ -538,7 +556,11 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
         if (window != null) {
             return window.canPlaceItem(windowIndex(slot), stack);
         }
-        return isSupplySlot(slot) ? FoodSupply.isFood(stack) : this.upgrades.isModule(stack);
+        if (isSupplySlot(slot)) {
+            return FoodSupply.isFood(stack);
+        }
+        // A module slot past Core's configured cap has no backing slot: refuse rather than lose it.
+        return slot >= 0 && slot < this.upgrades.slots() && this.upgrades.isModule(stack);
     }
 
     @Override

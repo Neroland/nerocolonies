@@ -73,6 +73,9 @@ public final class ColonyCatchUp {
 
         // Consumption first: a colony that would have starved while away should be found starving,
         // not found fed and then starving one tick later.
+        // What the colony kept in storage was there to be eaten while it was away.
+        updated = FoodSupply.intakeFromStorage(level.getServer(), updated,
+                (int) Math.min(Integer.MAX_VALUE, Math.ceil(cycles * yield)));
         updated = FoodSupply.consume(updated, cycles, yield);
 
         // Life support over the whole window in one step: the generators were not running either, so

@@ -43,7 +43,13 @@ erasure request — erasing a player never touches a colony's goods. That is exa
 `transfer_to_server` ownership policy is for.
 
 It is a separate store from the index on purpose: the colony record is a small value that is copied
-on every morale tick, and two 54-slot item lists have no business being copied that often.
+on every morale tick, and two item lists of up to 270 and 54 slots have no business being copied
+that often.
+
+**Where the goods are kept — `nerocolonies:storage_blocks`.** A small side index lists each colony's
+Storage Crates and Colony Depots: dimension, block position and whether it is a crate. It sets how
+much storage the colony has. Like the goods, it holds positions only, nothing player-shaped, and it
+is forgotten with the colony.
 
 The consequence worth knowing: dissolving a colony drops **and forgets** its store in one operation.
 Doing either without the other would duplicate the goods or silently delete them.

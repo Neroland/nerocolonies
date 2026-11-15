@@ -8,6 +8,10 @@
     {
       "id": "nerocolonies:colony_depot",
       "required": false
+    },
+    {
+      "id": "nerocolonies:storage_crate",
+      "required": false
     }
   ]
 }

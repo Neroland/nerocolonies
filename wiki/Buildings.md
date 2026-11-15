@@ -87,6 +87,7 @@ Three block tags decide what "natural" means, and a datapack can add to or repla
 | `nerocolonies:clearable` | `data/nerocolonies/tags/block/clearable.json` | Everything the colony may break to make room: the vegetation tag below, plus dirt, grass, podzol, mycelium, sand, gravel, stone and its common variants, deepslate, tuff, snow blocks and moss blocks |
 | `nerocolonies:clearable_vegetation` | `data/nerocolonies/tags/block/clearable_vegetation.json` | The part of that list that sits *on top of* the ground: logs, leaves, flowers, saplings, grasses, ferns, snow layers, vines, mushrooms, bamboo, pumpkins and melons. These are also ignored when the colony measures how level a site is |
 | `nerocolonies:protected` | `data/nerocolonies/tags/block/protected.json` | Blocks the colony never breaks, whatever else they are: beds, doors, rails, signs, chests, barrels, shulker boxes, hoppers, furnaces, redstone components, spawners, and every NeroColonies block |
+| `nerocolonies:quarryable` | `data/nerocolonies/tags/block/quarryable.json` | What a Miner may dig out of its quarry: overworld and nether base stone, dirt, sand, gravel, cobblestone, clay, calcite, sandstone, the vanilla ores, and the common `c:ores`, `c:stones`, `c:cobblestones`, `c:gravels` and `c:sands` tags when another mod fills them. `nerocolonies:protected` still wins. See [Nerans and professions](Nerans-and-Professions.md#what-they-do) |
 
 Beyond the tags, two things are never touched: **any block with a block entity**, and any block of
 another finished building.

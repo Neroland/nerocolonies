@@ -128,9 +128,11 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     private static final int BAND_LABEL_DROP = 11;
     private static final int BAND_WIDTH = 3 * SLOT;
 
-    private static final int TAB_COLONY = 0;
-    private static final int TAB_PEOPLE = 1;
-    private static final int TAB_NEEDS = 2;
+    // Needs is the first tab and the one the screen opens on: what the colony is short of is the
+    // question a player walking up to the beacon most often has.
+    private static final int TAB_NEEDS = 0;
+    private static final int TAB_COLONY = 1;
+    private static final int TAB_PEOPLE = 2;
     private static final int TAB_ROLES = 3;
     private static final int TAB_JOBS = 4;
     private static final int TAB_RESEARCH = 5;
@@ -175,16 +177,16 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     /** The hotbar and the three rows above it: what "carrying" means, here and on the server. */
     private static final int CARRIED_SLOTS = 36;
 
-    /** The food need's name key. Food is eaten from the supply slots, so Give never takes it. */
-    private static final String FOOD_NAME_KEY = "need.nerocolonies.food";
+    /** The storage-box need's name key. It is met by placing a block, so Give never takes it. */
+    private static final String STORAGE_NAME_KEY = "need.nerocolonies.storage";
 
     /** How often an open Needs or Roles tab asks the server for a fresh snapshot, in client ticks. */
     private static final int REFRESH_TICKS = 60;
 
     private static final String[] TAB_KEYS = {
+        "gui.nerocolonies.tab.needs",
         "gui.nerocolonies.tab.overview",
         "gui.nerocolonies.tab.colonists",
-        "gui.nerocolonies.tab.needs",
         "gui.nerocolonies.tab.roles",
         "gui.nerocolonies.tab.jobs",
         "gui.nerocolonies.tab.research",
@@ -223,12 +225,13 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
         "gui.nerocolonies.build.why.cap_reached",
         "gui.nerocolonies.build.why.nothing_needed",
         "gui.nerocolonies.build.why.no_site",
-        "gui.nerocolonies.build.why.awaiting_materials"
+        "gui.nerocolonies.build.why.awaiting_materials",
+        "gui.nerocolonies.build.why.no_storage"
     };
 
     private static final int BUILD_AWAITING_MATERIALS = 8;
 
-    private int tab = TAB_COLONY;
+    private int tab = TAB_NEEDS;
 
     /** Measured geometry, panel-relative. Rebuilt whenever the screen is (re)initialised. */
     private int railWidth = RAIL_MIN_WIDTH;
@@ -404,7 +407,8 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
 
         slotTray(g, ColonyBeaconMenu.SUPPLY_X, ColonyBeaconMenu.SUPPLY_Y,
                 ColonyBeaconMenu.SUPPLY_COLUMNS, ColonyBeaconMenu.SUPPLY_ROWS);
-        slotTray(g, ColonyBeaconMenu.UPGRADE_X, ColonyBeaconMenu.UPGRADE_Y, 3, 1);
+        slotTray(g, ColonyBeaconMenu.UPGRADE_X, ColonyBeaconMenu.UPGRADE_Y,
+                za.co.neroland.nerocolonies.block.entity.ColonyBeaconBlockEntity.UPGRADE_SLOTS, 1);
         playerInventoryTray(g, ColonyBeaconMenu.INVENTORY_X, ColonyBeaconMenu.INVENTORY_Y,
                 ColonyBeaconMenu.HOTBAR_Y);
     }
@@ -597,7 +601,7 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
      */
     private int carried(ColonySnapshotPayload.NeedLine line) {
         int missing = line.needed() - line.have();
-        if (missing <= 0 || FOOD_NAME_KEY.equals(line.nameKey())) {
+        if (missing <= 0 || STORAGE_NAME_KEY.equals(line.nameKey())) {
             return 0;
         }
         String label = line.label();

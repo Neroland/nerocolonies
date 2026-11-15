@@ -47,6 +47,8 @@ public final class NeroColoniesItems {
 
     public static final RegistryEntry<BlockItem> COLONY_DEPOT =
             describedBlockItem("colony_depot", NeroColoniesBlocks.COLONY_DEPOT);
+    public static final RegistryEntry<BlockItem> STORAGE_CRATE =
+            describedBlockItem("storage_crate", NeroColoniesBlocks.STORAGE_CRATE);
 
     public static final RegistryEntry<BlockItem> RESEARCH_STATION =
             describedBlockItem("research_station", NeroColoniesBlocks.RESEARCH_STATION);

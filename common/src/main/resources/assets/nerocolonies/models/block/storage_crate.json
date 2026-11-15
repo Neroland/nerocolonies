@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "nerocolonies:block/storage_crate_side",
+    "top": "nerocolonies:block/storage_crate_top",
+    "bottom": "nerocolonies:block/storage_crate_bottom",
+    "particle": "nerocolonies:block/storage_crate_side"
+  }
+}

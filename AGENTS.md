@@ -17,12 +17,14 @@
   stay `*Colonist*`, so existing worlds and configs load. Never rename any of them.
 - Mod id: **`nerocolonies`** (matches the registry namespace + every loader manifest). Package root:
   `za.co.neroland.nerocolonies`. Author: **Neroland**.
-- Version: **0.7.0-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
+- Version: **0.8.0-beta.1**. 0.3 was the living-colony rework (stages, professions, 51 blueprints,
   roles and defence, the Gratitude Cache, the Colony Planner, link schema 2, the gallery); 0.4 added
   NeroEconomy payouts; 0.5 ships the Colony Chronicle quest chapter, nine record gates, three new
   threshold channels and the two quest-hook rewards; 0.7 adds planetary colony types (`ColonyType`,
   derived once at founding from Nerospace's `colonyProfile()`), the `colony_types` content filter,
-  six planetary profiles, the terraform claim policy and link schema 3. Verified by the nine-cell build, `ecjCheck`
+  six planetary profiles, the terraform claim policy and link schema 3; 0.8 adds the Storage Crate
+  (storage lives in crates and depots), materials drawn as blocks are laid, eating from storage, four
+  beacon module slots and real work for every trade. Verified by the nine-cell build, `ecjCheck`
   and the JUnit suite; **not yet run in a game client**, so never write that it was.
 - Targets **MC 26.1.2, 26.2 AND 26.3** on **NeoForge, MinecraftForge/Forge, and Fabric** → the **"9 cells"**.
   **Java 25.** Mappings = official Mojang names (26.x ships de-obfuscated; no Parchment).
@@ -69,6 +71,12 @@
   review failure, and the erasure hook calls `SavedDataRecovery.backupNow` for every store it
   purges so the erasure reaches Core's last-known-good backup too.
 - **Every `openMenu` call goes through `menu/MenuOpener`.**
+- **Colony storage lives in boxes.** Capacity comes only from the Storage Crates and Colony Depots
+  recorded in `colony/ColonyStorageBlocks` (plus beacon `CAPACITY` modules while a box stands); a
+  colony with none has no storage, and the Starter Works wait for one. A box going (player break or
+  `prune`) goes through `ColonyStorage.settle`, which packs the goods into what is left and drops only
+  the overflow. A build's materials stay in storage and are consumed per block laid
+  (`Construction.remainingMaterials`); never take them up front.
 - **`Colony` has 17 components and its codec is split** (`BASE_MAP_CODEC` with the sixteen 0.6
   fields, plus `colony_type`, both over one flat map; `ColonyCodecCompatTest` guards it). The
   seventeenth, `colonyType`, was the owner-approved exception (D10). Do not add more: new
@@ -83,10 +91,11 @@
   an optional generated display name from the lang-file pool. Nothing player-shaped goes on the
   entity, and a generated name never comes from a player.
 - **The colony changes blocks only under the land rules.** Construction, land clearing and the
-  Farmer and Forester behaviours break and place blocks, always inside the claim (re-checked per
-  cell), never a block in `nerocolonies:protected`, never a block entity, never into a cell a
+  Farmer, Forester and Miner behaviours break and place blocks, always inside the claim (re-checked
+  per cell), never a block in `nerocolonies:protected`, never a block entity, never into a cell a
   living entity occupies, and with every drop going to colony storage. Clearing touches only
-  `nerocolonies:clearable`.
+  `nerocolonies:clearable`; the Miner breaks only `nerocolonies:quarryable` and never beside a fluid;
+  fields and quarries are never sited on the colony's buildings or the active site.
 - **Only Guards and guardian animals fight, and `ColonyDefence.isValidTarget` is the one rule:**
   hostile mobs (not creepers) and players on the colony's Enemy list, inside the claim plus
   `guardPursuitMargin`. Nothing else is ever targeted.
@@ -102,8 +111,13 @@
   neighbour, to the nearest safe spot within 8 blocks in the claim. Never widen it.
 - **A claim grows only into free ground.** The growth bonus goes through `ColonyClaims.clampGrowth`
   and never reaches a neighbouring colony's claim.
-- **Goods come from the colony tick.** A trade's `outputs` are gathered in `Professions.produce`
-  whether or not a Neran is loaded; the visible behaviours in `entity/ai/profession` are extra.
+- **Working Nerans gather for real; the colony tick is the fallback.** The behaviours in
+  `entity/ai/profession` do each trade's job and put real drops in colony storage. A trade's
+  `outputs` are still rolled in `Professions.produce` for every Neran whose trade has **not** done
+  productive work within `WorkAccounting.WINDOW_CYCLES` (2) colony cycles, so a quiet colony keeps
+  producing and a working Neran is never paid twice. The last-work times live in the Neran's
+  session-only `WorkMemory` and are never saved. Goods only ever move: carried goods are taken out
+  of storage exactly, and anything undeliverable goes back to storage.
 - **No Core gate is ever required.** `progression/ColonyGates` *writes* gates for other mods to
   read and never reads one for access. The two soft gates (`established`, `self_sufficient`) honour
   their `requires` (`tryOpen`, or the offline UUID path that checks `GateDefinitions` first); the

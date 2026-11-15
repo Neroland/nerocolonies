@@ -7,7 +7,9 @@
   "block.nerocolonies.outpost_beacon.tooltip": "Place near one of your colonies to found an outpost: a small remote claim whose job stations feed the parent colony",
 
   "block.nerocolonies.colony_depot": "Colony Depot",
-  "block.nerocolonies.colony_depot.tooltip": "A door onto the colony's shared storage - every depot in a claim shows the same goods",
+  "block.nerocolonies.colony_depot.tooltip": "Colony storage: holds 18 slots of the colony's shared goods. Every depot and crate in a claim shows the same goods",
+  "block.nerocolonies.storage_crate": "Storage Crate",
+  "block.nerocolonies.storage_crate.tooltip": "Where the colony keeps its goods: adds 27 slots of colony storage",
 
   "block.nerocolonies.research_station": "Research Station",
   "block.nerocolonies.research_station.tooltip": "Spends colony goods and power to unlock research for the whole colony",
@@ -24,7 +26,8 @@
   "entity.nerocolonies.colonist": "Neran",
 
   "info.nerocolonies.colony_beacon": "Place it to found a colony. It claims the ground around it, two founders arrive at once, and from then on the colony builds its own housing and grows. Feed it from the food supply slots, hand over building materials with Give needed items, and add upgrade modules to widen the claim or speed up work.",
-  "info.nerocolonies.colony_depot": "A window onto the colony's shared storage. Every depot in a claim shows the same goods. Put construction materials here and the colony builds four times faster.",
+  "info.nerocolonies.colony_depot": "A window onto the colony's shared storage, holding 18 slots of it. Every depot and Storage Crate in a claim shows the same goods. A colony needs a depot or crate before it can be given its Starter Works materials. Breaking one moves its goods into the colony's other depots and crates; only what no longer fits drops.",
+  "info.nerocolonies.storage_crate": "Where a colony keeps its goods. Each crate in the claim adds 27 slots of colony storage and opens onto the same shared stock as every depot. Materials you give the colony go into its crates, and you can take them back out; a building whose materials are taken out waits for them again. Breaking a crate moves its goods into the colony's other crates and depots; only what no longer fits drops.",
   "info.nerocolonies.housing": "Housing. The colony counts every housing block inside its claim; each one raises how many Nerans can live there. Higher tiers are unlocked by research and are more comfortable.",
   "info.nerocolonies.job_station": "A job station. Inside a claim it gives the colony a job to work, using colony storage for inputs and outputs. Production stops if morale collapses.",
   "info.nerocolonies.research_station": "Spends colony goods and power to unlock research for the whole colony: better housing, more job slots, cheaper life support.",
@@ -37,15 +40,16 @@
   "item.nerocolonies.efficiency_module": "Efficiency Module",
   "item.nerocolonies.range_module": "Range Module",
   "item.nerocolonies.capacity_module": "Capacity Module",
-  "item.nerocolonies.upgrade.speed.tooltip": "Job stations work faster",
+  "item.nerocolonies.upgrade.speed.tooltip": "Job stations work faster; in the colony beacon, construction is faster",
   "item.nerocolonies.upgrade.efficiency.tooltip": "Life support burns less oxygen",
   "item.nerocolonies.upgrade.range.tooltip": "Widens the colony's claim radius",
-  "item.nerocolonies.upgrade.capacity.tooltip": "Enlarges colony storage",
+  "item.nerocolonies.upgrade.capacity.tooltip": "Enlarges colony storage (needs a Colony Depot or Storage Crate)",
 
   "container.nerocolonies.colony_beacon": "Colony Beacon",
   "container.nerocolonies.outpost_beacon": "Outpost Beacon",
   "container.nerocolonies.oxygen_generator": "Oxygen Generator",
   "container.nerocolonies.colony_depot": "Colony Storage",
+  "container.nerocolonies.storage_crate": "Storage Crate",
   "container.nerocolonies.research_station": "Colony Research",
   "container.nerocolonies.job_station": "Job Station",
   "gui.nerocolonies.menu_open_failed": "This server platform refused to open the colony interface. The interaction was cancelled.",
@@ -80,7 +84,7 @@
 
   "gui.nerocolonies.beacon.unbound": "This beacon is not bound to a colony.",
   "gui.nerocolonies.beacon.supply": "Food supply",
-  "gui.nerocolonies.beacon.supply_hint": "Food only. For building materials, press Give needed items or use a Colony Depot.",
+  "gui.nerocolonies.beacon.supply_hint": "Food only. For building materials, press Give needed items or use a Storage Crate.",
   "gui.nerocolonies.beacon.colonists_hint": "The colony builds its own housing. Stock colony storage with materials to build faster.",
   "gui.nerocolonies.beacon.jobs_hint": "Build a job station inside the claim to start production.",
   "gui.nerocolonies.beacon.work_stopped_hint": "Morale is too low to work. Fix food, housing or life support.",
@@ -101,6 +105,8 @@
 
   "gui.nerocolonies.depot.unclaimed": "Not inside a colony claim",
   "gui.nerocolonies.depot.slots": "Unlocked: %s / %s slots",
+  "gui.nerocolonies.depot.no_storage": "No storage yet: place a Storage Crate",
+  "gui.nerocolonies.depot.page": "%s / %s",
 
   "gui.nerocolonies.research.unclaimed": "This station is not inside a colony claim.",
   "gui.nerocolonies.research.no_content": "No research is installed.",
@@ -264,6 +270,7 @@
   "message.nerocolonies.stage_advanced": "%s has grown: it is now %s.",
 
   "need.nerocolonies.food": "Food",
+  "need.nerocolonies.storage": "A Storage Crate in the claim",
   "need.nerocolonies.unknown": "Supplies",
   "message.nerocolonies.needs.no_colony": "This is not inside a colony claim.",
   "message.nerocolonies.needs.none": "%s needs nothing right now.",
@@ -276,7 +283,8 @@
   "message.nerocolonies.needs.not_needed": "The colony does not need %s right now.",
   "message.nerocolonies.needs.delivered": "The colony took %s items. Thank you.",
   "message.nerocolonies.needs.delivered_full": "The colony took %s items, then its storage was full.",
-  "message.nerocolonies.needs.storage_full": "Colony storage is full. Clear some space, or add a Capacity module to the beacon.",
+  "message.nerocolonies.needs.storage_full": "Colony storage is full. Place another Storage Crate, or add a Capacity module to the beacon.",
+  "message.nerocolonies.needs.no_storage": "The colony has nowhere to keep that yet. Place a Storage Crate inside the claim first.",
   "message.nerocolonies.needs.nothing_to_deliver": "You are carrying nothing the colony needs right now.",
 
   "message.nerocolonies.plan.outside": "Stand inside a colony claim to plan.",
@@ -487,6 +495,7 @@
   "gui.nerocolonies.tab.roles": "Roles",
   "gui.nerocolonies.beacon.loading": "Waiting for the colony's details...",
   "gui.nerocolonies.build.why.awaiting_materials": "Waiting for the Starter Works' materials: see the Needs tab, then press Give needed items.",
+  "gui.nerocolonies.build.why.no_storage": "Place a Storage Crate (or Colony Depot) inside the claim: the Starter Works' materials are kept there.",
   "gui.nerocolonies.list.more": "+%s more",
   "gui.nerocolonies.list.top": "Back to top",
 

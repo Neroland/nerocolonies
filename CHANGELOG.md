@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0-beta.1] - 2026-11-15
+
+Storage and work: a colony keeps its goods in Storage Crates, building materials stay in storage until
+they are used, the colony eats from what it stores, and every Neran trade now does its job in the
+world. Existing worlds load: depots already standing register as storage the first time their area
+loads. **Client and server must both run 0.8.0** (new block, a new storage menu layout and a fourth
+beacon module slot).
+
+### Added
+
+- **Storage Crate.** A new block where a colony keeps its goods. Each crate in the claim adds 27 slots
+  of colony storage and opens onto the same shared stock as every Colony Depot (which now adds 18).
+  Crafted from a chest, two barrels and two iron ingots.
+- **Storage pages.** Colony storage can now grow to 270 slots; the crate and depot screen shows one
+  page of 54 at a time with page buttons.
+- **All four module types fit in the beacon.** The beacon has four module slots (was three), so Speed,
+  Efficiency, Range and Capacity can all be installed at once. Speed modules in the beacon now make
+  construction faster.
+- **Nerans really work.** Every trade now does its job in the world. Farmers lay out and keep a 9 x 9
+  field near their workplace (water in the middle, grass and dirt tilled to farmland), sow it from the
+  colony's wheat, carrot, potato and beetroot seeds, and harvest and replant it. Foresters walk to the
+  nearest tree in the claim, fell all of it, replant a sapling and gather the saplings, sticks and
+  apples it drops. Miners dig a 5 x 5 quarry with a spiral stair down its rim, up to 16 deep, breaking
+  only blocks in the new `nerocolonies:quarryable` tag. Builders work the cell being laid at the
+  building site. Haulers carry food from storage to the beacon's supply slots when rations run short
+  and take stored tools to Nerans that lack them. Cooks cook raw food in storage (and bake bread from
+  wheat). Toolsmiths make missing trade tools from their real cost and hand them over. Researchers
+  refine what the next research is missing (sand to glass, raw ores to ingots, cane to paper, paper and
+  leather to books). Quartermasters walk the stores and merge part stacks to free slots. Every drop goes
+  to colony storage, and every block change follows the colony's land rules.
+
+### Changed
+
+- **A colony needs somewhere to keep its goods.** A colony with no Storage Crate or Colony Depot has
+  no storage: placing one is its first need, "Give needed items" asks for one, and the Starter Works
+  wait for it. Existing colonies without a crate or depot need one placed before they can store
+  anything; their goods stay safe in the colony's store meanwhile.
+- **Materials stay in storage until they are used.** A building no longer takes all its materials at
+  once: it takes each cycle's share as its blocks go up, and the rest stays in the crates where you
+  can take it back out. Taking materials out makes the need show again and pauses the Starter Works
+  (later buildings drop to the slow scrap rate) until they are returned. Builds already under way
+  that had paid up front keep running.
+- **Breaking a crate or depot no longer strands or loses goods.** The goods are packed into the
+  colony's other crates and depots, and only what no longer fits drops where the block stood (all of
+  it, if it was the last one).
+- **The beacon screen opens on the Needs tab**, now the first tab in the rail.
+- **Food in storage feeds the colony.** Food in the colony's Storage Crates and depots now counts
+  towards its food: each cycle the colony tops its rations up from storage to eight cycles' worth,
+  staples first, keeping 16 of each crop its Farmers plant back as seed (the rest stays in the
+  crates). The needs list counts stored food, and "Give needed items" now takes food for the food
+  need and puts it in storage. The export buffer is never eaten from.
+- **Real work replaces the dice roll while a Neran is working.** A trade's `outputs` are still rolled
+  on the colony cycle for any Neran that has not gathered for real in the last two cycles, so a colony
+  nobody is near keeps producing; a Neran that is harvesting, felling, digging or refining is not paid
+  twice. While a Hauler or Toolsmith is at work, tools are carried over by hand instead of being issued
+  on the colony cycle, and a Toolsmith-made tool now costs the tool's real recipe (an iron hoe is two
+  iron ingots and two sticks) rather than one iron ingot.
+
 ## [0.7.1-beta.1] - 2026-11-14
 
 ### Fixed

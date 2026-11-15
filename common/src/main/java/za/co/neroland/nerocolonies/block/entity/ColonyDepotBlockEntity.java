@@ -14,6 +14,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 
@@ -31,6 +32,7 @@ import za.co.neroland.nerocolonies.colony.Colony;
 import za.co.neroland.nerocolonies.colony.ColonyContainer;
 import za.co.neroland.nerocolonies.colony.ColonyState;
 import za.co.neroland.nerocolonies.colony.ColonyStorage;
+import za.co.neroland.nerocolonies.colony.ColonyStorageBlocks;
 import za.co.neroland.nerocolonies.colony.ColonyStores;
 import za.co.neroland.nerocolonies.colony.Outpost;
 import za.co.neroland.nerocolonies.item.ColonyUpgradeItem;
@@ -40,16 +42,18 @@ import za.co.neroland.nerocolonies.registry.NeroColoniesBlockEntities;
 /**
  * A colony depot: a door onto the colony's shared storage.
  *
- * <h2>A depot adds access, not capacity</h2>
+ * <h2>One stock, kept in boxes</h2>
  *
- * <p>Every depot in a claim shows the <b>same goods</b> — there is one stock per colony, in
- * {@link ColonyStores}, and this block entity is a window onto it rather than an inventory of its
- * own. Building a second depot therefore gives you somewhere else to stand, not somewhere else to
- * put things; capacity comes from {@code CAPACITY} modules in the beacon, which is where a
- * colony-wide upgrade belongs.
+ * <p>Every depot (and every Storage Crate, which is this block entity with more room) in a claim
+ * shows the <b>same goods</b> — there is one stock per colony, in {@link ColonyStores}, and this block
+ * entity is a window onto it rather than an inventory of its own. What each box adds is
+ * <em>capacity</em>: a depot holds {@value ColonyStorageBlocks#DEPOT_SLOTS} slots, a crate
+ * {@value ColonyStorageBlocks#CRATE_SLOTS}, recorded in {@link ColonyStorageBlocks}.
  *
- * <p>That also means a depot has nothing to drop when it breaks and nothing to save. Its contents
- * are not its own, and a colony's goods are not hostage to a stray pickaxe.
+ * <p>Breaking one packs the colony's goods into the boxes that remain and drops only what no longer
+ * fits (everything, when it was the last box); see {@code ColonyDepotBlock#playerWillDestroy} and
+ * {@link ColonyStorageBlocks#prune}. A box saves nothing of its own: its binding is derived from the
+ * claim.
  *
  * <h2>Automation</h2>
  *
@@ -99,11 +103,19 @@ public class ColonyDepotBlockEntity extends AbstractMachineBlockEntity
         }
     };
 
-    @SuppressWarnings("this-escape") // idiomatic Minecraft block-entity wiring
     public ColonyDepotBlockEntity(BlockPos pos, BlockState state) {
-        super(NeroColoniesBlockEntities.COLONY_DEPOT.get(), pos, state,
-                0, 0, UPGRADE_SLOTS, ColonyUpgradeItem.CLASSIFIER);
+        this(NeroColoniesBlockEntities.COLONY_DEPOT.get(), pos, state);
+    }
+
+    @SuppressWarnings("this-escape") // idiomatic Minecraft block-entity wiring
+    protected ColonyDepotBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state, 0, 0, UPGRADE_SLOTS, ColonyUpgradeItem.CLASSIFIER);
         installSideConfig(buildSideConfig()).withItems(() -> this);
+    }
+
+    /** Whether this box is a Storage Crate (more room) rather than a depot. */
+    public boolean isCrate() {
+        return false;
     }
 
     /** Items in and out on every face: a depot is a logistics port, and gating it would be a trap. */
@@ -139,7 +151,7 @@ public class ColonyDepotBlockEntity extends AbstractMachineBlockEntity
         return this.data;
     }
 
-    /** How many of the 54 backing slots this colony has unlocked (0 while unbound). */
+    /** How many of the backing slots this colony has unlocked (0 while unbound or with no box). */
     public int usableSlots() {
         ColonyContainer view = view();
         return view == null ? 0 : view.usableSlots();
@@ -164,7 +176,9 @@ public class ColonyDepotBlockEntity extends AbstractMachineBlockEntity
         if (colony == null) {
             return 0;
         }
-        return serverLevel.getBlockEntity(colony.beaconPos()) instanceof ColonyBeaconBlockEntity beacon
+        ServerLevel home = serverLevel.getServer().getLevel(colony.dimension());
+        return home != null && home.isLoaded(colony.beaconPos())
+                && home.getBlockEntity(colony.beaconPos()) instanceof ColonyBeaconBlockEntity beacon
                 ? beacon.capacityModules()
                 : 0;
     }
@@ -182,12 +196,19 @@ public class ColonyDepotBlockEntity extends AbstractMachineBlockEntity
             Colony colony = colonies.colonyAt(serverLevel.dimension(), pos);
             if (colony != null) {
                 this.colonyId = colony.colonyId();
-                return;
+            } else {
+                Outpost outpost = colonies.outpostAt(serverLevel.dimension(), pos);
+                this.colonyId = outpost != null && colonies.colony(outpost.parentColonyId()) != null
+                        ? outpost.parentColonyId()
+                        : null;
             }
-            Outpost outpost = colonies.outpostAt(serverLevel.dimension(), pos);
-            this.colonyId = outpost != null && colonies.colony(outpost.parentColonyId()) != null
-                    ? outpost.parentColonyId()
-                    : null;
+            // Keep the colony's record of where its goods are kept in step with the claim.
+            ColonyStorageBlocks boxes = ColonyStorageBlocks.get(serverLevel.getServer());
+            if (this.colonyId != null) {
+                boxes.register(this.colonyId, serverLevel.dimension(), pos, isCrate());
+            } else {
+                boxes.unregister(serverLevel.dimension(), pos);
+            }
         }
     }
 

@@ -16,12 +16,15 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 
 import za.co.neroland.nerocolonies.NeroColoniesCommon;
+import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
 import za.co.neroland.nerocolonies.content.ItemAmount;
 import za.co.neroland.nerocolonies.content.ItemTarget;
 import za.co.neroland.nerocolonies.content.ProfessionDefinition;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
 import za.co.neroland.nerocolonies.entity.ai.DayCycle;
+import za.co.neroland.nerocolonies.entity.ai.profession.ToolWork;
+import za.co.neroland.nerocolonies.entity.ai.profession.TradeRecipes;
 
 /**
  * Trades: who has which, where they work, what tools they carry, and what they gather.
@@ -35,20 +38,23 @@ import za.co.neroland.nerocolonies.entity.ai.DayCycle;
  * front of the nearest building that opens its trade (a job station may claim it instead; see
  * {@code JobBoard}).
  *
- * <h2>Simulated work</h2>
+ * <h2>Real work, and the colony tick as the fallback</h2>
  *
- * <p>During daylight each tradesperson gathers its trade's {@code outputs} into colony storage with
- * probability {@code output_chance}, scaled by morale, level and whether it has its tool. This runs on
- * the colony tick, so it does not depend on the Neran being loaded near a player or pathing anywhere:
- * the visible work in the world is extra, not the source of the goods. It is also how a colony slowly
- * fills its own needs list. Nothing is ever voided: output that does not fit in storage is simply not
- * produced that cycle.
+ * <p>A working Neran really does its job (see {@code entity/ai/profession/ProfessionBehaviours}):
+ * the Farmer harvests its field, the Forester fells trees, the Miner digs its quarry, the Researcher
+ * refines research materials, and their drops go to colony storage. During daylight the colony tick
+ * still gathers each trade's {@code outputs} with probability {@code output_chance} (scaled by
+ * morale, level and whether it has its tool) for every tradesperson who has <b>not</b> done
+ * productive work within the last {@value WorkAccounting#WINDOW_CYCLES} colony cycles, so a Neran
+ * that is unloaded, idle or out of reach of its work still contributes and a quiet colony keeps
+ * producing, while one that is working is never paid twice (see {@link WorkAccounting}). Nothing is
+ * ever voided: output that does not fit in storage is simply not produced that cycle.
  *
  * <h2>Special trades</h2>
  *
  * <ul>
- *   <li><b>Toolsmith</b> — hands out tools from storage, and makes them from an iron ingot when there
- *       are none.</li>
+ *   <li><b>Toolsmith</b> — makes missing trade tools from their real cost and hands them over. While a
+ *       Hauler or Toolsmith is at work, tools are delivered by hand rather than issued here.</li>
  *   <li><b>Cook</b> — turns stored food items into colony food stock.</li>
  *   <li><b>Medic</b> — lifts morale a little each cycle.</li>
  *   <li><b>Quartermaster</b> — stocks the Gratitude Cache (see {@link GratitudeCache}).</li>
@@ -62,9 +68,8 @@ public final class Professions {
     public static final Identifier MEDIC = id("medic");
     public static final Identifier QUARTERMASTER = id("quartermaster");
     public static final Identifier BEASTKEEPER = id("beastkeeper");
+    public static final Identifier HAULER = id("hauler");
 
-    private static final ItemTarget IRON_INGOT = new ItemTarget(Optional.of(Identifier.withDefaultNamespace("iron_ingot")),
-            Optional.empty(), 1);
     private static final ItemTarget FOOD_ITEM = new ItemTarget(Optional.empty(),
             Optional.of(FoodSupply.FOOD.location()), 1);
 
@@ -184,11 +189,19 @@ public final class Professions {
         Identifier priority = life == null ? null : life.priorityNeed();
         Identifier priorityTag = life == null ? null : life.priorityTag();
 
+        long now = level.getGameTime();
+        long window = WorkAccounting.window(NeroColoniesConfig.colonyTickInterval());
+        boolean smithAtWork = false;
+        boolean carrierAtWork = false;
         List<ColonistEntity> roster = Population.colonistsOf(level, colony);
         for (ColonistEntity neran : roster) {
             if (neran.professionId() != null && !neran.isChildNeran()) {
                 counts.merge(neran.professionId(), 1, Integer::sum);
-                toolsmith |= TOOLSMITH.equals(neran.professionId());
+                boolean smith = TOOLSMITH.equals(neran.professionId());
+                toolsmith |= smith;
+                boolean atWork = WorkAccounting.recent(neran.workMemory().lastAtWork(), now, window);
+                smithAtWork |= smith && atWork;
+                carrierAtWork |= atWork && (smith || HAULER.equals(neran.professionId()));
             }
         }
 
@@ -197,11 +210,16 @@ public final class Professions {
             if (trade == null || neran.isChildNeran()) {
                 continue;
             }
-            provisionTool(server, colony, neran, trade, toolsmith);
+            // A Hauler or Toolsmith at work carries stored tools over by hand, and a Toolsmith at work
+            // makes them at its forge; the colony tick covers only what nobody is doing for real.
+            provisionTool(server, colony, neran, trade, !carrierAtWork, toolsmith && !smithAtWork);
             if (!daylight || Morale.workStopped(colony)) {
                 continue;
             }
             neran.addProfessionXp(1);
+            if (WorkAccounting.recent(neran.workMemory().lastProductive(), now, window)) {
+                continue; // it gathered for real this window; the roll would count its goods twice
+            }
             double chance = trade.outputChance() * morale * (neran.hasTool() ? 1.0D : 0.5D)
                     * (1.0D + LEVEL_BONUS * (neran.professionLevel() - 1));
             if (ColonyNeeds.boosted(trade, priority, priorityTag)) {
@@ -239,17 +257,30 @@ public final class Professions {
         return updated;
     }
 
-    /** Gives a tradesperson its tool from storage, or has the toolsmith make one from an iron ingot. */
+    /** What making a tool costs, as storage targets (see {@code TradeRecipes.toolCost}). */
+    private static List<ItemTarget> toolCost(net.minecraft.world.item.Item tool) {
+        List<ItemTarget> cost = new ArrayList<>();
+        for (TradeRecipes.Part part : ToolWork.costOf(tool)) {
+            cost.add(new ItemTarget(Optional.of(Identifier.withDefaultNamespace(part.item())), Optional.empty(),
+                    part.count()));
+        }
+        return cost;
+    }
+
+    /**
+     * Gives a tradesperson its tool from storage, or has the colony's toolsmith make one from the
+     * tool's cost (all or nothing). The fallback for when no Hauler or Toolsmith is at work.
+     */
     private static void provisionTool(MinecraftServer server, Colony colony, ColonistEntity neran,
-            ProfessionDefinition trade, boolean toolsmith) {
+            ProfessionDefinition trade, boolean fromStorage, boolean toolsmith) {
         if (neran.hasTool() || trade.toolItem() == null) {
             neran.updateHeldTool();
             return;
         }
         Identifier toolId = BuiltInRegistries.ITEM.getKey(trade.toolItem());
         ItemTarget stored = new ItemTarget(Optional.of(toolId), Optional.empty(), 1);
-        boolean got = ColonyStorage.consume(server, colony.colonyId(), List.of(stored))
-                || (toolsmith && ColonyStorage.consume(server, colony.colonyId(), List.of(IRON_INGOT)));
+        boolean got = (fromStorage && ColonyStorage.consume(server, colony.colonyId(), List.of(stored)))
+                || (toolsmith && ColonyStorage.consume(server, colony.colonyId(), toolCost(trade.toolItem())));
         if (got) {
             neran.inventory().addItem(trade.toolStack());
         }

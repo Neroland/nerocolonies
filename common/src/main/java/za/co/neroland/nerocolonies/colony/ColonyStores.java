@@ -76,7 +76,7 @@ public final class ColonyStores extends SavedData {
             SavedDataCompat.type(ID, ColonyStores::new, codec());
 
     /** Backing size of the storage region. The usable part is gated by {@link ColonyStorage}. */
-    public static final int STORAGE_SLOTS = 54;
+    public static final int STORAGE_SLOTS = 270;
 
     /** Backing size of the export region. The usable part is gated by {@link ExportBuffer}. */
     public static final int EXPORT_SLOTS = 54;

@@ -215,6 +215,10 @@ public final class ColonyIntents {
         }
         ColonyNeeds.Delivery delivery = ColonyNeeds.contributeAll(level, colony, player.getInventory(),
                 CARRIED_SLOTS);
+        if (delivery.noStorage()) {
+            player.sendSystemMessage(Component.translatable("message.nerocolonies.needs.no_storage"));
+            return;
+        }
         if (delivery.accepted() > 0) {
             player.containerMenu.broadcastChanges();
             player.sendSystemMessage(Component.translatable(delivery.storageFull()

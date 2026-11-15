@@ -280,7 +280,8 @@ Each colony runs its cycle every `colonyTickIntervalTicks` (default 100), offset
 two hundred colonies never land on the same game tick. In order:
 
 1. **life support** — the colony's physical situation, before anything reacts to it;
-2. **food** — intake from the beacon's supply slots, then the cycle's consumption;
+2. **food** — intake from the beacon's supply slots, then from colony storage up to a buffer, then
+   the cycle's consumption;
 3. **population** — births first, then departures and arrivals, gated on the two above;
 4. **trades** — who holds which trade, and where each works;
 5. **jobs** — job-station production, inside the shared per-tick budget;
@@ -300,17 +301,21 @@ skipped.
 A colony eats from its **food stock**, an abstract count of rations. Each Neran eats
 `foodPerColonistPerCycle` (default 1) rations per cycle. Set it to `0` and colonies are never hungry.
 
-Rations get into the stock in two ways:
+Rations get into the stock in three ways:
 
 - **The beacon's six supply slots** — by hand, by hopper or by pipe. The colony cycle converts each
   food item there into one ration. Staples are drawn down before anything else, so a colony fed from
   a mixed supply line does not eat the rare item first.
+- **Colony storage.** Food kept in the colony's Storage Crates and depots counts. Each cycle the
+  colony tops its stock up from storage to eight cycles of eating, staples first, one ration per
+  item; the rest stays in the crates where you can see it and take it. It keeps 16 of each crop its
+  Farmers plant (carrots, potatoes) back as seed, and never eats from the export buffer. An offline
+  colony eats from storage for the time it was away too.
 - **Cooks.** Each Cook takes one food item from *colony storage* per daytime cycle and turns it into
   three rations.
 
-That second route matters, because **the food a colony's Farmers gather goes into colony storage,
-not into the food stock**. Without a Canteen and a Cook, wheat piling up in storage feeds nobody
-until you move it to the supply slots yourself.
+So what the colony's Farmers bring in feeds it with no help from you, and "Give needed items"
+takes food you carry for the food need and puts it in storage.
 
 What counts as food is decided entirely by two item tags, `nerocolonies:colony_food` and
 `nerocolonies:colony_food/staple`. NeroColonies hard-codes no food item anywhere, so any farming mod

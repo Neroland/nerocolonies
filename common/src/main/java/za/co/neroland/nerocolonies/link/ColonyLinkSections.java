@@ -269,7 +269,7 @@ final class ColonyLinkSections {
                     progress.addProperty("name_key", nameKey(active,
                             Construction.activeBlueprint(server, colony.colonyId())));
                     progress.addProperty("percent", plan.progressPercent());
-                    progress.addProperty("supplied", plan.supplied());
+                    progress.addProperty("supplied", Construction.isSupplied(server, colony.colonyId()));
                     progress.addProperty("upgrade", plan.isUpgrade());
                 }
                 for (ColonyConstruction.Planned waiting : plan.queue()) {

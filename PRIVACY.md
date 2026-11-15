@@ -26,7 +26,11 @@ The role store (`nerocolonies:roles`), where a player can appear two ways:
 - **A colony's Enemy list** — up to 64 UUIDs.
 
 The other three stores hold no player data at all. The colony's goods live in
-`nerocolonies:stores`, which holds **item stacks only**, keyed by colony id.
+`nerocolonies:stores`, which holds **item stacks only**, keyed by colony id. Which Storage Crates
+and Colony Depots hold them is recorded in `nerocolonies:storage_blocks`: dimensions and block
+positions only, keyed by colony id, forgotten with the colony. While a Neran works it remembers its
+field, tree, quarry or delivery in memory only (block positions and game times, nothing about any
+player); none of it is saved, logged or sent.
 
 `nerocolonies:construction` records what each colony has built for itself, the structure it is
 part way through and the buildings its owner or Chiefs have planned: blueprint ids, block

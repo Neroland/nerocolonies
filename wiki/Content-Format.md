@@ -453,7 +453,7 @@ A profession is a Neran trade. The shipped `nerocolonies:farmer`:
 | Field | Type | Default | Range | Meaning |
 | --- | --- | --- | --- | --- |
 | `name` | translation key | derived | — | falls back to `profession.<namespace>.<path with dots>` |
-| `behaviour` | id | — (required) | — | which built-in visible work the Neran does. See below |
+| `behaviour` | id | — (required) | — | which built-in work the Neran does. See below |
 | `tool` | item id | none | — | the tool a Neran of this trade holds. Without it the trade gathers at half rate |
 | `stations` | list of block ids | `[]` | — | job-station blocks a Neran of this trade may staff |
 | `priority` | integer | `100` | 0–10,000 | lower is filled first when trades are handed out |
@@ -461,8 +461,8 @@ A profession is a Neran trade. The shipped `nerocolonies:farmer`:
 | `max_per_colony` | integer | `8` | 0–256 | most places one colony can have |
 | `xp_per_level` | integer | `100` | 1–100,000 | experience step between levels |
 | `max_level` | integer | `5` | 1–10 | highest level |
-| `work_radius` | integer | `10` | 1–32 | how far from the workplace visible work reaches, in blocks |
-| `outputs` | list of item amounts | `[]` | — | what one Neran gathers on a successful roll |
+| `work_radius` | integer | `10` | 1–32 | how far from the workplace the trade's work reaches, in blocks (Foresters, Miners and carriers may walk further, inside the claim) |
+| `outputs` | list of item amounts | `[]` | — | what one Neran gathers on a successful roll; a Neran that gathered for real in the last two colony cycles does not roll |
 | `output_chance` | double | `1.0` | 0–64 | chance of that per daytime colony cycle; above 1 means whole extra batches |
 
 **Numbers and bindings are data; behaviours are code.** `behaviour` names one of the twelve

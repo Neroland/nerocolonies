@@ -29,8 +29,12 @@ import za.co.neroland.nerocolonies.entity.ColonistEntity;
  * three sources, so it cannot drift from the truth.
  *
  * <ol>
+ *   <li><b>Storage</b> — a colony with no Colony Depot or Storage Crate has nowhere to keep what it is
+ *       given, so placing one is its first need, ahead of everything else.</li>
  *   <li><b>Construction</b> — the unpaid materials of the building under way (or, while founding,
- *       of the next Starter Works). Marked {@code STARTER} when only the player can supply them.</li>
+ *       of the next Starter Works), less what the blocks already laid have used. Marked
+ *       {@code STARTER} when only the player can supply them. Materials stay in storage until used,
+ *       so taking them back out puts them back on this list.</li>
  *   <li><b>Food</b> — the shortfall against a few cycles of what the colony eats.</li>
  *   <li><b>Tools</b> — tradespeople without their trade's tool.</li>
  * </ol>
@@ -49,7 +53,7 @@ public final class ColonyNeeds {
 
     /** Why the colony needs something. Lower-case name is the payload value. */
     public enum Reason {
-        STARTER, CONSTRUCTION, FOOD, TOOLS;
+        STORAGE, STARTER, CONSTRUCTION, FOOD, TOOLS;
 
         public String key() {
             return name().toLowerCase(java.util.Locale.ROOT);
@@ -70,6 +74,13 @@ public final class ColonyNeeds {
             return Math.max(0, this.needed - this.have);
         }
     }
+
+    /** The item the storage need shows: the Storage Crate. */
+    private static final Identifier STORAGE_CRATE =
+            Identifier.fromNamespaceAndPath(za.co.neroland.nerocolonies.NeroColoniesCommon.MOD_ID, "storage_crate");
+
+    /** The storage need's name key; the beacon screen keeps it out of "Give needed items". */
+    public static final String STORAGE_NAME_KEY = "need.nerocolonies.storage";
 
     /** Cycles of food the colony likes to keep in hand. */
     private static final int FOOD_BUFFER_CYCLES = 10;
@@ -92,18 +103,29 @@ public final class ColonyNeeds {
         Map<Identifier, Double> rates = gatherRates(level, colony, priority, priorityTag);
         List<Need> needs = new ArrayList<>();
 
+        // 0. Somewhere to keep things.
+        if (!ColonyStorageBlocks.get(server).hasStorage(colony.colonyId())
+                && !ColonyLife.isSandbox(server, colony.colonyId())) {
+            ItemTarget crate = new ItemTarget(Optional.of(STORAGE_CRATE), Optional.empty(), 1);
+            needs.add(new Need(crate, STORAGE_CRATE.toString(), STORAGE_NAME_KEY, 1, 0, Reason.STORAGE, -1,
+                    false));
+        }
+
         // 1. Construction materials.
         Blueprint building = Construction.activeBlueprint(server, colony.colonyId());
         boolean supplied = Construction.isSupplied(server, colony.colonyId());
+        List<ItemTarget> materials = building == null ? List.of()
+                : Construction.remainingMaterials(server, colony.colonyId());
         if (building == null && stage == ColonyStage.FOUNDING) {
             List<Blueprint> missing = ColonyProgress.missingStarterWorks(server, colony);
             building = missing.isEmpty() ? null : missing.get(0);
+            materials = building == null ? List.of() : building.materials();
             supplied = false;
         }
         if (building != null && !supplied) {
             Reason reason = building.starter() && stage == ColonyStage.FOUNDING ? Reason.STARTER
                     : Reason.CONSTRUCTION;
-            for (ItemTarget material : building.materials()) {
+            for (ItemTarget material : materials) {
                 int have = ColonyStorage.count(server, colony.colonyId(), material);
                 if (have < material.count()) {
                     needs.add(need(material, material.count(), have, reason, rates, priority, priorityTag));
@@ -113,10 +135,13 @@ public final class ColonyNeeds {
 
         // 2. Food.
         long demand = FoodSupply.demandPerCycle(colony) * FOOD_BUFFER_CYCLES;
-        if (demand > 0 && colony.foodStock() < demand) {
+        if (demand > 0 && colony.foodStock() + (long) FoodSupply.storedFood(server, colony.colonyId()) < demand) {
             ItemTarget food = new ItemTarget(Optional.empty(), Optional.of(FoodSupply.FOOD.location()), 1);
             needs.add(new Need(food, "#" + FoodSupply.FOOD.location(), "need.nerocolonies.food",
-                    (int) Math.min(Integer.MAX_VALUE, demand), colony.foodStock(), Reason.FOOD, -1,
+                    (int) Math.min(Integer.MAX_VALUE, demand),
+                    (int) Math.min(Integer.MAX_VALUE,
+                            (long) colony.foodStock() + FoodSupply.storedFood(server, colony.colonyId())),
+                    Reason.FOOD, -1,
                     FoodSupply.FOOD.location().equals(priorityTag)));
         }
 
@@ -264,7 +289,7 @@ public final class ColonyNeeds {
         boolean supplied = false;
         if (building != null && plan != null) {
             remaining = Math.max(0, plan.total() - plan.cursor());
-            supplied = plan.supplied();
+            supplied = Construction.isSupplied(server, colony.colonyId());
         } else if (stage == ColonyStage.FOUNDING) {
             List<Blueprint> missing = ColonyProgress.missingStarterWorks(server, colony);
             if (missing.isEmpty()) {
@@ -305,12 +330,12 @@ public final class ColonyNeeds {
      * storage. Returns how many items were accepted (the stack is shrunk by that much).
      */
     public static int contribute(ServerLevel level, Colony colony, ItemStack stack) {
-        if (stack.isEmpty()) {
+        if (stack.isEmpty() || !ColonyStorageBlocks.get(level.getServer()).hasStorage(colony.colonyId())) {
             return 0;
         }
         int wanted = 0;
         for (Need need : derive(level, colony)) {
-            if (need.reason() != Reason.FOOD && need.target().matches(stack)) {
+            if (need.reason() != Reason.STORAGE && need.target().matches(stack)) {
                 wanted += need.missing();
             }
         }
@@ -331,8 +356,13 @@ public final class ColonyNeeds {
      *
      * @param accepted    items taken from the player and put in colony storage
      * @param storageFull whether the hand-over stopped because colony storage had no room left
+     * @param noStorage   whether nothing was taken because the colony has no depot or crate yet
      */
-    public record Delivery(int accepted, boolean storageFull) {
+    public record Delivery(int accepted, boolean storageFull, boolean noStorage) {
+
+        public Delivery(int accepted, boolean storageFull) {
+            this(accepted, storageFull, false);
+        }
     }
 
     /**
@@ -341,17 +371,23 @@ public final class ColonyNeeds {
      * walks up with nine stacks of planks hands over fifty-two and keeps the rest.
      *
      * <p>The list is derived once and each need is ticked off as it is filled, rather than derived
-     * again for every stack. Food is not taken: it is eaten from the beacon's food supply slots, not
-     * from colony storage, and taking it here would put it somewhere the colony cannot eat it from.
+     * again for every stack. Food is taken too: the colony eats from storage as well as from the
+     * beacon's food supply slots.
      */
     public static Delivery contributeAll(ServerLevel level, Colony colony,
             net.minecraft.world.Container inventory, int slots) {
+        if (!ColonyStorageBlocks.get(level.getServer()).hasStorage(colony.colonyId())
+                && !ColonyLife.isSandbox(level.getServer(), colony.colonyId())) {
+            // What is handed over goes into the colony's depots and crates; with none, there is
+            // nowhere to put it.
+            return new Delivery(0, false, true);
+        }
         List<Need> needs = derive(level, colony);
         int[] missing = new int[needs.size()];
         boolean anything = false;
         for (int i = 0; i < missing.length; i++) {
             Need need = needs.get(i);
-            missing[i] = need.reason() == Reason.FOOD ? 0 : need.missing();
+            missing[i] = need.reason() == Reason.STORAGE ? 0 : need.missing();
             anything |= missing[i] > 0;
         }
         if (!anything) {

@@ -202,8 +202,10 @@ public final class ColonyTicker {
         // 1. Life support.
         updated = LifeSupport.tick(level, updated, interval);
 
-        // 2. Food: what arrived, then what was eaten.
+        // 2. Food: what arrived, then what was eaten. The supply slots first, then whatever colony
+        //    storage holds, up to a comfortable buffer.
         updated = FoodSupply.intake(supply, updated);
+        updated = FoodSupply.intakeFromStorage(level.getServer(), updated);
         updated = FoodSupply.consume(updated, 1, 1.0D);
 
         // 3. Births first, once the colony is Growing and has food and a bed to spare: a child gets

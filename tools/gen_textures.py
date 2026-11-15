@@ -25,7 +25,7 @@ its subclasses, so a block and its screen read as the same machine:
     colony cyan     0x4FB3D9  beacon, outpost
     oxygen cyan     0x6FD3E8  oxygen generator
     work green      0x8FD96F  job stations (family LED strip)
-    depot amber     0xD9A64F  colony depot, refinery glyph
+    depot amber     0xD9A64F  colony depot, storage crate, refinery glyph
     research violet 0x9F7FE0  research station, fabricator glyph
     habitat panels  lighter grey-blue plate, tiered brighter per housing tier
 
@@ -326,6 +326,77 @@ def gen_colony_depot() -> Canvas:
     for (bx, by) in ((4, 4), (11, 4), (4, 11), (11, 11)):
         c.set(bx, by, AMBER)
         c.set(bx, by + 1 if by < 8 else by - 1, deep(AMBER))
+    return c
+
+
+CRATE_BRACKET: Colour = _mix(H_MID, H_LIGHT, 0.45)   # storage crate corner iron
+
+
+def gen_storage_crate_side() -> Canvas:
+    """A reinforced supply crate wall: lid with two latches and a stock light, bracketed amber body, stencilled mark."""
+    c = Canvas(SIZE)
+    c.noise_fill(HULL, rng_for("storage_crate_side"))
+    c.bevel(H_MID, H_DARK)
+    body = _mix(HULL[3], AMBER, 0.12)
+    c.rect(1, 1, 14, 3, H_MID)                       # lid band
+    c.rect(1, 1, 14, 1, H_LIGHT)
+    c.rect(1, 3, 14, 3, _mix(H_MID, H_DARK, 0.45))
+    c.rect(0, 4, 15, 4, INK)                         # lid seam
+    c.recess(2, 6, 13, 13, fill=body)                # cargo panel
+    for y in (8, 12):                                # pressed slats
+        c.rect(3, y, 12, y, _mix(body, H_DARK, 0.55))
+    for (bx, by, dx, dy) in ((1, 5, 1, 1), (14, 5, -1, 1), (1, 14, 1, -1), (14, 14, -1, -1)):
+        c.rect(min(bx, bx + 2 * dx), by, max(bx, bx + 2 * dx), by, CRATE_BRACKET)   # corner brackets
+        c.rect(bx, min(by, by + 2 * dy), bx, max(by, by + 2 * dy), CRATE_BRACKET)
+        c.set(bx, by, H_LIGHT)         # bracket bolt
+    for lx in (3, 11):                               # latches straddling the seam
+        c.rect(lx, 2, lx + 1, 5, H_LIGHT)
+        c.rect(lx, 3, lx + 1, 4, AMBER)
+        c.set(lx + 1, 4, deep(AMBER))
+        c.set(lx, 3, glow(AMBER))
+        c.rect(lx, 6, lx + 1, 6, INK)
+    c.rect(7, 2, 8, 2, deep(CYAN))                   # stock status light on the lid
+    c.set(7, 2, glow(CYAN))
+    c.set(8, 2, CYAN)
+    c.rect(5, 9, 10, 11, deep(AMBER))                # stencilled colony mark: a crate glyph
+    c.outline(6, 9, 9, 11, AMBER)
+    c.rect(7, 9, 8, 9, glow(AMBER))
+    c.rect(6, 11, 9, 11, _mix(AMBER, H_DARK, 0.3))
+    return c
+
+
+def gen_storage_crate_top() -> Canvas:
+    """The lid: bracketed plate, cross straps, an amber grab handle in the centre."""
+    c = Canvas(SIZE)
+    c.noise_fill(HULL, rng_for("storage_crate_top"))
+    c.bevel(H_MID, H_DARK)
+    c.recess(2, 2, 13, 13, fill=_mix(HULL[3], AMBER, 0.12))
+    c.rect(7, 3, 8, 12, H_MID)                       # cross straps
+    c.rect(3, 7, 12, 8, H_MID)
+    c.rect(7, 3, 7, 12, H_LIGHT)
+    c.rect(3, 7, 12, 7, H_LIGHT)
+    c.rect(5, 5, 10, 10, H_DARK)                     # handle plate
+    c.rect(6, 6, 9, 9, deep(AMBER))
+    c.rect(6, 7, 9, 8, AMBER)
+    c.rect(7, 7, 8, 7, glow(AMBER))
+    for (bx, by, dx, dy) in ((1, 1, 1, 1), (14, 1, -1, 1), (1, 14, 1, -1), (14, 14, -1, -1)):
+        c.rect(min(bx, bx + 2 * dx), by, max(bx, bx + 2 * dx), by, CRATE_BRACKET)   # corner brackets
+        c.rect(bx, min(by, by + 2 * dy), bx, max(by, by + 2 * dy), CRATE_BRACKET)
+        c.set(bx, by, H_LIGHT)
+    return c
+
+
+def gen_storage_crate_bottom() -> Canvas:
+    """The underside: bare plate on two skid rails, no accent."""
+    c = Canvas(SIZE)
+    c.noise_fill(HULL, rng_for("storage_crate_bottom"))
+    c.bevel(H_DARK, INK)
+    for y in (3, 10):                                # skid rails
+        c.rect(1, y, 14, y + 2, H_DARK)
+        c.rect(1, y, 14, y, H_MID)
+        c.rect(1, y + 2, 14, y + 2, INK)
+        c.set(2, y + 1, H_LIGHT)
+        c.set(13, y + 1, H_LIGHT)
     return c
 
 
@@ -721,6 +792,9 @@ BLOCK_MOTIFS = {
     "outpost_beacon": gen_outpost_beacon,
     "oxygen_generator": gen_oxygen_generator,
     "colony_depot": gen_colony_depot,
+    "storage_crate_side": gen_storage_crate_side,
+    "storage_crate_top": gen_storage_crate_top,
+    "storage_crate_bottom": gen_storage_crate_bottom,
     "research_station": gen_research_station,
     "farm_station": gen_farm_station,
     "hydroponics_station": gen_hydroponics_station,

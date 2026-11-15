@@ -26,6 +26,7 @@ public final class RecipeViewerInfo {
         return List.of(
                 new Page(NeroColoniesItems.COLONY_BEACON::get, "info.nerocolonies.colony_beacon"),
                 new Page(NeroColoniesItems.COLONY_DEPOT::get, "info.nerocolonies.colony_depot"),
+                new Page(NeroColoniesItems.STORAGE_CRATE::get, "info.nerocolonies.storage_crate"),
                 new Page(NeroColoniesItems.HABITAT_POD::get, "info.nerocolonies.housing"),
                 new Page(NeroColoniesItems.HABITAT_MODULE::get, "info.nerocolonies.housing"),
                 new Page(NeroColoniesItems.HABITAT_BLOCK::get, "info.nerocolonies.housing"),

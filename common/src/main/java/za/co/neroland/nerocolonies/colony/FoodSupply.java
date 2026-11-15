@@ -35,7 +35,10 @@ import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
  * <h2>The store</h2>
  *
  * <p>{@code Colony.foodStock} is an abstract ration count, not an inventory: food items placed in
- * the beacon's supply slots are converted into it and the item is consumed. That keeps the hot path
+ * the beacon's supply slots are converted into it and the item is consumed. Food kept in colony
+ * storage (its Storage Crates and depots) counts too: each cycle the ration store is topped up from
+ * storage to {@value #COMFORTABLE_BUFFER_CYCLES} cycles' worth ({@link #intakeFromStorage}), staples
+ * first, so the rest stays in the crates where players can see and take it. That keeps the hot path
  * (every colony, every cycle) to integer arithmetic rather than an inventory walk, and it means a
  * colony's food reserve survives its beacon's chunk unloading without keeping an inventory loaded.
  */
@@ -89,6 +92,97 @@ public final class FoodSupply {
         gained += drawFrom(supply, true, MAX_FOOD_STOCK - stock - gained);
         gained += drawFrom(supply, false, MAX_FOOD_STOCK - stock - gained);
         return gained <= 0 ? colony : colony.withFoodStock(Math.min(MAX_FOOD_STOCK, stock + gained));
+    }
+
+    /**
+     * Seed a colony keeps back from the table: a crop item that is also what its Farmers plant
+     * (carrots, potatoes) is only eaten down to this many.
+     */
+    public static final int SEED_RESERVE = 16;
+
+    /**
+     * Tops the ration store up from colony storage to {@value #COMFORTABLE_BUFFER_CYCLES} cycles of
+     * demand, staples first, keeping {@value #SEED_RESERVE} of each plantable crop back. Food above
+     * that buffer stays in storage. The export buffer is never touched.
+     *
+     * @return the colony record with its food stock raised (possibly the same instance)
+     */
+    public static Colony intakeFromStorage(net.minecraft.server.MinecraftServer server, Colony colony) {
+        return intakeFromStorage(server, colony, 0);
+    }
+
+    /**
+     * {@link #intakeFromStorage(net.minecraft.server.MinecraftServer, Colony)} with room for
+     * {@code extraCycles} more cycles of eating on top of the buffer — the offline catch-up, which
+     * charges a whole absence at once.
+     */
+    public static Colony intakeFromStorage(net.minecraft.server.MinecraftServer server, Colony colony,
+            int extraCycles) {
+        long target = demandPerCycle(colony) * ((long) COMFORTABLE_BUFFER_CYCLES + Math.max(0, extraCycles));
+        int stock = colony.foodStock();
+        int room = (int) Math.min(MAX_FOOD_STOCK - (long) stock, target - stock);
+        if (room <= 0) {
+            return colony;
+        }
+        ColonyStores stores = ColonyStores.get(server);
+        ColonyStores.Store store = stores.peek(colony.colonyId());
+        if (store == null) {
+            return colony;
+        }
+        net.minecraft.core.NonNullList<ItemStack> items = store.storage();
+        java.util.Map<Item, Integer> spare = new java.util.HashMap<>();
+        for (ItemStack stack : items) {
+            if (isFood(stack)) {
+                spare.merge(stack.getItem(), stack.getCount(), Integer::sum);
+            }
+        }
+        spare.replaceAll((item, count) -> plantable(item) ? Math.max(0, count - SEED_RESERVE) : count);
+        int gained = 0;
+        for (boolean staplesOnly : new boolean[] {true, false}) {
+            for (int slot = 0; slot < items.size() && gained < room; slot++) {
+                ItemStack stack = items.get(slot);
+                if (!isFood(stack) || staplesOnly != isStaple(stack)) {
+                    continue;
+                }
+                int take = Math.min(Math.min(stack.getCount(), spare.getOrDefault(stack.getItem(), 0)),
+                        (room - gained) / RATIONS_PER_ITEM);
+                if (take <= 0) {
+                    continue;
+                }
+                spare.merge(stack.getItem(), -take, Integer::sum);
+                stack.shrink(take);
+                if (stack.isEmpty()) {
+                    items.set(slot, ItemStack.EMPTY);
+                }
+                gained += take * RATIONS_PER_ITEM;
+            }
+        }
+        if (gained <= 0) {
+            return colony;
+        }
+        stores.touch();
+        return colony.withFoodStock(Math.min(MAX_FOOD_STOCK, stock + gained));
+    }
+
+    /** How many food items colony storage holds (the needs list counts them as food in hand). */
+    public static int storedFood(net.minecraft.server.MinecraftServer server, java.util.UUID colonyId) {
+        ColonyStores.Store store = ColonyStores.get(server).peek(colonyId);
+        if (store == null) {
+            return 0;
+        }
+        int total = 0;
+        for (ItemStack stack : store.storage()) {
+            if (isFood(stack)) {
+                total += stack.getCount();
+            }
+        }
+        return total;
+    }
+
+    /** Whether an item is a crop Farmers plant (a block item whose block is a crop). */
+    private static boolean plantable(Item item) {
+        return item instanceof net.minecraft.world.item.BlockItem block
+                && block.getBlock() instanceof net.minecraft.world.level.block.CropBlock;
     }
 
     private static int drawFrom(Container supply, boolean staplesOnly, int room) {

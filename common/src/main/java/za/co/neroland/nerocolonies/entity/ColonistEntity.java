@@ -129,6 +129,10 @@ public class ColonistEntity extends PathfinderMob {
     private int dayCycleCountdown;
     private int growthCountdown;
 
+    /** Session-only work state: field, quarry, tree, load, last productive time. Never saved. */
+    private final za.co.neroland.nerocolonies.entity.ai.profession.WorkMemory workMemory =
+            new za.co.neroland.nerocolonies.entity.ai.profession.WorkMemory();
+
     @Nullable
     private Colony cachedColony;
     private long colonyCachedAt = Long.MIN_VALUE;
@@ -346,6 +350,11 @@ public class ColonistEntity extends PathfinderMob {
             }
         }
         this.setItemSlot(EquipmentSlot.MAINHAND, tool);
+    }
+
+    /** This Neran's session-only work memory (see {@code WorkMemory}); never saved. */
+    public za.co.neroland.nerocolonies.entity.ai.profession.WorkMemory workMemory() {
+        return this.workMemory;
     }
 
     /** Whether the Neran carries its trade's tool (or the trade needs none). */

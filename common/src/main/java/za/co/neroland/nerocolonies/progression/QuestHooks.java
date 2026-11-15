@@ -140,7 +140,8 @@ public final class QuestHooks {
     /** The fixed crate: building basics and a few meals, the things a young colony's needs list asks for. */
     private static void supplyDrop(MinecraftServer server, Colony colony) {
         ServerLevel level = server.getLevel(colony.dimension());
-        int slots = level != null ? ColonyStorage.usableSlots(level, colony) : ColonyStorage.usableSlots(0);
+        int slots = level != null ? ColonyStorage.usableSlots(level, colony)
+                : ColonyStorage.usableSlots(server, colony.colonyId(), 0);
         List<ItemStack> crate = List.of(
                 new ItemStack(Items.COBBLESTONE, 32),
                 new ItemStack(Items.OAK_PLANKS, 32),

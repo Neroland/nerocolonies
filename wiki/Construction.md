@@ -61,23 +61,31 @@ into existence reads as a command block.
 
 ### Supplied and unsupplied
 
-At the start of every cycle, a build that has not yet been paid for looks for its blueprint's
-**materials in colony storage**. If the whole list is there it is taken, once, and the build runs at
-full rate. If it is not, the Nerans fabricate from scrap instead: the same structure, free, at
+Every cycle, a build looks for **what it still needs in colony storage**: each material of its
+blueprint, less the share the blocks already laid have used. If all of it is there the build is
+*supplied* and runs at full rate, and each cycle takes from storage only the share of each material
+that cycle's blocks used. The rest stays in storage, where you can see it and take it back out. If it
+is not all there, the Nerans fabricate from scrap instead: the same structure, free, at
 `constructionUnsuppliedFactor` of the rate.
+
+Taking materials back out of storage part way through makes the build short again: the needs list
+asks for them again and the build drops to the scrap rate, or pauses if it is a Starter Work.
+(Builds started before 0.8 paid for all their materials up front and keep running at full rate.)
 
 From the Settled stage on, nothing is ever *blocked* on materials. A colony left entirely alone still
 grows, just slowly — a colony that stops dead waiting for iron is a colony you have to babysit.
 
 **The Starter Works are the exception.** While a colony is Founding, its four Starter Works are not
-fabricated from scrap: they wait for your materials. See
-[Progression](Progression.md#the-starter-works).
+fabricated from scrap: they wait for your materials, and before that for a **Storage Crate** (or
+Colony Depot) in the claim to keep them in. See [Progression](Progression.md#the-starter-works).
+`SPEED` modules in the beacon make every build faster.
 
 The check runs every cycle, not only when the build starts, so **putting materials into colony
 storage part way through speeds up the build already under way**.
 
-> Materials go into **colony storage**, which you reach through a Colony Depot inside the claim,
-> through a Needs Board, or through any pipe or hopper inserting into the beacon. They do **not** go
+> Materials go into **colony storage**, which you reach through a Storage Crate or Colony Depot
+> inside the claim, through a Needs Board, or through any pipe or hopper inserting into the beacon.
+> See [Colony storage](#colony-storage). They do **not** go
 > in the beacon's six supply slots — those are the food intake and refuse anything that is not food.
 
 A blueprint with no materials list always builds at full speed.
@@ -90,7 +98,9 @@ Construction pauses (never cancels, never demolishes) when:
 - morale has fallen below `moraleWorkStopThreshold` and work has stopped;
 - life support is `FAILED`;
 - `constructionRequiresColonist` is set (the default) and the colony's roster is empty;
-- the colony is Founding and the current Starter Work has not been supplied;
+- the colony is Founding and has no Storage Crate or Colony Depot in its claim;
+- the colony is Founding and the current Starter Work is not supplied (including when its
+  materials were taken back out of storage);
 - for the colony's own picks only: it has reached its structure cap, or nothing is eligible, or no
   site fits.
 
@@ -134,7 +144,7 @@ time anyone looks, from three things.
 | Source | What appears |
 | --- | --- |
 | **Construction** | The unpaid materials of the building under way — or, while Founding with nothing started, of the next Starter Work |
-| **Food** | The shortfall when the food stock is below ten cycles of what the colony eats |
+| **Food** | The shortfall when the food stock plus the food in colony storage is below ten cycles of what the colony eats |
 | **Tools** | One line per kind of tool that tradespeople are missing and colony storage cannot cover |
 
 A need you have prioritised comes first; after that, Starter Works materials, other construction
@@ -166,26 +176,51 @@ count Builders on site, so a staffed site finishes sooner than it says.
 The Needs Board is crafted from three paper, four wooden slabs and an iron ingot. The colony also
 builds one for itself in its Needs Board Pavilion.
 
+### Colony storage
+
+A colony keeps its goods in **Storage Crates** and **Colony Depots** inside its claim (or an
+outpost's). Every crate and depot opens onto the same shared stock, so it does not matter which one
+you use; what each adds is room:
+
+| Block | Storage it adds |
+|---|---|
+| Storage Crate | 27 slots |
+| Colony Depot | 18 slots |
+| `CAPACITY` module in the beacon | 9 slots (only while the colony has a crate or depot) |
+
+Storage tops out at 270 slots. Its screen shows one page of 54 slots at a time, with page buttons
+when there is more. A colony with no crate or depot has **no storage**: its first need is a crate,
+it cannot be handed materials, and its Starter Works wait. Colonies that grow on their own build
+depots into some of their buildings (the Depot Shed and Hauler's Depot), which count too.
+
+Breaking a crate or depot moves the goods into the colony's other crates and depots; only what no
+longer fits drops where the broken block stood. Breaking the last one drops everything. Removing a
+`CAPACITY` module drops nothing: goods past the new limit stay where they are and can still be taken
+out.
+
+The Storage Crate is crafted from a chest, two barrels and two iron ingots.
+
 ### Contributing
 
 Every need is paid from **colony storage**, and there are three ways to put something there. Any
-member of the colony may use them.
+member of the colony may use them. All three need a Storage Crate or Colony Depot in the claim.
 
 - **At the beacon: the `Give needed items` button.** It sits above your inventory on every tab of the
   beacon's screen. Carry the items to the beacon, open it and press the button: the colony takes
   everything in your hotbar and inventory that the needs list wants, and no more of each thing than it
   is short of. The button lights up only when you are carrying something on the list, and on the
-  Needs tab each need you can pay towards gets a green pip. A new colony has no depot yet, so this
-  is how the Starter Works get their materials.
+  Needs tab (the tab the beacon opens on) each need you can pay towards gets a green pip. What you
+  give goes into the colony's crates, where you can take it back out if you need it.
 - **A Needs Board.** Use it while holding something on the list. The colony takes as much of the
   stack as it still needs and thanks you; if it does not need the item it says so and takes nothing.
-- **A Colony Depot.** Open it and put the items in. A depot is a door onto colony storage itself, so
-  it takes anything, needed or not. Hoppers and pipes into a depot or the beacon work too.
+- **A Storage Crate or Colony Depot.** Open it and put the items in. It is a door onto colony
+  storage itself, so it takes anything, needed or not. Hoppers and pipes into a crate, a depot or the
+  beacon work too.
 
 Neither the button nor the board stores anything itself, and neither takes more than is wanted.
-Food is the one need they do not take: food goes in the beacon's food supply slots. If colony
-storage is full the colony takes what fits and says so; a `CAPACITY` module in the beacon makes it
-bigger.
+Food they take goes into colony storage, which the colony eats from. If colony
+storage is full the colony takes what fits and says so; another Storage Crate, or a `CAPACITY`
+module in the beacon, makes it bigger.
 
 ### Prioritising a need
 

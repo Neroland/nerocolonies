@@ -18,6 +18,10 @@
       "required": false
     },
     {
+      "id": "nerocolonies:storage_crate",
+      "required": false
+    },
+    {
       "id": "nerocolonies:research_station",
       "required": false
     },

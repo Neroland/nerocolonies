@@ -57,6 +57,12 @@ public final class NeroColoniesBlockEntities {
                     key -> BlockEntityTypeCompat.create(ColonyDepotBlockEntity::new,
                             NeroColoniesBlocks.COLONY_DEPOT.get()));
 
+    public static final RegistryEntry<BlockEntityType<za.co.neroland.nerocolonies.block.entity.StorageCrateBlockEntity>> STORAGE_CRATE =
+            BLOCK_ENTITIES.register("storage_crate",
+                    key -> BlockEntityTypeCompat.create(
+                            za.co.neroland.nerocolonies.block.entity.StorageCrateBlockEntity::new,
+                            NeroColoniesBlocks.STORAGE_CRATE.get()));
+
     public static final RegistryEntry<BlockEntityType<ResearchStationBlockEntity>> RESEARCH_STATION =
             BLOCK_ENTITIES.register("research_station",
                     key -> BlockEntityTypeCompat.create(ResearchStationBlockEntity::new,
@@ -81,7 +87,7 @@ public final class NeroColoniesBlockEntities {
     /** Every machine block-entity type that should carry the shared energy/item capabilities. */
     public static List<BlockEntityType<? extends AbstractMachineBlockEntity>> machineTypes() {
         return List.of(COLONY_BEACON.get(), OUTPOST_BEACON.get(), OXYGEN_GENERATOR.get(),
-                COLONY_DEPOT.get(), RESEARCH_STATION.get(), JOB_STATION.get());
+                COLONY_DEPOT.get(), STORAGE_CRATE.get(), RESEARCH_STATION.get(), JOB_STATION.get());
     }
 
     /** Every machine that holds gas, for the loader gas-capability registrations. */

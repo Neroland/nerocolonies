@@ -143,8 +143,9 @@ class ColonyNeedsTest {
     @Test
     @DisplayName("Reasons are declared in urgency order and keyed by lower-case name")
     void reasonOrderAndKeys() {
-        assertArrayEquals(new Reason[] {Reason.STARTER, Reason.CONSTRUCTION, Reason.FOOD, Reason.TOOLS},
-                Reason.values());
+        assertArrayEquals(new Reason[] {Reason.STORAGE, Reason.STARTER, Reason.CONSTRUCTION, Reason.FOOD,
+                Reason.TOOLS}, Reason.values());
+        assertEquals("storage", Reason.STORAGE.key());
         assertEquals("starter", Reason.STARTER.key());
         assertEquals("construction", Reason.CONSTRUCTION.key());
         assertEquals("food", Reason.FOOD.key());

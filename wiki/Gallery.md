@@ -56,7 +56,7 @@ label: its name, its stage, category and level, and the trades it opens.
   **Chief's Planning Table**, each labelled;
 - **a stall for every trade** (up to 24), with one Neran of that trade holding its tool at a small
   work area: ripe wheat for the Farmer, trunks for the Forester, a wounded patient for the Medic, a
-  wounded guardian wolf for the Beastkeeper, a half-built site for the Builder and the Hauler;
+  wounded guardian wolf for the Beastkeeper, a half-built site for the Builder;
 - **the door house**: a Neran whose home is inside and whose workplace is outside, so it uses the
   door at dawn and dusk;
 - **the maze**: a workplace sealed behind glass at the end of a maze. The Neran walks the maze, fails

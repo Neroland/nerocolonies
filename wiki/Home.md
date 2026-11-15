@@ -17,8 +17,8 @@ slowly, from scrap; bring the materials and the same structure goes up four time
 do want a say, the Colony Planner lets you put a building exactly where you want it.
 
 **Nerans have a day.** They work a trade, eat at midday, gather in the evening and sleep at home.
-Farmers harvest, Foresters fell and replant, Guards patrol, and the colony's share of each trade's
-goods arrives whether or not anyone is watching.
+Farmers keep fields, Foresters fell and replant trees, Miners dig quarries, Guards patrol, and a
+colony nobody is watching still gets its share of each trade's goods.
 
 **A colony has roles.** Its owner can promote Chiefs, admit Allies and mark Enemies. Guards and
 guardian animals fight hostile mobs and, if the server allows it, marked Enemies — and nobody else.

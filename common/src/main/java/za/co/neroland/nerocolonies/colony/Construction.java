@@ -27,6 +27,7 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
 import za.co.neroland.nerocolonies.config.NeroColoniesConfig;
 import za.co.neroland.nerocolonies.content.Blueprint;
 import za.co.neroland.nerocolonies.content.ColonyDefinitions;
+import za.co.neroland.nerocolonies.content.ItemTarget;
 import za.co.neroland.nerocolonies.entity.ColonistEntity;
 
 /**
@@ -48,10 +49,20 @@ import za.co.neroland.nerocolonies.entity.ColonistEntity;
  * <p>A blueprint needs the colony to have reached its {@code stage}. While a colony is
  * {@link ColonyStage#FOUNDING} only the Starter Works are eligible, and they build <b>only from
  * materials the player supplies</b>: nothing is fabricated from scrap, so the first four buildings
- * are the player's contribution. From {@link ColonyStage#SETTLED} on, everything builds slowly from
- * scrap ({@code constructionUnsuppliedFactor}) or at full speed when its materials are in colony
- * storage, and the whole rate scales with colony size (see {@link Growth}) and with professional
- * Builders on site.
+ * are the player's contribution, and they wait for a Colony Depot or Storage Crate to keep those
+ * materials in. From {@link ColonyStage#SETTLED} on, everything builds slowly from scrap
+ * ({@code constructionUnsuppliedFactor}) or at full speed when its materials are in colony storage,
+ * and the whole rate scales with colony size (see {@link Growth}), with professional Builders on
+ * site and with {@code SPEED} modules in the beacon.
+ *
+ * <h2>Materials stay in storage until they are used</h2>
+ *
+ * <p>A building's materials are not taken all at once. They stay in colony storage, where players can
+ * see and take them, and each cycle takes only the share the blocks laid that cycle used
+ * ({@link #remainingMaterials}). A building is <em>supplied</em> while storage holds everything it
+ * still needs; take some out and it is short again, the needs list asks for it again, and the
+ * Starter Works pause (later buildings fall back to the slow scrap rate). Builds started before this
+ * rule paid up front and keep their {@code supplied} flag.
  *
  * <h2>Where it may build</h2>
  *
@@ -132,6 +143,14 @@ public final class Construction {
 
     /** Speed added per Builder on site, and the most Builders that count. */
     private static final double BUILDER_BONUS = 0.5D;
+
+    /**
+     * When a Neran last laid a block of each colony's build by hand, in game time. Session-only:
+     * while it is recent the construction cycle banks credit and leaves the laying to the Nerans on
+     * site ({@link #placeByHand}); with nobody there (an unloaded site, a quiet colony) the cycle
+     * lays the blocks itself, as before.
+     */
+    private static final java.util.Map<UUID, Long> HAND_WORK = new java.util.concurrent.ConcurrentHashMap<>();
     private static final int MAX_COUNTED_BUILDERS = 4;
 
     /** Flood-fill bound for the entrance check. */
@@ -169,7 +188,7 @@ public final class Construction {
     /** What the construction loop is doing, as the beacon shows it. Ordinal is synced: append only. */
     public enum IdleReason {
         BUILDING, DISABLED, WORK_STOPPED, LIFE_SUPPORT, NO_COLONISTS, CAP_REACHED, NOTHING_NEEDED,
-        NO_SITE, AWAITING_MATERIALS
+        NO_SITE, AWAITING_MATERIALS, NO_STORAGE
     }
 
     /** Snapshot of one colony's build progress, read once per beacon tick. */
@@ -184,7 +203,7 @@ public final class Construction {
             return Readout.NONE;
         }
         return new Readout(plan.progressPercent(), plan.totalBuilt(),
-                plan.active() != null && plan.supplied());
+                plan.active() != null && suppliedNow(server, colonyId, plan));
     }
 
     // --- the cycle ----------------------------------------------------------
@@ -234,6 +253,10 @@ public final class Construction {
         }
 
         state.hadSite = true;
+        if (plan.cursor() >= plan.total()) {
+            // Laid to the last block by hand since the last cycle.
+            return finish(level, colony, blueprint, plan, index, state);
+        }
         BlockPos spot = accessSpot(level, colony, plan.origin(), blueprint, plan.rotation());
         assignBuilder(level, colony, spot);
 
@@ -242,21 +265,30 @@ public final class Construction {
             state.status = IdleReason.BUILDING;
             return null;
         }
-        if (!plan.supplied() && payMaterials(server, colony.colonyId(), blueprint)) {
-            plan.markSupplied();
-            index.touch();
-        }
         boolean scrapAllowed = !(blueprint.starter() && stage == ColonyStage.FOUNDING);
-        if (!plan.supplied() && !scrapAllowed) {
-            // Starter Works while founding: the player's materials or nothing. The needs list says so.
+        if (!scrapAllowed && !ColonyStorageBlocks.get(server).hasStorage(colony.colonyId())
+                && !ColonyLife.isSandbox(server, colony.colonyId())) {
+            // The Starter Works are built from what the player hands over, and that has to be kept
+            // somewhere: a Colony Depot or Storage Crate in the claim. The needs list says so.
+            state.status = IdleReason.NO_STORAGE;
+            return null;
+        }
+        // Prepaid (a build started before materials were drawn as they are used) or stocked now.
+        boolean prepaid = plan.supplied();
+        boolean stocked = prepaid || ColonyStorage.hasAll(server, colony.colonyId(),
+                remainingMaterials(blueprint, plan.cursor(), plan.total()));
+        if (!stocked && !scrapAllowed) {
+            // Starter Works while founding: the player's materials or nothing. Materials taken back
+            // out of storage pause the build here until they are returned.
             state.status = IdleReason.AWAITING_MATERIALS;
             return null;
         }
         state.status = IdleReason.BUILDING;
 
         double rate = base * Growth.buildMultiplierFor(colony.population(), plan.totalBuilt())
-                * (1.0D + BUILDER_BONUS * buildersOnSite(level, colony, spot));
-        double factor = plan.supplied() ? 1.0D : NeroColoniesConfig.CONSTRUCTION_UNSUPPLIED_FACTOR.get();
+                * (1.0D + BUILDER_BONUS * buildersOnSite(level, colony, spot))
+                * beaconSpeed(level, colony);
+        double factor = stocked ? 1.0D : NeroColoniesConfig.CONSTRUCTION_UNSUPPLIED_FACTOR.get();
         plan.addCredit(rate * factor, rate * CATCH_UP_CREDIT_CYCLES);
 
         int placeable = (int) Math.floor(plan.credit());
@@ -265,28 +297,100 @@ public final class Construction {
             return null;
         }
 
+        int cursorBefore = plan.cursor();
         int used = clearSite(level, colony, blueprint, plan, state, placeable);
-        int placed = place(level, colony, blueprint, plan, order, placeable - used);
+        // Nerans on site lay the blocks themselves; the cycle only lays them when nobody is there.
+        int placed = handRecent(level, colony.colonyId()) ? 0
+                : place(level, colony, blueprint, plan, order, placeable - used);
         plan.spendCredit(used + placed);
+        if (stocked && !prepaid && plan.cursor() > cursorBefore) {
+            // Take the share of the materials the blocks just laid used, and no more.
+            ColonyStorage.consume(server, colony.colonyId(),
+                    materialsUsed(blueprint, cursorBefore, plan.cursor(), plan.total()));
+        }
         index.touch();
 
         if (plan.cursor() >= plan.total()) {
-            Identifier completed = plan.active();
-            BlockPos origin = plan.origin();
-            Rotation rotation = plan.rotation();
-            plan.complete(blueprint.level());
-            index.touch();
-            state.clearCursor = 0;
-            releaseBuilders(level, colony, state);
-            if (origin != null) {
-                ensureEntrance(level, colony, blueprint, origin, rotation);
-            }
-            NeroColoniesCommon.LOGGER.debug(
-                    "[NeroColonies] A colony finished building {} ({} structure(s) total).",
-                    completed, plan.totalBuilt());
-            return completed;
+            return finish(level, colony, blueprint, plan, index, state);
         }
         return null;
+    }
+
+    private static Identifier finish(ServerLevel level, Colony colony, Blueprint blueprint,
+            ColonyConstruction.Plan plan, ColonyConstruction index, State state) {
+        Identifier completed = plan.active();
+        BlockPos origin = plan.origin();
+        Rotation rotation = plan.rotation();
+        plan.complete(blueprint.level());
+        index.touch();
+        state.clearCursor = 0;
+        releaseBuilders(level, colony, state);
+        if (origin != null) {
+            ensureEntrance(level, colony, blueprint, origin, rotation);
+        }
+        NeroColoniesCommon.LOGGER.debug(
+                "[NeroColonies] A colony finished building {} ({} structure(s) total).",
+                completed, plan.totalBuilt());
+        return completed;
+    }
+
+    /** Whether a Neran has worked this colony's site by hand within the last two colony cycles. */
+    private static boolean handRecent(ServerLevel level, UUID colonyId) {
+        Long last = HAND_WORK.get(colonyId);
+        return last != null
+                && level.getGameTime() - last <= 2L * Math.max(20, NeroColoniesConfig.colonyTickInterval());
+    }
+
+    /**
+     * A Neran at the site lays the next block of the build by hand: one block, paid for from the
+     * build's banked credit (the same rate the cycle uses), its share of the materials taken from
+     * storage, under the same rules as the cycle (the Starter Works need a box and their materials).
+     * Calling this marks the site as worked by hand even when nothing can be laid yet, so the cycle
+     * leaves the laying to the Nerans.
+     *
+     * @return whether a block was laid
+     */
+    public static boolean placeByHand(ServerLevel level, Colony colony) {
+        MinecraftServer server = level.getServer();
+        if (server == null || !NeroColoniesConfig.CONSTRUCTION_ENABLED.get() || workBlocker(colony) != null
+                || !level.dimension().equals(colony.dimension())) {
+            return false;
+        }
+        ColonyConstruction index = ColonyConstruction.get(server);
+        ColonyConstruction.Plan plan = index.peek(colony.colonyId());
+        if (plan == null || plan.active() == null || plan.origin() == null) {
+            return false;
+        }
+        Blueprint blueprint = activeBlueprint(server, plan);
+        if (blueprint == null) {
+            return false;
+        }
+        HAND_WORK.put(colony.colonyId(), level.getGameTime());
+        List<BlockPos> order = blueprint.buildOrder();
+        if (order.size() != plan.total() || plan.cursor() >= plan.total() || plan.credit() < 1.0D) {
+            return false;
+        }
+        boolean scrapAllowed = !(blueprint.starter()
+                && ColonyProgress.stage(server, colony) == ColonyStage.FOUNDING);
+        boolean prepaid = plan.supplied();
+        boolean stocked = prepaid || ColonyStorage.hasAll(server, colony.colonyId(),
+                remainingMaterials(blueprint, plan.cursor(), plan.total()));
+        if (!scrapAllowed && (!stocked || (!ColonyStorageBlocks.get(server).hasStorage(colony.colonyId())
+                && !ColonyLife.isSandbox(server, colony.colonyId())))) {
+            return false;
+        }
+        int before = plan.cursor();
+        int placed = place(level, colony, blueprint, plan, order, 1);
+        if (placed <= 0) {
+            return false;
+        }
+        plan.spendCredit(placed);
+        if (stocked && !prepaid && plan.cursor() > before) {
+            ColonyStorage.consume(server, colony.colonyId(),
+                    materialsUsed(blueprint, before, plan.cursor(), plan.total()));
+        }
+        index.touch();
+        return true;
     }
 
     /** Advances credit for an offline colony. <b>Places nothing.</b> */
@@ -305,10 +409,12 @@ public final class Construction {
         }
         Blueprint blueprint = activeBlueprint(server, plan);
         boolean founding = ColonyProgress.stage(server, colony) == ColonyStage.FOUNDING;
-        if (!plan.supplied() && blueprint != null && blueprint.starter() && founding) {
+        if (blueprint != null && blueprint.starter() && founding
+                && !suppliedNow(server, colony.colonyId(), plan)) {
             return; // no scrap fabrication for the Starter Works, offline or not
         }
-        double factor = plan.supplied() ? 1.0D : NeroColoniesConfig.CONSTRUCTION_UNSUPPLIED_FACTOR.get();
+        boolean stocked = blueprint != null && suppliedNow(server, colony.colonyId(), plan);
+        double factor = stocked ? 1.0D : NeroColoniesConfig.CONSTRUCTION_UNSUPPLIED_FACTOR.get();
         plan.addCredit((double) cycles * budget * factor * yield, budget * (double) CATCH_UP_CREDIT_CYCLES);
         index.touch();
     }
@@ -333,9 +439,91 @@ public final class Construction {
         return ColonyDefinitions.blueprint(plan.active()).map(Blueprint::nameKey).orElse("");
     }
 
+    /**
+     * Whether the building under way has everything it still needs: prepaid, or every remaining
+     * material is in colony storage right now.
+     */
     public static boolean isSupplied(@Nullable MinecraftServer server, @Nullable UUID colonyId) {
         ColonyConstruction.Plan plan = planOf(server, colonyId);
-        return plan != null && plan.active() != null && plan.supplied();
+        return plan != null && plan.active() != null && suppliedNow(server, colonyId, plan);
+    }
+
+    private static boolean suppliedNow(@Nullable MinecraftServer server, @Nullable UUID colonyId,
+            ColonyConstruction.Plan plan) {
+        if (plan.supplied()) {
+            return true;
+        }
+        if (server == null || colonyId == null) {
+            return false;
+        }
+        Blueprint blueprint = activeBlueprint(server, plan);
+        return blueprint != null && ColonyStorage.hasAll(server, colonyId,
+                remainingMaterials(blueprint, plan.cursor(), plan.total()));
+    }
+
+    /**
+     * What the building under way still needs from storage: each material less the share the blocks
+     * already laid have used. Empty when it is prepaid or there is no build.
+     */
+    public static List<ItemTarget> remainingMaterials(@Nullable MinecraftServer server,
+            @Nullable UUID colonyId) {
+        ColonyConstruction.Plan plan = planOf(server, colonyId);
+        if (plan == null || plan.active() == null || plan.supplied() || server == null) {
+            return List.of();
+        }
+        Blueprint blueprint = activeBlueprint(server, plan);
+        return blueprint == null ? List.of() : remainingMaterials(blueprint, plan.cursor(), plan.total());
+    }
+
+    /** {@link #remainingMaterials(int, int, int)} for each of a blueprint's materials. */
+    public static List<ItemTarget> remainingMaterials(Blueprint blueprint, int cursor, int total) {
+        List<ItemTarget> out = new java.util.ArrayList<>();
+        for (ItemTarget material : blueprint.materials()) {
+            int left = remainingMaterials(material.count(), cursor, total);
+            if (left > 0) {
+                out.add(new ItemTarget(material.item(), material.tag(), left));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * How many of a material costing {@code count} for the whole building are still to be used once
+     * {@code cursor} of its {@code total} blocks are laid. Used materials are the floor of the
+     * proportional share, so the last item goes with the last block. Pure; unit-tested.
+     */
+    public static int remainingMaterials(int count, int cursor, int total) {
+        if (count <= 0) {
+            return 0;
+        }
+        if (total <= 0) {
+            return count;
+        }
+        int laid = Math.clamp(cursor, 0, total);
+        return count - (int) ((long) count * laid / total);
+    }
+
+    /** What laying blocks {@code from} to {@code to} uses of each material. Pure. */
+    static List<ItemTarget> materialsUsed(Blueprint blueprint, int from, int to, int total) {
+        List<ItemTarget> out = new java.util.ArrayList<>();
+        for (ItemTarget material : blueprint.materials()) {
+            int used = remainingMaterials(material.count(), from, total)
+                    - remainingMaterials(material.count(), to, total);
+            if (used > 0) {
+                out.add(new ItemTarget(material.item(), material.tag(), used));
+            }
+        }
+        return out;
+    }
+
+    /** The construction-speed factor from {@code SPEED} modules in the colony's beacon. */
+    private static double beaconSpeed(ServerLevel level, Colony colony) {
+        ServerLevel home = level.getServer().getLevel(colony.dimension());
+        if (home != null && home.isLoaded(colony.beaconPos()) && home.getBlockEntity(colony.beaconPos())
+                instanceof za.co.neroland.nerocolonies.block.entity.ColonyBeaconBlockEntity beacon) {
+            return Math.max(1.0D, beacon.speedMultiplier());
+        }
+        return 1.0D;
     }
 
     /** The blueprint under construction, or null. */
@@ -444,6 +632,8 @@ public final class Construction {
         ColonyLife.get(server).forget(colonyId);
         ColonyBuildings.invalidate(colonyId);
         GratitudeCache.forget(colonyId);
+        ColonyStorageBlocks.get(server).forget(colonyId);
+        HAND_WORK.remove(colonyId);
     }
 
     @Nullable
@@ -1046,13 +1236,6 @@ public final class Construction {
 
     // --- materials and builders -------------------------------------------------
 
-    private static boolean payMaterials(MinecraftServer server, UUID colonyId, Blueprint blueprint) {
-        if (blueprint.materials().isEmpty()) {
-            return true;
-        }
-        return ColonyStorage.consume(server, colonyId, blueprint.materials());
-    }
-
     /** Professional Builders standing near the access spot (capped). */
     private static int buildersOnSite(ServerLevel level, Colony colony, @Nullable BlockPos spot) {
         if (spot == null) {
@@ -1060,7 +1243,7 @@ public final class Construction {
         }
         int count = 0;
         for (ColonistEntity colonist : Population.colonistsOf(level, colony)) {
-            if (BUILDER_PROFESSION.equals(colonist.professionId())
+            if ((BUILDER_PROFESSION.equals(colonist.professionId()) || BUILDER_JOB.equals(colonist.jobId()))
                     && colonist.blockPosition().distSqr(spot) <= BUILDER_RANGE_SQR) {
                 count++;
             }
@@ -1068,27 +1251,24 @@ public final class Construction {
         return Math.min(count, MAX_COUNTED_BUILDERS);
     }
 
-    /** Points Builders (or, failing that, one idle adult) at the site's access spot. */
+    /**
+     * Points Builders, and every adult with no trade of its own (the founders, before the colony
+     * has workplaces), at the site's access spot: they go and lay the building by hand.
+     */
     private static void assignBuilder(ServerLevel level, Colony colony, @Nullable BlockPos spot) {
         if (spot == null) {
             return;
         }
-        boolean anyBuilder = false;
         for (ColonistEntity colonist : Population.colonistsOf(level, colony)) {
-            if (BUILDER_PROFESSION.equals(colonist.professionId()) && !colonist.isChildNeran()) {
-                colonist.setJobStationPos(spot);
-                colonist.setJobId(BUILDER_JOB);
-                anyBuilder = true;
+            if (colonist.isChildNeran()) {
+                continue;
             }
-        }
-        if (anyBuilder) {
-            return;
-        }
-        for (ColonistEntity colonist : Population.colonistsOf(level, colony)) {
-            if (colonist.jobStationPos() == null && !colonist.isChildNeran()) {
+            boolean builder = BUILDER_PROFESSION.equals(colonist.professionId());
+            boolean idle = colonist.professionId() == null
+                    && (colonist.jobStationPos() == null || BUILDER_JOB.equals(colonist.jobId()));
+            if (builder || idle) {
                 colonist.setJobStationPos(spot);
                 colonist.setJobId(BUILDER_JOB);
-                return;
             }
         }
     }
