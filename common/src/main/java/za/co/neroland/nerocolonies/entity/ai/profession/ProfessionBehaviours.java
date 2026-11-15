@@ -63,7 +63,7 @@ public final class ProfessionBehaviours {
             neran.blockPosition().distSqr(anchor) <= 9.0D;
 
     static {
-        register("farmer", FieldWork::work);
+        register("farmer", ProfessionBehaviours::farm);
         register("forester", ForestWork::work);
         register("miner", QuarryWork::work);
         register("builder", SiteWork::work);
@@ -133,7 +133,20 @@ public final class ProfessionBehaviours {
                 return false;
             }
         }
+        // No one to patch up: breed the colony's livestock.
+        if (BreedWork.work(level, neran, colony, anchor)) {
+            return true;
+        }
         return neran.blockPosition().distSqr(anchor) <= (double) radius * radius;
+    }
+
+    /** The Farmer: the field first; every few strokes, breed any livestock near the workplace. */
+    private static boolean farm(ServerLevel level, ColonistEntity neran, Colony colony,
+            ProfessionDefinition profession, BlockPos anchor) {
+        if ((level.getGameTime() / 20L) % 5L == 0L && BreedWork.work(level, neran, colony, anchor)) {
+            return true;
+        }
+        return FieldWork.work(level, neran, colony, profession, anchor);
     }
 
     // --- medic ------------------------------------------------------------------

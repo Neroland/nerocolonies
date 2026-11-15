@@ -44,6 +44,15 @@ public final class HousingScan {
     /** Loaded chunks read per slice. */
     private static final int CHUNKS_PER_SLICE = 2;
 
+    /**
+     * A full sweep is sized to finish in about this many slices however big the claim is (one slice a
+     * second), so a claim widened by Range modules is still counted within seconds.
+     */
+    private static final int TARGET_SLICES = 10;
+
+    /** The most chunks one slice reads. */
+    private static final int MAX_CHUNKS_PER_SLICE = 24;
+
     /** Ticks between slices while a cycle is still open. */
     private static final int SLICE_INTERVAL_TICKS = 20;
 
@@ -80,6 +89,22 @@ public final class HousingScan {
 
         /** Whether at least one full cycle has closed since this state was created. */
         private boolean committed;
+
+        /** A rescan was asked for mid-sweep: start the next one as soon as this one closes. */
+        private boolean rescanQueued;
+
+        /**
+         * Asks for a fresh count (a building finished, the claim changed). A sweep under way is not
+         * thrown away, which with buildings finishing faster than a sweep took meant the count never
+         * closed and housing never changed: it finishes, and the next starts straight after.
+         */
+        public void requestRescan() {
+            if (this.chunkCursor == 0) {
+                this.countdown = 0;
+            } else {
+                this.rescanQueued = true;
+            }
+        }
 
         /** Total housing capacity found on the last completed cycle. */
         public int capacity() {
@@ -163,8 +188,10 @@ public final class HousingScan {
         int width = maxChunkX - minChunkX + 1;
         int total = width * (maxChunkZ - minChunkZ + 1);
 
+        int perSlice = Math.clamp((total + TARGET_SLICES - 1) / TARGET_SLICES, CHUNKS_PER_SLICE,
+                MAX_CHUNKS_PER_SLICE);
         int scanned = 0;
-        while (scanned < CHUNKS_PER_SLICE && state.chunkCursor < total) {
+        while (scanned < perSlice && state.chunkCursor < total) {
             int index = state.chunkCursor++;
             int chunkX = minChunkX + (index % width);
             int chunkZ = minChunkZ + (index / width);
@@ -177,6 +204,10 @@ public final class HousingScan {
             return false;
         }
 
+        // The sweep only looks at a band around the beacon's height; homes in the colony's own
+        // finished buildings count wherever they stand, so a cottage built on lower ground counts.
+        addStructureHomes(level, colony, byBlock, state);
+
         // Cycle closed: commit, reset the cursor, rest.
         state.capacity = state.runningCapacity;
         state.comfortRatio = state.runningCapacity <= 0
@@ -188,7 +219,8 @@ public final class HousingScan {
         state.runningCapacity = 0;
         state.runningComfort = 0.0D;
         state.runningHomes.clear();
-        state.countdown = NeroColoniesConfig.housingScanInterval();
+        state.countdown = state.rescanQueued ? 0 : NeroColoniesConfig.housingScanInterval();
+        state.rescanQueued = false;
         return true;
     }
 
@@ -242,6 +274,47 @@ public final class HousingScan {
     }
 
     /** Whether the state is the upper half of a two-block-tall block (a door-like housing block). */
+    /**
+     * Counts the housing blocks of the colony's finished buildings that lie outside the sweep's
+     * height band (inside it, the sweep has already counted them). Each is checked in the world: a
+     * home that was broken out does not count.
+     */
+    private static void addStructureHomes(ServerLevel level, Colony colony, Map<Identifier, HousingTier> byBlock,
+            State state) {
+        int beaconY = colony.beaconPos().getY();
+        int minY = beaconY - BAND_BELOW;
+        int maxY = beaconY + BAND_ABOVE;
+        for (ColonyBuildings.Placed placed : ColonyBuildings.placed(level, colony)) {
+            za.co.neroland.nerocolonies.content.Blueprint blueprint = placed.blueprint();
+            ColonyConstruction.Structure structure = placed.structure();
+            for (BlockPos cell : blueprint.buildOrder()) {
+                BlockState wanted = blueprint.stateAt(cell.getX(), cell.getY(), cell.getZ(), structure.rotation());
+                if (wanted == null || wanted.isAir()) {
+                    continue;
+                }
+                HousingTier tier = byBlock.get(
+                        net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(wanted.getBlock()));
+                if (tier == null || !unlocked(colony, tier)) {
+                    continue;
+                }
+                BlockPos pos = structure.origin().offset(blueprint.rotate(cell, structure.rotation()));
+                if ((pos.getY() >= minY && pos.getY() <= maxY) || !level.isLoaded(pos)
+                        || !colony.contains(pos)) {
+                    continue;
+                }
+                BlockState actual = level.getBlockState(pos);
+                if (!actual.is(wanted.getBlock()) || isUpperHalf(actual)) {
+                    continue;
+                }
+                state.runningCapacity += tier.capacity();
+                state.runningComfort += tier.comfort() * tier.capacity();
+                if (state.runningHomes.size() < MAX_HOME_POSITIONS) {
+                    state.runningHomes.add(pos.immutable());
+                }
+            }
+        }
+    }
+
     private static boolean isUpperHalf(BlockState blockState) {
         return blockState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF)
                 && blockState.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER;

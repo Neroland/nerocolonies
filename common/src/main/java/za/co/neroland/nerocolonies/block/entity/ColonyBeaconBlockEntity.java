@@ -369,7 +369,7 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 colony = colony.withClaimRadius(radius);
                 colonies.put(colony);
                 // A different claim means a different set of chunks to sweep.
-                this.tickState.housing().restart();
+                this.tickState.housing().requestRescan();
             }
             // A depot or crate that went without a player (an explosion) is noticed here, and the
             // colony's goods are packed into what is left.

@@ -83,6 +83,21 @@ final class FieldWork {
             }
         }
 
+        // 2b. No seed in store: cut wild grass for it, as a player would. Its drops go to storage.
+        if (seeds.isEmpty()) {
+            BlockPos grass = nearest(level, colony, anchor, radius, 1, 1,
+                    (pos, state) -> wildGrass(state) && WorkSupport.mayBreak(level, colony, pos, state)
+                            && !WorkSupport.builtUp(level, colony, pos, 0));
+            if (grass != null) {
+                if (!WorkSupport.reach(neran, grass)) {
+                    return false;
+                }
+                WorkSupport.strike(neran, grass);
+                Construction.breakToStorage(level, colony, grass, level.getBlockState(grass));
+                return true;
+            }
+        }
+
         // 3. Keep up the field.
         if (field == null || WorkSupport.builtUp(level, colony, field, 0)) {
             memory.field = null;
@@ -184,6 +199,12 @@ final class FieldWork {
     }
 
     // --- the field ----------------------------------------------------------------
+
+    /** Wild grass and ferns: where seed comes from before the colony has any. */
+    private static boolean wildGrass(BlockState state) {
+        return state.is(Blocks.SHORT_GRASS) || state.is(Blocks.TALL_GRASS) || state.is(Blocks.FERN)
+                || state.is(Blocks.LARGE_FERN);
+    }
 
     /** Grass, dirt or a path: ground a hoe turns to farmland. */
     private static boolean tillable(BlockState state) {

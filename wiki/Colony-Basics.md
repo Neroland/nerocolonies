@@ -151,11 +151,14 @@ arcology tower — is a shell around a number of Habitat Pods, and the pods are 
 Housing you place by hand inside the claim counts in exactly the same way.
 
 **The scan is budgeted.** Reading every block in a 97-block-wide claim on a cadence would be the
-most expensive thing this mod does, so the sweep is a cursor over the claim's chunks: two loaded
-chunks per slice, over a band from 6 levels below the beacon to 12 above, with slices 20 ticks
-apart. Only when a full cycle closes are the totals committed — a half-finished sweep never makes
-capacity flicker — and the colony then rests for `housingScanIntervalTicks` (default 600) before
-starting again.
+most expensive thing this mod does, so the sweep is a cursor over the claim's chunks, over a band
+from 6 levels below the beacon to 12 above, with slices 20 ticks apart. Each slice reads enough
+loaded chunks (2 to 24) that a whole sweep takes about ten slices however wide the claim is. The
+homes inside the colony's own finished buildings are counted at any height, outside that band too.
+Only when a full cycle closes are the totals committed — a half-finished sweep never makes capacity
+flicker — and the colony then rests for `housingScanIntervalTicks` (default 600) before starting
+again. A finished building or a changed claim asks for a fresh count: straight away when the colony
+is resting, or as soon as the sweep under way closes.
 
 Unloaded chunks are **skipped, never loaded**. A colony whose claim is half-unloaded reports the
 housing it can actually see, which is also the housing its Nerans could actually reach. Housing

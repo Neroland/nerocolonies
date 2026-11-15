@@ -25,6 +25,21 @@ beacon module slot).
 - **All four module types fit in the beacon.** The beacon has four module slots (was three), so Speed,
   Efficiency, Range and Capacity can all be installed at once. Speed modules in the beacon now make
   construction faster.
+- **Nerans build by hand, and nobody stands idle.** While Nerans are at a building site they lay the
+  building themselves, one block per stroke, at the same overall rate the colony builds at (the
+  colony only places blocks on its own when nobody is on site, such as when the area is unloaded).
+  Every adult without a trade of its own, the founders included, goes to the site as a labourer, and
+  when nothing is being built a labourer gathers wood around the claim. Nerans work once a second,
+  and the work swing now shows on 26.3 too.
+- **Livestock breeding.** Beastkeepers, and Farmers between rounds of their field, breed the colony's
+  animals: two grown animals of a kind inside the claim are fed their breeding food from colony
+  storage, up to 12 head of a kind. Tamed animals and the colony's guardians are left alone.
+- **Job stations make real workers.** A Neran without a trade who works a job station works as the
+  trade that station belongs to: at a farm or hydroponics station it farms around the station, and
+  at a refinery station it digs a quarry right beside the station. A Farmer with no seed in storage
+  cuts wild grass for it.
+- **`/nerocolonies colony workers`** lists what each loaded Neran of the colony you stand in is
+  working as, its job, workplace distance, part of the day and status.
 - **Nerans really work.** Every trade now does its job in the world. Farmers lay out and keep a 9 x 9
   field near their workplace (water in the middle, grass and dirt tilled to farmland), sow it from the
   colony's wheat, carrot, potato and beetroot seeds, and harvest and replant it. Foresters walk to the
@@ -37,6 +52,17 @@ beacon module slot).
   refine what the next research is missing (sand to glass, raw ores to ingots, cane to paper, paper and
   leather to books). Quartermasters walk the stores and merge part stacks to free slots. Every drop goes
   to colony storage, and every block change follows the colony's land rules.
+
+### Fixed
+
+- **Cottages and other homes now raise housing wherever they stand.** The housing count only looked
+  6 blocks below to 12 above the beacon, so a home the colony built on lower or higher ground in the
+  claim never counted. Homes in the colony's own finished buildings now count at any height.
+- **Housing stopped updating in a busy colony.** The housing count read the claim a couple of chunks
+  a second and started over whenever a building finished, so a colony finishing buildings faster
+  than that (Speed modules, a claim widened by Range modules) never finished counting and its
+  housing stayed where it was. A count under way now finishes and the next starts straight after,
+  and a whole count takes about ten seconds however big the claim is.
 
 ### Changed
 

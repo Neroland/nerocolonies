@@ -38,7 +38,8 @@ final class QuarryWork {
     private static final List<int[]> ORDER = WorkGeometry.quarryOrder(SIDE, DEPTH);
 
     /** Pit centres tried, nearest the workplace first. */
-    private static final List<int[]> SITES = WorkGeometry.ringOffsets(SIDE / 2 + 3, 16);
+    // Nearest first, the pit's edge two blocks from the workplace: the Miner digs beside its station.
+    private static final List<int[]> SITES = WorkGeometry.ringOffsets(SIDE / 2 + 2, 16);
 
     private static final int SITES_PER_CALL = 3;
     private static final int CELLS_PER_CALL = 16;

@@ -30,7 +30,8 @@ import za.co.neroland.nerocolonies.entity.ai.profession.ProfessionBehaviours;
  *
  * <p><b>Labourers.</b> An adult with no trade of its own (the founders, before a colony has any
  * workplaces) still works: sent to a building site it lays the building by hand as a Builder does,
- * and otherwise it gathers wood as a Forester does, anywhere in the claim.
+ * at a job station it works as the trade that station belongs to (a farm station farms, a refinery
+ * station mines), and otherwise it gathers wood as a Forester does, anywhere in the claim.
  *
  * <p><b>The leash.</b> A Neran stays at work within its trade's work radius of the workplace plus
  * {@value #LEASH}. While a behaviour is walking it to a real target (a tree, the quarry face, a Neran
@@ -71,13 +72,41 @@ public class WorkGoal extends Goal {
 
     /** The trade this Neran works as: its own, or a labourer's (builder at a site, else forester). */
     private ProfessionDefinition trade() {
-        ProfessionDefinition own = this.colonist.profession();
-        if (own != null || this.colonist.isChildNeran()) {
+        return tradeOf(this.colonist);
+    }
+
+    /** The trade a Neran works as right now (its own, or a labourer's); null for a child. */
+    public static ProfessionDefinition tradeOf(ColonistEntity colonist) {
+        ProfessionDefinition own = colonist.profession();
+        if (own != null || colonist.isChildNeran()) {
             return own;
         }
-        Identifier fallback = Construction.BUILDER_JOB.equals(this.colonist.jobId())
-                ? Construction.BUILDER_PROFESSION : LABOURER_TRADE;
-        return ColonyDefinitions.profession(fallback).orElse(null);
+        if (Construction.BUILDER_JOB.equals(colonist.jobId())) {
+            return ColonyDefinitions.profession(Construction.BUILDER_PROFESSION).orElse(null);
+        }
+        ProfessionDefinition station = stationTrade(colonist);
+        if (station != null) {
+            return station;
+        }
+        return ColonyDefinitions.profession(LABOURER_TRADE).orElse(null);
+    }
+
+    /** The trade whose stations include the job station this Neran works, if it works one. */
+    private static ProfessionDefinition stationTrade(ColonistEntity colonist) {
+        BlockPos pos = colonist.jobStationPos();
+        if (pos == null || !(colonist.level() instanceof ServerLevel level) || !level.isLoaded(pos)) {
+            return null;
+        }
+        Identifier block = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                .getKey(level.getBlockState(pos).getBlock());
+        ProfessionDefinition best = null;
+        for (ProfessionDefinition trade
+                : ColonyDefinitions.professionsForServer(level.getServer()).values()) {
+            if (trade.stations().contains(block) && (best == null || trade.priority() < best.priority())) {
+                best = trade;
+            }
+        }
+        return best;
     }
 
     /** The workplace: the assigned one, or for a labourer with none, the colony beacon. */
@@ -109,7 +138,7 @@ public class WorkGoal extends Goal {
             return true;
         }
         BlockPos target = this.colonist.workMemory().activeTarget(this.colonist.level().getGameTime());
-        if (target == null || colony == null || !colony.contains(target)
+        if (target == null || !colony.contains(target)
                 || !colony.contains(this.colonist.blockPosition())) {
             return false;
         }

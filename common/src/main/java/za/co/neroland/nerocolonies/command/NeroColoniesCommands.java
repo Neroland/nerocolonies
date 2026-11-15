@@ -165,6 +165,9 @@ public final class NeroColoniesCommands {
                         .then(Commands.literal("list")
                                 .executes(ctx -> runSafely(ctx.getSource(), "colony list",
                                         () -> listMine(ctx.getSource()))))
+                        .then(Commands.literal("workers")
+                                .executes(ctx -> runSafely(ctx.getSource(), "colony workers",
+                                        () -> workers(ctx.getSource()))))
                         .then(Commands.literal("info")
                                 .executes(ctx -> runSafely(ctx.getSource(), "colony info",
                                         () -> info(ctx.getSource(), null)))
@@ -417,6 +420,45 @@ public final class NeroColoniesCommands {
      * One colony in detail. With no id, the colony the caller is standing in is used, which is what
      * somebody typing this while looking at their own beacon means every time.
      */
+    /**
+     * What each Neran of the colony the sender stands in is doing: trade (its own, or what it works
+     * as), job, workplace distance, phase, whether its AI is awake, whether it is at work, status.
+     * Colony state only: Nerans carry no player data.
+     */
+    private static int workers(CommandSourceStack source) {
+        Colony colony = colonyHere(source);
+        if (colony == null) {
+            source.sendFailure(Component.translatable("command.nerocolonies.colony.none_here"));
+            return 0;
+        }
+        if (!mayView(source, colony)) {
+            source.sendFailure(Component.translatable("command.nerocolonies.colony.no_access"));
+            return 0;
+        }
+        ServerLevel level = source.getServer().getLevel(colony.dimension());
+        if (level == null) {
+            return 0;
+        }
+        java.util.List<za.co.neroland.nerocolonies.entity.ColonistEntity> nerans =
+                za.co.neroland.nerocolonies.colony.Population.colonistsOf(level, colony);
+        source.sendSuccess(() -> Component.literal("§e" + nerans.size() + " Neran(s) loaded"), false);
+        for (za.co.neroland.nerocolonies.entity.ColonistEntity neran : nerans) {
+            za.co.neroland.nerocolonies.content.ProfessionDefinition trade =
+                    za.co.neroland.nerocolonies.entity.ai.WorkGoal.tradeOf(neran);
+            String works = trade == null ? "-" : trade.id().getPath();
+            String own = neran.professionId() == null ? "labourer" : "trade";
+            BlockPos at = neran.jobStationPos();
+            String place = at == null ? "no workplace"
+                    : "workplace " + (int) Math.sqrt(at.distSqr(neran.blockPosition())) + "m";
+            String job = neran.jobId() == null ? "-" : neran.jobId().getPath();
+            String line = "§7" + neran.getName().getString() + "§r " + works + " (" + own + ", job " + job
+                    + ") " + place + ", " + neran.phase().name().toLowerCase(Locale.ROOT)
+                    + (neran.aiActive() ? "" : ", §cAI asleep§r") + ", " + neran.status().name().toLowerCase(Locale.ROOT);
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+        return nerans.size();
+    }
+
     private static int info(CommandSourceStack source, @Nullable String rawId) {
         MinecraftServer server = source.getServer();
         if (server == null) {

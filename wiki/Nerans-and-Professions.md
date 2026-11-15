@@ -244,9 +244,9 @@ full), and every block it changes follows the colony's land rules:
 
 | Trade | What it does |
 | --- | --- |
-| Farmer | Harvests ripe crops and replants them, around its workplace (the farm buildings' farmland) and in its own field. Lays out a 9 × 9 field on flat grass or dirt near the workplace, puts a water source in the middle if there is no water in it, tills it to farmland and sows it from the colony's wheat seeds, carrots, potatoes and beetroot seeds |
+| Farmer | Harvests ripe crops and replants them, around its workplace (the farm buildings' farmland) and in its own field. Lays out a 9 × 9 field on flat grass or dirt near the workplace, puts a water source in the middle if there is no water in it, tills it to farmland and sows it from the colony's wheat seeds, carrots, potatoes and beetroot seeds. With no seed in storage it cuts wild grass for some. Every few strokes it breeds livestock near its workplace, like a Beastkeeper |
 | Forester | Walks to the nearest tree in the claim (up to 20 blocks from its workplace), fells the whole tree one log at a time, replants a sapling of the same kind from storage where the trunk stood, and gathers the saplings, sticks and apples the leaves drop |
-| Miner | Digs a 5 × 5 quarry near its workplace, a layer at a time, up to 16 blocks deep. The rim is left as a spiral stair so it can walk down and back out |
+| Miner | Digs a 5 × 5 quarry beside its workplace (from two blocks out), a layer at a time, up to 16 blocks deep. The rim is left as a spiral stair so it can walk down and back out |
 | Builder | Stands at the building site and works the block being laid next. Builders near the site speed the build (see below) |
 | Hauler | Carries food from colony storage to the beacon's food supply slots when the colony's rations are short, and takes stored tools to Nerans who lack them |
 | Cook | Cooks raw meat, fish, potatoes and kelp from colony storage, and bakes bread from three wheat. With nothing to cook it carries food to the beacon like a Hauler |
@@ -254,7 +254,7 @@ full), and every block it changes follows the colony's land rules:
 | Researcher | Works at the colony's research station (or its own building) and prepares the next research: for research the colony could take next but cannot yet pay for, it turns what storage holds into what the cost is missing |
 | Quartermaster | Walks between the colony's crates and depots, the beacon and the Gratitude Cache pavilion, merging part stacks and closing gaps in colony storage so its goods take fewer slots |
 | Guard | Walks between the colony's guard posts, and fights |
-| Beastkeeper | Heals the colony's wounded guardian wolves and golems |
+| Beastkeeper | Heals the colony's wounded guardian wolves and golems, and breeds the colony's livestock: two grown animals of a kind in the claim are fed their breeding food from colony storage, up to 12 head of a kind within 16 blocks. Tamed animals and guardians are left alone |
 | Medic | Heals the nearest wounded Neran of its own colony |
 
 Details that matter:
@@ -279,6 +279,15 @@ Details that matter:
   ingots, sugar cane to paper, paper and leather to books, cobblestone to stone, stone to smooth stone
   and oak logs to charcoal, one batch at a time and only while the next research is short of it.
   Unlocking a node is still your choice at the research station.
+
+### Labourers
+
+An adult without a trade (the two founders, before the colony has any workplaces, or anyone the
+colony has no place for yet) is a labourer. While something is being built, labourers go to the
+site and lay it by hand with the Builders. A labourer sent to a job station works as the trade that
+station belongs to (a farm or hydroponics station farms around it, a refinery station digs a quarry
+beside it). Otherwise labourers gather wood like a Forester, anywhere in the claim. A labourer earns
+no trade experience. `/nerocolonies colony workers` shows what each Neran is working as.
 
 ### The special trades
 

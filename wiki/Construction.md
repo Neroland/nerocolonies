@@ -59,6 +59,15 @@ blocks per cycle = constructionBlocksPerCycle          (default 2)
 Deliberately slow at first. A colony growing visibly over minutes reads as a colony; one that snaps
 into existence reads as a command block.
 
+### Who lays the blocks
+
+The Nerans do. Every Builder, and every adult without a trade of its own (the two founders, before
+the colony has any workplaces), walks to the site and lays the building by hand, one block per
+stroke, about one stroke a second each. The colony banks building credit at the rate below and the
+Nerans on site spend it, so more hands do not build faster than the rate allows, but Builders on
+site raise the rate. When nobody is working the site (its area is unloaded, or the colony is quiet)
+the colony lays the blocks itself on its cycle, so a colony you are away from still grows.
+
 ### Supplied and unsupplied
 
 Every cycle, a build looks for **what it still needs in colony storage**: each material of its

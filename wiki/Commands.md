@@ -14,6 +14,7 @@ it is the same on every loader.
 | --- | --- | --- |
 | `/nerocolonies colony list` | anyone | Your colonies: id, name, dimension, morale, population |
 | `/nerocolonies colony info [<colony>]` | member | One colony in detail. With no id, the one you are standing in |
+| `/nerocolonies colony workers` | member | What each loaded Neran of the colony you stand in is working as, and why it might be idle |
 | `/nerocolonies colony rename <colony> <name>` | owner | Renames a colony |
 | `/nerocolonies colony role ally add <colony> <player>` | owner or Chief | Makes a player an Ally |
 | `/nerocolonies colony role ally remove <colony> <player>` | owner or Chief | Removes an Ally. Removing one who is a Chief takes the owner |
@@ -107,6 +108,14 @@ The last two lines are **counts**, not rosters, and that is true for operators a
 
 Run with no id while standing inside a claim and it uses that colony (an outpost resolves to its
 parent).
+
+### `colony workers`
+
+One line per loaded Neran of the colony you are standing in: the trade it works as (its own, or as
+a labourer: builder at a site, the station's trade at a job station, forester otherwise), its job,
+how far it is from its workplace, its part of the day, whether its AI is asleep (no member nearby)
+and its status. Useful when a Neran seems idle: Nerans only work in the `work` part of the day, and
+only while a colony member is near.
 
 ### `colony rename`
 

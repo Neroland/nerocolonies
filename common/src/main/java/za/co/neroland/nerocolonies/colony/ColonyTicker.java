@@ -305,8 +305,9 @@ public final class ColonyTicker {
         if (completed == null) {
             return;
         }
-        // A new structure is new geometry: rescan now rather than at the next scheduled sweep.
-        state.housing.restart();
+        // A new structure is new geometry: rescan now (or right after the sweep under way) rather
+        // than at the next scheduled sweep.
+        state.housing.requestRescan();
         ColonyBuildings.invalidate(colony.colonyId());
         publishStructure(level, colony, completed);
     }
