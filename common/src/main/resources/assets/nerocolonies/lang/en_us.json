@@ -669,5 +669,12 @@
   "blueprint.nerocolonies.planetary.canopy_sap_platform": "Sap Platform",
   "blueprint.nerocolonies.planetary.canopy_biolab": "Amber Biolab",
   "blueprint.nerocolonies.planetary.twilight_observatory": "Observatory",
-  "blueprint.nerocolonies.planetary.twilight_lens_workshop": "Lens Workshop"
+  "blueprint.nerocolonies.planetary.twilight_lens_workshop": "Lens Workshop",
+  "map.layer.nerocolonies.colony_border": "Colony borders",
+  "map.layer.nerocolonies.colony_buildings": "Colony buildings",
+  "map.layer.nerocolonies.outposts": "Colony outposts",
+  "map.nerocolonies.outpost": "Outpost",
+  "map.nerocolonies.storage_crate": "Storage Crate",
+  "map.nerocolonies.depot": "Colony Depot",
+  "map.nerocolonies.building": "Colony building"
 }

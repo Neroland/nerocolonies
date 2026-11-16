@@ -616,3 +616,5 @@ usable as quest-objective triggers. Switch them off with `thresholdEventsEnabled
   through Core's shared hook immediately reads as belonging to nothing.
 
 See [`../PRIVACY.md`](../PRIVACY.md) and [Data storage](Data-Storage.md).
+
+**Maps.** With a map mod that reads Neroland Core's map registry, your colonies' borders, buildings and outposts appear as map layers (Storage Crates and depots for owners and Chiefs only); nobody else's colony is ever shown.
