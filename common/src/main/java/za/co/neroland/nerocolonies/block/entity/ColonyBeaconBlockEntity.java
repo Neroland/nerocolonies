@@ -157,7 +157,10 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_BUILD_SUPPLIED = 17;
     public static final int DATA_GROWTH_STATUS = 18;
     public static final int DATA_BUILD_STATUS = 19;
-    public static final int DATA_SIZE = 20;
+    /** Exact stored energy as a 15-bit low/high pair (gauge tooltips; see menu.SplitValue). */
+    public static final int DATA_ENERGY_LOW = 20;
+    public static final int DATA_ENERGY_HIGH = 21;
+    public static final int DATA_SIZE = 22;
 
     /** The colony this beacon anchors, or {@code null} until placement binds one. */
     @Nullable
@@ -222,6 +225,8 @@ public class ColonyBeaconBlockEntity extends AbstractMachineBlockEntity
                 case DATA_GROWTH_STATUS -> ColonyBeaconBlockEntity.this.growthStatus;
                 case DATA_BUILD_STATUS -> ColonyBeaconBlockEntity.this.tickState.construction()
                         .status().ordinal();
+                case DATA_ENERGY_LOW -> za.co.neroland.nerocolonies.menu.SplitValue.low(energy.getRaw());
+                case DATA_ENERGY_HIGH -> za.co.neroland.nerocolonies.menu.SplitValue.high(energy.getRaw());
                 default -> 0;
             };
         }

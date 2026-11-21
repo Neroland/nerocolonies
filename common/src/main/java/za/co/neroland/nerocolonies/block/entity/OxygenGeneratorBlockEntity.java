@@ -94,7 +94,13 @@ public class OxygenGeneratorBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_GAS_SCALE = 3;
     public static final int DATA_RUNNING = 4;
     public static final int DATA_NEEDED = 5;
-    public static final int DATA_SIZE = 6;
+    /** Exact stored energy as a 15-bit low/high pair (gauge tooltips; see menu.SplitValue). */
+    public static final int DATA_ENERGY_LOW = 6;
+    public static final int DATA_ENERGY_HIGH = 7;
+    /** Exact oxygen in the tank (mB) as a low/high pair. */
+    public static final int DATA_GAS_LOW = 8;
+    public static final int DATA_GAS_HIGH = 9;
+    public static final int DATA_SIZE = 10;
 
     private final GasBuffer gas = new GasBuffer(GAS_CAPACITY, this::setChanged);
 
@@ -118,6 +124,10 @@ public class OxygenGeneratorBlockEntity extends AbstractMachineBlockEntity
                 case DATA_GAS_SCALE -> 1000;
                 case DATA_RUNNING -> OxygenGeneratorBlockEntity.this.running ? 1 : 0;
                 case DATA_NEEDED -> OxygenGeneratorBlockEntity.this.lifeSupportNeeded ? 1 : 0;
+                case DATA_ENERGY_LOW -> za.co.neroland.nerocolonies.menu.SplitValue.low(energy.getRaw());
+                case DATA_ENERGY_HIGH -> za.co.neroland.nerocolonies.menu.SplitValue.high(energy.getRaw());
+                case DATA_GAS_LOW -> za.co.neroland.nerocolonies.menu.SplitValue.low(gas.getAmount());
+                case DATA_GAS_HIGH -> za.co.neroland.nerocolonies.menu.SplitValue.high(gas.getAmount());
                 default -> 0;
             };
         }

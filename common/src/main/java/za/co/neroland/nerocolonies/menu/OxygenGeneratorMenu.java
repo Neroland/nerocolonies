@@ -72,6 +72,26 @@ public class OxygenGeneratorMenu extends AbstractContainerMenu {
 
     // --- synced machine state ----------------------------------------------
 
+    /** Exact stored energy (gauge tooltips). */
+    public long energyStored() {
+        return SplitValue.join(this.data.get(OxygenGeneratorBlockEntity.DATA_ENERGY_LOW), this.data.get(OxygenGeneratorBlockEntity.DATA_ENERGY_HIGH));
+    }
+
+    /** The energy buffer's capacity. */
+    public long energyCapacity() {
+        return OxygenGeneratorBlockEntity.ENERGY_CAPACITY;
+    }
+
+    /** Exact oxygen in the tank, mB (gauge tooltips). */
+    public long gasAmount() {
+        return SplitValue.join(this.data.get(OxygenGeneratorBlockEntity.DATA_GAS_LOW), this.data.get(OxygenGeneratorBlockEntity.DATA_GAS_HIGH));
+    }
+
+    /** The tank's capacity, mB. */
+    public long gasCapacity() {
+        return OxygenGeneratorBlockEntity.GAS_CAPACITY;
+    }
+
     public int energyPermille() {
         return this.data.get(OxygenGeneratorBlockEntity.DATA_ENERGY_PERMILLE);
     }

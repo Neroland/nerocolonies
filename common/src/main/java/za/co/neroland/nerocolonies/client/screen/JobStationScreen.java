@@ -8,6 +8,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import za.co.neroland.nerocolonies.client.ClientColonySnapshot;
+import za.co.neroland.nerocolonies.client.GaugeMath;
+import za.co.neroland.nerocolonies.client.GaugeTooltips;
 import za.co.neroland.nerocolonies.menu.JobStationMenu;
 import za.co.neroland.nerocolonies.network.ColonyIntentPayload;
 import za.co.neroland.nerocolonies.platform.Services;
@@ -40,6 +42,11 @@ public class JobStationScreen extends NeroColoniesScreen<JobStationMenu> {
     private static final int ROUTE_BUTTON_WIDTH = 68;
     private static final int ROUTE_BUTTON_HEIGHT = 14;
 
+    /** Gauge tooltip rates, measured from the synced values over the last ~20 client ticks. */
+    private final GaugeMath.RateWindow energyWindow = new GaugeMath.RateWindow();
+    /** Progress resets at a job boundary (a jump of more than 30%). */
+    private final GaugeMath.RateWindow progressWindow = new GaugeMath.RateWindow(300);
+
     public JobStationScreen(JobStationMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, ACCENT, WIDTH, HEIGHT);
         this.titleLabelX = 8;
@@ -57,6 +64,14 @@ public class JobStationScreen extends NeroColoniesScreen<JobStationMenu> {
 
     @Override
     protected void extractForeground(GuiGraphicsExtractor g) {
+        long tick = gaugeTick();
+        this.energyWindow.sample(tick, this.menu.energyStored());
+        int permille = Math.round(frac(this.menu.progressPermille(), this.menu.progressScale()) * 1000F);
+        if (permille > 0) {
+            this.progressWindow.sample(tick, permille);
+        } else {
+            this.progressWindow.reset();
+        }
         labelRight(g, Component.translatable("gui.nerocolonies.slots.modules"), CONTENT_X,
                 CONTENT_WIDTH, this.titleLabelY, SUBTLE);
 
@@ -64,10 +79,18 @@ public class JobStationScreen extends NeroColoniesScreen<JobStationMenu> {
                 Component.translatable("gui.nerocolonies.station.progress"),
                 percent(this.menu.progressPermille(), this.menu.progressScale()),
                 frac(this.menu.progressPermille(), this.menu.progressScale()), ACCENT, false);
+        boolean stalled = !this.menu.bound() || !this.menu.hasJob() || !this.menu.active() || this.menu.blocked()
+                || this.menu.energyPermille() <= 0;
+        Component cause = stalled ? statusLine() : null;
+        gaugeTip(CONTENT_X, 22 + LINE, GAUGE_WIDTH, BAR_H, lines -> GaugeTooltips.progress(lines,
+                Component.translatable("gui.nerocolonies.station.progress"), permille > 0 || this.menu.active(),
+                permille, this.progressWindow.perTick(), cause));
 
         gaugeRow(g, CONTENT_X, 43, GAUGE_WIDTH, Component.translatable("gui.nerocolonies.stat.power"),
                 percent(this.menu.energyPermille(), this.menu.energyScale()),
                 frac(this.menu.energyPermille(), this.menu.energyScale()), ACCENT, true);
+        gaugeTip(CONTENT_X, 43 + LINE, GAUGE_WIDTH, SEG_H, lines -> GaugeTooltips.energy(lines,
+                this.menu.energyStored(), this.menu.energyCapacity(), this.energyWindow.perTick()));
 
         clampedLabel(g, Component.translatable("gui.nerocolonies.station.workers",
                 this.menu.assigned(), this.menu.required()), CONTENT_X, WORKERS_Y,

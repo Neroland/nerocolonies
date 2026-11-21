@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import za.co.neroland.nerocolonies.client.ClientColonyDefinitions;
 import za.co.neroland.nerocolonies.client.ClientColonySnapshot;
+import za.co.neroland.nerocolonies.client.GaugeMath;
+import za.co.neroland.nerocolonies.client.GaugeTooltips;
 import za.co.neroland.nerocolonies.colony.ColonyPermissions;
 import za.co.neroland.nerocolonies.colony.ColonyStage;
 import za.co.neroland.nerocolonies.content.ItemTarget;
@@ -272,6 +274,11 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     @Nullable
     private Component tip;
 
+    /** Gauge tooltip rates, measured from the synced values over the last ~20 client ticks. */
+    private final GaugeMath.RateWindow energyWindow = new GaugeMath.RateWindow();
+    /** Construction progress in permille; resets when a new structure starts (a jump of over 30%). */
+    private final GaugeMath.RateWindow buildWindow = new GaugeMath.RateWindow(300);
+
     private int refreshTicks;
 
     /** One drawn roster name and its box, panel-relative. */
@@ -421,6 +428,13 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     @Override
     protected void extractForeground(GuiGraphicsExtractor g) {
         this.tip = null;
+        long tick = gaugeTick();
+        this.energyWindow.sample(tick, this.menu.energyStored());
+        if (this.menu.buildPercent() > 0) {
+            this.buildWindow.sample(tick, this.menu.buildPercent() * 10L);
+        } else {
+            this.buildWindow.reset();
+        }
         drawRail(g);
         drawBand(g);
 
@@ -697,6 +711,9 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
     private int gaugeAt(GuiGraphicsExtractor g, int x, int width, int y, String captionKey,
             Component value, int valueColor, float frac, int fill, boolean segmented) {
         rowAt(g, x, width, y, captionKey, value, valueColor);
+        // Every gauge row names itself and its value on hover; richer tips are added over it.
+        gaugeTip(x, y + LINE, width, segmented ? SEG_H : BAR_H,
+                lines -> GaugeTooltips.count(lines, Component.translatable(captionKey), value, frac));
         if (segmented) {
             segGauge(g, x, y + LINE, width, SEG_H, frac, fill);
         } else {
@@ -752,9 +769,12 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
         gaugeAt(g, this.cx, half, y, "gui.nerocolonies.row.morale",
                 Component.translatable("gui.nerocolonies.value.of_hundred", morale),
                 stopped ? BAD : TITLE, morale / 100.0F, stopped ? BAD : ACCENT, false);
+        int powerY = y;
         y = gaugeAt(g, this.cx + this.cw - half, half, y, "gui.nerocolonies.stat.power",
                 percent(this.menu.energyPermille(), this.menu.energyScale()), TITLE,
                 frac(this.menu.energyPermille(), this.menu.energyScale()), ACCENT, true);
+        gaugeTip(this.cx + this.cw - half, powerY + LINE, half, SEG_H, lines -> GaugeTooltips.energy(lines,
+                this.menu.energyStored(), this.menu.energyCapacity(), this.energyWindow.perTick()));
         if (stopped) {
             clampedLabel(g, Component.translatable("gui.nerocolonies.stat.work_stopped"), this.cx, y,
                     this.cw, BAD);
@@ -817,6 +837,12 @@ public class ColonyBeaconScreen extends NeroColoniesScreen<ColonyBeaconMenu> {
                 Component.translatable(name)), this.cx, y, this.cw - valueWidth - 6,
                 supplied ? ACCENT : WARN);
         hGauge(g, this.cx, y + LINE, this.cw, BAR_H, percent / 100.0F, supplied ? ACCENT : WARN);
+        Component buildCause = this.menu.workStopped()
+                ? Component.translatable("gui.nerocolonies.stat.work_stopped")
+                : supplied ? null : Component.translatable("gui.nerocolonies.build.materials_hint");
+        gaugeTip(this.cx, y + LINE, this.cw, BAR_H, lines -> GaugeTooltips.progress(lines,
+                Component.translatable("gui.nerocolonies.section.construction"), true, percent * 10,
+                this.buildWindow.perTick(), buildCause));
         // With work stopped the banner above already says why the bar is not moving, and takes the
         // line this hint would need.
         if (!supplied && !this.menu.workStopped()) {

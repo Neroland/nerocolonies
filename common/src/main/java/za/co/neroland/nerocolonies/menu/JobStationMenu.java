@@ -76,6 +76,16 @@ public class JobStationMenu extends AbstractContainerMenu {
 
     // --- synced station state -----------------------------------------------
 
+    /** Exact stored energy (gauge tooltips). */
+    public long energyStored() {
+        return SplitValue.join(this.data.get(JobStationBlockEntity.DATA_ENERGY_LOW), this.data.get(JobStationBlockEntity.DATA_ENERGY_HIGH));
+    }
+
+    /** The energy buffer's capacity. */
+    public long energyCapacity() {
+        return JobStationBlockEntity.ENERGY_CAPACITY;
+    }
+
     public int energyPermille() {
         return this.data.get(JobStationBlockEntity.DATA_ENERGY_PERMILLE);
     }

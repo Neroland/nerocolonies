@@ -69,6 +69,16 @@ public class OutpostMenu extends AbstractContainerMenu {
 
     // --- synced outpost state -----------------------------------------------
 
+    /** Exact stored energy (gauge tooltips). */
+    public long energyStored() {
+        return SplitValue.join(this.data.get(OutpostBeaconBlockEntity.DATA_ENERGY_LOW), this.data.get(OutpostBeaconBlockEntity.DATA_ENERGY_HIGH));
+    }
+
+    /** The energy buffer's capacity. */
+    public long energyCapacity() {
+        return OutpostBeaconBlockEntity.ENERGY_CAPACITY;
+    }
+
     public int energyPermille() {
         return this.data.get(OutpostBeaconBlockEntity.DATA_ENERGY_PERMILLE);
     }

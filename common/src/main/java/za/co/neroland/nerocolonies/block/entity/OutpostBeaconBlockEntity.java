@@ -83,7 +83,10 @@ public class OutpostBeaconBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_COLONIST_CAP = 5;
     public static final int DATA_JOB_SLOTS = 6;
     public static final int DATA_STATIONS = 7;
-    public static final int DATA_SIZE = 8;
+    /** Exact stored energy as a 15-bit low/high pair (gauge tooltips; see menu.SplitValue). */
+    public static final int DATA_ENERGY_LOW = 8;
+    public static final int DATA_ENERGY_HIGH = 9;
+    public static final int DATA_SIZE = 10;
 
     /** The outpost record this beacon anchors, or {@code null} until placement binds one. */
     @Nullable
@@ -106,6 +109,8 @@ public class OutpostBeaconBlockEntity extends AbstractMachineBlockEntity
                 case DATA_COLONIST_CAP -> NeroColoniesConfig.OUTPOST_COLONIST_CAP.get();
                 case DATA_JOB_SLOTS -> NeroColoniesConfig.OUTPOST_JOB_SLOTS.get();
                 case DATA_STATIONS -> parent == null ? 0 : JobBoard.stationCount(parent.colonyId());
+                case DATA_ENERGY_LOW -> za.co.neroland.nerocolonies.menu.SplitValue.low(energy.getRaw());
+                case DATA_ENERGY_HIGH -> za.co.neroland.nerocolonies.menu.SplitValue.high(energy.getRaw());
                 default -> 0;
             };
         }

@@ -2,6 +2,7 @@ package za.co.neroland.nerocolonies.client.screen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,6 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
+
+import za.co.neroland.nerocolonies.client.GaugeTooltips;
 
 /**
  * Base class for NeroColonies container screens. It paints a procedural sci-fi hull panel (no PNG
@@ -68,6 +71,9 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
     protected int hoverX = -1;
     protected int hoverY = -1;
 
+    /** The gauges drawn this frame, for their hover tooltips (see {@link #gaugeTip}). */
+    private final GaugeTooltips.Hover gaugeHover = new GaugeTooltips.Hover();
+
     protected NeroColoniesScreen(T menu, Inventory playerInventory, Component title, int accent,
             int width, int height) {
         //? if >=26.1 {
@@ -86,9 +92,11 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
     public void extractContents(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick) {
         this.hoverX = mouseX - this.leftPos;
         this.hoverY = mouseY - this.topPos;
+        this.gaugeHover.clear();
         drawPanel(extractor);
         super.extractContents(extractor, mouseX, mouseY, partialTick);
         extractForeground(extractor);
+        this.gaugeHover.emit(extractor, this.font, mouseX, mouseY, this.hoveredSlot, this.width);
     }
     //?} else {
     /*// Before 26.1 the container screen paints its background in renderBg and draws the hovered-slot
@@ -97,8 +105,10 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
     public void render(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick) {
         this.hoverX = mouseX - this.leftPos;
         this.hoverY = mouseY - this.topPos;
+        this.gaugeHover.clear();
         super.render(extractor, mouseX, mouseY, partialTick);
         extractForeground(extractor);
+        this.gaugeHover.emit(extractor, this.font, mouseX, mouseY, this.hoveredSlot, this.width);
         this.renderTooltip(extractor, mouseX, mouseY);
     }
 
@@ -253,6 +263,22 @@ public abstract class NeroColoniesScreen<T extends AbstractContainerMenu> extend
     }
 
     // --- gauges (panel-relative dx/dy) --------------------------------------
+
+    /**
+     * A hover tooltip for the gauge at panel-relative {@code (dx, dy)}, {@code w} x {@code h} (its
+     * one-pixel outline included). Call it as the gauge is drawn; the one added last wins where two
+     * overlap. Tooltips show the machine or colony numbers already on screen, nothing more.
+     */
+    protected void gaugeTip(int dx, int dy, int w, int h, Consumer<List<Component>> builder) {
+        int x = this.leftPos + dx;
+        int y = this.topPos + dy;
+        this.gaugeHover.add(x - 1, y - 1, x + w + 1, y + h + 1, builder);
+    }
+
+    /** The client game tick the gauge rate windows sample on. */
+    protected static long gaugeTick() {
+        return GaugeTooltips.gameTick();
+    }
 
     /**
      * The trough every gauge sits in: outline, backing and quarter ticks. Painted unconditionally, so

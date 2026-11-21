@@ -4,6 +4,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+import za.co.neroland.nerocolonies.client.GaugeMath;
+import za.co.neroland.nerocolonies.client.GaugeTooltips;
+
 import za.co.neroland.nerocolonies.menu.OxygenGeneratorMenu;
 
 /**
@@ -29,6 +32,10 @@ public class OxygenGeneratorScreen extends NeroColoniesScreen<OxygenGeneratorMen
     private static final int CONTENT_WIDTH = WIDTH - 2 * CONTENT_X;
     private static final int STATUS_Y = 62;
 
+    /** Gauge tooltip rates, measured from the synced values over the last ~20 client ticks. */
+    private final GaugeMath.RateWindow energyWindow = new GaugeMath.RateWindow();
+    private final GaugeMath.RateWindow gasWindow = new GaugeMath.RateWindow();
+
     public OxygenGeneratorScreen(OxygenGeneratorMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, ACCENT, WIDTH, HEIGHT);
         this.titleLabelX = 8;
@@ -46,6 +53,9 @@ public class OxygenGeneratorScreen extends NeroColoniesScreen<OxygenGeneratorMen
 
     @Override
     protected void extractForeground(GuiGraphicsExtractor g) {
+        long tick = gaugeTick();
+        this.energyWindow.sample(tick, this.menu.energyStored());
+        this.gasWindow.sample(tick, this.menu.gasAmount());
         // The module column's caption lives in the title band, directly above the column it names —
         // the working area is too tight to spend a whole line on one word.
         labelRight(g, Component.translatable("gui.nerocolonies.slots.modules"), CONTENT_X,
@@ -54,10 +64,15 @@ public class OxygenGeneratorScreen extends NeroColoniesScreen<OxygenGeneratorMen
         gaugeRow(g, CONTENT_X, 22, GAUGE_WIDTH, Component.translatable("gui.nerocolonies.stat.power"),
                 percent(this.menu.energyPermille(), this.menu.energyScale()),
                 frac(this.menu.energyPermille(), this.menu.energyScale()), ACCENT, true);
+        gaugeTip(CONTENT_X, 22 + LINE, GAUGE_WIDTH, SEG_H, lines -> GaugeTooltips.energy(lines,
+                this.menu.energyStored(), this.menu.energyCapacity(), this.energyWindow.perTick()));
 
         gaugeRow(g, CONTENT_X, 42, GAUGE_WIDTH, Component.translatable("gui.nerocolonies.stat.oxygen"),
                 percent(this.menu.gasPermille(), this.menu.gasScale()),
                 frac(this.menu.gasPermille(), this.menu.gasScale()), ACCENT, false);
+        gaugeTip(CONTENT_X, 42 + LINE, GAUGE_WIDTH, BAR_H, lines -> GaugeTooltips.tank(lines,
+                Component.translatable("gui.nerocolonies.stat.oxygen"), this.menu.gasAmount(),
+                this.menu.gasCapacity(), this.gasWindow.perTick()));
 
         Component status;
         int colour;

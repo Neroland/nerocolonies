@@ -108,6 +108,16 @@ public class ColonyBeaconMenu extends AbstractContainerMenu {
 
     // --- synced colony state (client-safe readouts) -------------------------
 
+    /** Exact stored energy (gauge tooltips). */
+    public long energyStored() {
+        return SplitValue.join(this.data.get(ColonyBeaconBlockEntity.DATA_ENERGY_LOW), this.data.get(ColonyBeaconBlockEntity.DATA_ENERGY_HIGH));
+    }
+
+    /** The energy buffer's capacity. */
+    public long energyCapacity() {
+        return ColonyBeaconBlockEntity.ENERGY_CAPACITY;
+    }
+
     public int energyPermille() {
         return this.data.get(ColonyBeaconBlockEntity.DATA_ENERGY_PERMILLE);
     }

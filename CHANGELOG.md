@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-21
+
+### Changed
+
+- Hovering a gauge now shows what it is, how much, and the rate.
+
+- Transitioning to stable versions: the alpha/beta label is dropped from the version number, so this release is **0.8.1** (previously 0.8.1-beta.1). Nothing else changes with the version label.
+
 ## [0.8.1-beta.1] - 2026-11-16
 
 ### Added

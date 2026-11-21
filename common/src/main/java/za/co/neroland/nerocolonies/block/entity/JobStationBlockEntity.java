@@ -98,7 +98,10 @@ public class JobStationBlockEntity extends AbstractMachineBlockEntity
     public static final int DATA_BOUND = 9;
     public static final int DATA_OUTPOST = 10;
     public static final int DATA_EXPORT = 11;
-    public static final int DATA_SIZE = 12;
+    /** Exact stored energy as a 15-bit low/high pair (gauge tooltips; see menu.SplitValue). */
+    public static final int DATA_ENERGY_LOW = 12;
+    public static final int DATA_ENERGY_HIGH = 13;
+    public static final int DATA_SIZE = 14;
 
     /** The colony this station works for (a parent colony, when it stands in an outpost). */
     @Nullable
@@ -141,6 +144,8 @@ public class JobStationBlockEntity extends AbstractMachineBlockEntity
                 case DATA_BOUND -> JobStationBlockEntity.this.colonyId == null ? 0 : 1;
                 case DATA_OUTPOST -> JobStationBlockEntity.this.outpostId == null ? 0 : 1;
                 case DATA_EXPORT -> JobStationBlockEntity.this.exportOutput ? 1 : 0;
+                case DATA_ENERGY_LOW -> za.co.neroland.nerocolonies.menu.SplitValue.low(energy.getRaw());
+                case DATA_ENERGY_HIGH -> za.co.neroland.nerocolonies.menu.SplitValue.high(energy.getRaw());
                 default -> 0;
             };
         }
