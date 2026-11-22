@@ -215,6 +215,10 @@ The result is JSON containing exactly one player's own records and nobody else's
 **No other player's UUID appears anywhere in the result.** A colony's member list is never included:
 the export tells you which colonies you are in or marked by, not who else is in them.
 
+The same document is part of Neroland Core's `/neroland data exportme`, which gathers what every Neroland mod
+keeps about you in one reply. It is built in memory and shown as click-to-copy text; nothing is written to a
+file or logged.
+
 ## Erasure
 
 NeroColonies registers with Neroland Core's shared per-player data-erasure hook, so a single request

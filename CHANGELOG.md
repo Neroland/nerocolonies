@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-22
+
+### Added
+
+- NeroColonies' records are part of Neroland Core's `/neroland data exportme` (the same document as `/nerocolonies data export`), built in memory and never written to disk. Requires Neroland Core 1.20.1.
+- Neroland Core's land-protection check: other Neroland mods now treat colony claims as protected land. World effects with no player (radiation, explosions, automated breaking) leave a claim alone, and a player may act inside one only if they could build there (Owner, Chief, Ally or operator; never an Enemy).
+
+### Fixed
+
+- Error reporting no longer shares Sentry's global client with other mods. Every Neroland mod bundles the same Sentry library, so only the last mod to start kept reporting and its filter dropped everyone else's reports; NeroColonies now reports through its own client. Handled-error labels now reach the report too (they were set in a scope Sentry 8 never attached).
+
 ## [0.8.2] - 2026-11-26
 
 ### Added

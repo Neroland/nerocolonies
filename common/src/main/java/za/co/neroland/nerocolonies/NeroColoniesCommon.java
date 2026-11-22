@@ -82,6 +82,9 @@ public final class NeroColoniesCommon {
         // 8. Player-data erasure registration. Registered before any colony can exist on purpose:
         //    registering late is how an erasure request silently misses a store (POPIA/GDPR).
         NeroColoniesData.init();
+        za.co.neroland.nerocolonies.data.ColonyDataExport.register();
+        // Neroland Core's land-protection SPI: colony claims protect their land for every Neroland mod.
+        za.co.neroland.nerocolonies.colony.ColonyClaimCheck.register();
 
         // 9. Compat bridge detection — resolved once here through Services.PLATFORM.isModLoaded,
         //    never per interaction. This is also where the Nerospace planet adapter is probed; with
