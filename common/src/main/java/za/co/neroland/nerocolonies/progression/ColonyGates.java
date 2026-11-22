@@ -82,6 +82,14 @@ public final class ColonyGates {
     public static final Identifier FIRST_EXPORT = id("first_export");
     /** Record gate: the player founded an outpost. */
     public static final Identifier FIRST_OUTPOST = id("first_outpost");
+    /** Record gate: the owner's colony reached a population of {@link #POPULATION_25_SIZE}. */
+    public static final Identifier POPULATION_25 = id("population_25");
+    /** Record gate: the owner's colony reached a population of {@link #POPULATION_50_SIZE}. */
+    public static final Identifier POPULATION_50 = id("population_50");
+    /** The population that opens {@link #POPULATION_25} (matches the {@code population} channel's rung). */
+    public static final int POPULATION_25_SIZE = 25;
+    /** The population that opens {@link #POPULATION_50} (matches the {@code population} channel's rung). */
+    public static final int POPULATION_50_SIZE = 50;
 
     private ColonyGates() {
     }

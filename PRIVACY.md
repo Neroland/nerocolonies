@@ -272,8 +272,8 @@ colony and never a player.
 ## Progression gates
 
 NeroColonies writes player-scope progression gates into Neroland Core's progression store — two soft
-gates (`established`, `self_sufficient`), nine milestone records (the stages, life support online,
-food secure, first research, first export, first outpost) and two hook gates a quest pack may name as
+gates (`established`, `self_sufficient`), eleven milestone records (the stages, life support online,
+food secure, first research, first export, first outpost, population 25 and 50) and two hook gates a quest pack may name as
 a reward (`hook/supply_drop`, `hook/morale_boost`). Each is a flag keyed by the player's existing game
 UUID; it is stored by Core, not by this mod, and is removed by Core's own erasure registration when a
 player's data is erased. None of them is ever read to allow or deny anything, and none is logged

@@ -55,6 +55,7 @@ read by NeroColonies itself. They have no `requires` and gate nothing.
 | `nerocolonies:first_research` | The owner | The colony unlocks a research node |
 | `nerocolonies:first_export` | The owner | The colony sells its export buffer |
 | `nerocolonies:first_outpost` | The placing player | An outpost is founded |
+| `nerocolonies:population_25` / `population_50` | The owner | The colony first reaches a population of 25 / 50 |
 
 Gates are written for the player **online or offline**. `gateWritesEnabled=false` switches all of
 them off; nothing in NeroColonies changes, because nothing in NeroColonies reads a gate.

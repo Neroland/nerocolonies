@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-26
+
+### Added
+
+- New milestones `nerocolonies:population_25` and `nerocolonies:population_50`, opened for the colony's owner the first time it reaches that population. NeroTrophies uses them.
+
 ## [0.8.1] - 2026-11-21
 
 ### Changed

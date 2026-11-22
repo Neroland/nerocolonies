@@ -383,8 +383,8 @@ public final class ColonyTicker {
     }
 
     /**
-     * The owner's two "first time it was fine" record gates: life support holding, and food in store
-     * with nobody starving. Written once each (the {@code isOpen} check inside {@code record} makes
+     * The owner's "first time it was fine" record gates: life support holding, food in store with
+     * nobody starving, and the population reaching 25 and 50. Written once each (the {@code isOpen} check inside {@code record} makes
      * the usual cycle one lookup per gate), online or offline, never for the gallery sandbox.
      */
     private static void recordFirsts(ServerLevel level, Colony colony) {
@@ -396,6 +396,12 @@ public final class ColonyTicker {
         }
         if (colony.foodStock() > 0 && !FoodSupply.starving(colony)) {
             ColonyGates.recordForOwner(level.getServer(), colony, ColonyGates.FOOD_SECURE);
+        }
+        if (colony.population() >= ColonyGates.POPULATION_25_SIZE) {
+            ColonyGates.recordForOwner(level.getServer(), colony, ColonyGates.POPULATION_25);
+        }
+        if (colony.population() >= ColonyGates.POPULATION_50_SIZE) {
+            ColonyGates.recordForOwner(level.getServer(), colony, ColonyGates.POPULATION_50);
         }
     }
 
