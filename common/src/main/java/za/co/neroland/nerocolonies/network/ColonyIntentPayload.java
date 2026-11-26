@@ -93,8 +93,13 @@ public record ColonyIntentPayload(int op, BlockPos pos, String argument) impleme
     /** Separates the role token from the player name. Not a character a role token can contain. */
     public static final char ROLE_SEPARATOR = '|';
 
+    //? if >=1.20.5 {
     public static final Type<ColonyIntentPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_intent"));
+    //?} else {
+    /*public static final Type<ColonyIntentPayload> TYPE = new Type<>(
+            Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_intent"), ColonyIntentPayload.class);
+    *///?}
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ColonyIntentPayload> STREAM_CODEC =
             StreamCodec.of(ColonyIntentPayload::write, ColonyIntentPayload::read);

@@ -13,9 +13,11 @@ plugins {
 // MC version comes from the Stonecutter node (e.g. :neoforge:26.1.2), not a global property.
 def mc = stonecutter.current.version
 def neoVersion = project.findProperty("neo_version_${mc}")
-def jeiVersion = project.findProperty("jei_version_${mc}")
+def jeiMc = mc == '1.20.5' ? '1.20.6' : mc == '1.20.3' ? '1.20.4' : mc
+def jeiVersion = project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
-def nerolandcoreVersion = project.findProperty('nerolandcore_version')
+def nerolandcoreVersion = rootProject.property('nerolandcore_version')
+def neroeconomyVersion = rootProject.property('neroeconomy_version')
 // Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
 def mcCeiling = project.findProperty("mc_ceiling_${mc}")
 def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
@@ -92,12 +94,12 @@ dependencies {
     // NeroEconomy — OPTIONAL. Its public api package on the compile classpath only, for the one bridge
     // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
-    compileOnly "za.co.neroland.neroeconomy:neroeconomy-neoforge-${mc}:${rootProject.neroeconomy_version}"
+    compileOnly "za.co.neroland.neroeconomy:neroeconomy-neoforge-${mc}:${neroeconomyVersion}"
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). Dev clients
     // load it only with -PwithNerospace, so the default run proves NeroColonies stays optional-clean.
     if (nerospaceOn) {
-        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-neoforge-${mc}:${rootProject.nerospace_version}"
+        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-neoforge-${mc}:${rootProject.property('nerospace_version')}"
         compileOnly nerospaceCoord
         if (project.hasProperty('withNerospace')) {
             runtimeOnly nerospaceCoord
@@ -112,9 +114,9 @@ dependencies {
     // is compile-time; the full NeoForge artifact is runtime-only (dev/test) so it is never published as a
     // hard dependency. Per-MC-version via jei_version_<mc> (BlameJared maven, inherited from the root).
     if (jeiVersion) {
-        compileOnly "mezz.jei:jei-${mc}-common-api:${jeiVersion}"
-        compileOnly "mezz.jei:jei-${mc}-neoforge-api:${jeiVersion}"
-        runtimeOnly "mezz.jei:jei-${mc}-neoforge:${jeiVersion}"
+        compileOnly "mezz.jei:jei-${jeiMc}-common-api:${jeiVersion}"
+        compileOnly "mezz.jei:jei-${jeiMc}-neoforge-api:${jeiVersion}"
+        if (mc != '1.20.5') runtimeOnly "mezz.jei:jei-${jeiMc}-neoforge:${jeiVersion}"
     }
 
     // EMI (optional recipe-viewer compat). EMI ships one jar per loader with its API inside, so compile
@@ -169,9 +171,41 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
     inputs.properties(props)
     expand(props)
     from "${branchDir}/src/main/templates"
+    if (stonecutter.eval(mc, '<1.20.5')) {
+        filesMatching('META-INF/neoforge.mods.toml') {
+            name = 'mods.toml'
+            filter { line -> line.replace('type = "required"', 'mandatory = true')
+                                 .replace('type = "optional"', 'mandatory = false') }
+        }
+    }
     into layout.buildDirectory.dir('generated/sources/modMetadata')
 }
 sourceSets.main.resources.srcDir generateModMetadata
+
+// NeoForge 20.5's POM predates the ModDevGradle variants. The original userdev jar supplies the
+// game patches and the original POM supplies dependencies for the compile and test classpaths.
+if (mc == '1.20.5') {
+    dependencies.components.withModule('net.neoforged:neoforge') { details ->
+        if (details.id.version == neoVersion) {
+            details.withVariant('sources') {
+                withDependencies { clear() }
+            }
+            details.addVariant('legacyModDevBundle') {
+                withCapabilities { addCapability('net.neoforged', 'neoforge-moddev-bundle', neoVersion) }
+                withFiles { addFile("neoforge-${neoVersion}-userdev.jar") }
+            }
+            ['compile', 'runtime'].each { pomVariant ->
+                details.addVariant("legacyModDev-${pomVariant}", pomVariant) {
+                    withCapabilities {
+                        removeCapability('net.neoforged', 'neoforge')
+                        addCapability('net.neoforged', 'neoforge-dependencies', neoVersion)
+                    }
+                    withFiles { removeAllFiles() }
+                }
+            }
+        }
+    }
+}
 
 neoForge {
     version = neoVersion

@@ -356,13 +356,16 @@ public final class ColonyIntents {
         }
         ColonyState colonies = ColonyState.get(server);
         BlockEntity blockEntity = level.getBlockEntity(pos);
-        UUID fromBlock = switch (blockEntity) {
-            case ColonyBeaconBlockEntity beacon -> beacon.colonyId();
-            case ResearchStationBlockEntity station -> station.colonyId();
-            case JobStationBlockEntity station -> station.colonyId();
-            case ColonyDepotBlockEntity depot -> depot.colonyId();
-            case null, default -> null;
-        };
+        UUID fromBlock = null;
+        if (blockEntity instanceof ColonyBeaconBlockEntity beacon) {
+            fromBlock = beacon.colonyId();
+        } else if (blockEntity instanceof ResearchStationBlockEntity station) {
+            fromBlock = station.colonyId();
+        } else if (blockEntity instanceof JobStationBlockEntity station) {
+            fromBlock = station.colonyId();
+        } else if (blockEntity instanceof ColonyDepotBlockEntity depot) {
+            fromBlock = depot.colonyId();
+        }
         if (fromBlock != null) {
             Colony colony = colonies.colony(fromBlock);
             if (colony != null) {

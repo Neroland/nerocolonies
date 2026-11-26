@@ -4,16 +4,23 @@
 plugins {
     id 'net.minecraftforge.gradle'
     id 'net.minecraftforge.jarjar'
+    id 'net.minecraftforge.renamer' apply false
     id 'eclipse'
     id 'maven-publish'
 }
 
 // MC version comes from the Stonecutter node (e.g. :forge:26.1.2), not a global property.
 def mc = stonecutter.current.version
+def preComponents = stonecutter.eval(mc, '<1.20.5')
+if (preComponents) {
+    apply plugin: 'net.minecraftforge.renamer'
+}
 def forgeVersion = project.findProperty("forge_version_${mc}")
-def jeiVersion = project.findProperty("jei_version_${mc}")
+def jeiMc = mc == '1.20.5' ? '1.20.6' : mc == '1.20.3' ? '1.20.4' : mc
+def jeiVersion = project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
-def nerolandcoreVersion = project.findProperty('nerolandcore_version')
+def nerolandcoreVersion = rootProject.property('nerolandcore_version')
+def neroeconomyVersion = rootProject.property('neroeconomy_version')
 // Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
 def mcCeiling = project.findProperty("mc_ceiling_${mc}")
 def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
@@ -134,12 +141,12 @@ dependencies {
     // NeroEconomy — OPTIONAL. Its public api package on the compile classpath only, for the one bridge
     // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
-    compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${mc}:${rootProject.neroeconomy_version}"
+    compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${mc}:${neroeconomyVersion}"
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). Dev clients
     // load it only with -PwithNerospace.
     if (nerospaceOn) {
-        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-forge-${mc}:${rootProject.nerospace_version}"
+        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-forge-${mc}:${rootProject.property('nerospace_version')}"
         compileOnly nerospaceCoord
         if (project.hasProperty('withNerospace')) {
             runtimeOnly nerospaceCoord
@@ -151,7 +158,7 @@ dependencies {
 
     // JEI common API only; Forge 26.x loader artifacts are not yet published on the pinned JEI lines.
     if (jeiVersion) {
-        compileOnly "mezz.jei:jei-${mc}-common-api:${jeiVersion}"
+        compileOnly "mezz.jei:jei-${jeiMc}-common-api:${jeiVersion}"
     }
 
     // EMI: compile-only, so any shared compat/emi plugin compiles in the Forge cells. The port publishes no
@@ -163,6 +170,18 @@ dependencies {
 }
 
 // Expand mods.toml from src/main/templates into generated resources.
+if (preComponents) {
+    renamer.mappings.from minecraft.dependency.toSrgFile
+    def bundled = tasks.named('jarJar', Jar) {
+        archiveClassifier = 'dev-all'
+    }
+    renamer.classes('renameReleaseJar', bundled) {
+        archiveClassifier = 'all'
+    }
+    tasks.named('assemble') { dependsOn 'renameReleaseJar' }
+}
+
+
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     def props = [
         mod_id                    : rootProject.mod_id,

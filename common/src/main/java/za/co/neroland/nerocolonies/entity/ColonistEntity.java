@@ -167,6 +167,14 @@ public class ColonistEntity extends PathfinderMob {
         builder.define(DATA_PROFESSION, "");
     }
 
+    //? if <1.20.5 {
+    /*@Override
+    protected float getStandingEyeHeight(net.minecraft.world.entity.Pose pose,
+            net.minecraft.world.entity.EntityDimensions dimensions) {
+        return 1.62F;
+    }
+    *///?}
+
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));

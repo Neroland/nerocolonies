@@ -552,29 +552,19 @@ public final class ColonyDefinitions {
             // (see dropMissing); that is expected, so it is not reported.
             boolean typeFiltered = !node.colonyTypes().isEmpty();
             for (ResearchEffect effect : node.effects()) {
-                switch (effect) {
-                    case ResearchEffect.Unknown unknown -> warn(collected, node.id(),
-                            "unknown effect type " + unknown.unresolvedType() + " (ignored)", false);
-                    case ResearchEffect.JobUnlock unlock -> {
-                        if (!validJobs.containsKey(unlock.job()) && !typeFiltered) {
-                            warn(collected, node.id(),
-                                    "unlocks unknown job " + unlock.job() + " (ignored)", false);
-                        }
+                if (effect instanceof ResearchEffect.Unknown unknown) {
+                    warn(collected, node.id(), "unknown effect type " + unknown.unresolvedType() + " (ignored)", false);
+                } else if (effect instanceof ResearchEffect.JobUnlock unlock) {
+                    if (!validJobs.containsKey(unlock.job()) && !typeFiltered) {
+                        warn(collected, node.id(), "unlocks unknown job " + unlock.job() + " (ignored)", false);
                     }
-                    case ResearchEffect.HousingTierUnlock unlock -> {
-                        if (!validHousing.containsKey(unlock.tier())) {
-                            warn(collected, node.id(),
-                                    "unlocks unknown housing tier " + unlock.tier() + " (ignored)", false);
-                        }
+                } else if (effect instanceof ResearchEffect.HousingTierUnlock unlock) {
+                    if (!validHousing.containsKey(unlock.tier())) {
+                        warn(collected, node.id(), "unlocks unknown housing tier " + unlock.tier() + " (ignored)", false);
                     }
-                    case ResearchEffect.ExportUnlock unlock -> {
-                        if (!validExports.containsKey(unlock.export()) && !typeFiltered) {
-                            warn(collected, node.id(),
-                                    "unlocks unknown export " + unlock.export() + " (ignored)", false);
-                        }
-                    }
-                    default -> {
-                        // Numeric effects reference nothing and cannot dangle.
+                } else if (effect instanceof ResearchEffect.ExportUnlock unlock) {
+                    if (!validExports.containsKey(unlock.export()) && !typeFiltered) {
+                        warn(collected, node.id(), "unlocks unknown export " + unlock.export() + " (ignored)", false);
                     }
                 }
             }

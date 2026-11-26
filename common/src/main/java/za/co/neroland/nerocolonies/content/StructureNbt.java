@@ -44,15 +44,30 @@ public final class StructureNbt {
 
     /** Reads {@code data/<ns>/structure/<path>.nbt} and converts it. */
     public static DataResult<Blueprint.Grid> load(ResourceManager resources, Identifier structure) {
+        //? if >=1.21 {
+        String directory = "structure/";
+        //?} else {
+        /*String directory = "structures/";
+        *///?}
         Identifier file = Identifier.fromNamespaceAndPath(structure.getNamespace(),
-                "structure/" + structure.getPath() + ".nbt");
+                directory + structure.getPath() + ".nbt");
         Optional<Resource> resource = resources.getResource(file);
         if (resource.isEmpty()) {
             return DataResult.error(() -> "structure file " + file + " not found");
         }
         try (InputStream in = resource.get().open()) {
+            //? if >=1.20.3 {
             CompoundTag root = NbtIo.readCompressed(in, NbtAccounter.create(64L * 1024L * 1024L));
             return convert(root);
+            //?} else {
+            /*try (var data = new java.io.DataInputStream(new java.util.zip.GZIPInputStream(in))) {
+                //? if >=1.20.2 {
+                return convert(NbtIo.read(data, NbtAccounter.create(64L * 1024L * 1024L)));
+                //?} else {
+                return convert(NbtIo.read(data, new NbtAccounter(64L * 1024L * 1024L)));
+                //?}
+            }
+            *///?}
         } catch (Exception e) {
             return DataResult.error(() -> "structure file " + file + " could not be read ("
                     + e.getClass().getSimpleName() + ")");

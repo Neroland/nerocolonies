@@ -48,8 +48,13 @@ public record ColonyDefinitionsPayload(int generation, List<String> research, Li
     public static final ColonyDefinitionsPayload EMPTY =
             new ColonyDefinitionsPayload(-1, List.of(), List.of());
 
+    //? if >=1.20.5 {
     public static final Type<ColonyDefinitionsPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_definitions"));
+    //?} else {
+    /*public static final Type<ColonyDefinitionsPayload> TYPE = new Type<>(
+            Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_definitions"), ColonyDefinitionsPayload.class);
+    *///?}
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ColonyDefinitionsPayload> STREAM_CODEC =
             StreamCodec.of(ColonyDefinitionsPayload::write, ColonyDefinitionsPayload::read);

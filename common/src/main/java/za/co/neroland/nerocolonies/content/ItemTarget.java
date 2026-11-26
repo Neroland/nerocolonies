@@ -41,9 +41,13 @@ public record ItemTarget(Optional<Identifier> item, Optional<Identifier> tag, in
                     Identifier.CODEC.optionalFieldOf("tag").forGetter(ItemTarget::tag),
                     Codec.INT.optionalFieldOf("count", 1).forGetter(ItemTarget::count)
             ).apply(inst, ItemTarget::new))
-            .validate(target -> target.item().isPresent() == target.tag().isPresent()
-                    ? DataResult.error(() -> "an item target needs exactly one of 'item' or 'tag'")
-                    : DataResult.success(target));
+            .flatXmap(ItemTarget::validate, ItemTarget::validate);
+
+    private static DataResult<ItemTarget> validate(ItemTarget target) {
+        return target.item().isPresent() == target.tag().isPresent()
+                ? DataResult.error(() -> "an item target needs exactly one of 'item' or 'tag'")
+                : DataResult.success(target);
+    }
 
     public static final Codec<ItemTarget> CODEC = MAP_CODEC.codec();
 

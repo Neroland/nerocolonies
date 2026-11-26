@@ -199,8 +199,13 @@ public record ColonySnapshotPayload(
             false, BlockPos.ZERO, "", "", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0L, 0, 0, false, false,
             "", 0, 0, List.of(), List.of(), Life.NONE);
 
+    //? if >=1.20.5 {
     public static final Type<ColonySnapshotPayload> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_snapshot"));
+    //?} else {
+    /*public static final Type<ColonySnapshotPayload> TYPE = new Type<>(
+            Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "colony_snapshot"), ColonySnapshotPayload.class);
+    *///?}
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ColonySnapshotPayload> STREAM_CODEC =
             StreamCodec.of(ColonySnapshotPayload::write, ColonySnapshotPayload::read);

@@ -27,6 +27,12 @@ import za.co.neroland.nerocolonies.colony.ColonyType;
  * blueprints, two jobs and one research node, and every one of them is filtered to its own type only.
  */
 class PlanetaryProfilesTest {
+    //? if >=1.21 {
+    private static final String PLANETARY_TAGS = "data/nerocolonies/tags/item/planetary/";
+    //?} else {
+    /*private static final String PLANETARY_TAGS = "data/nerocolonies/tags/items/planetary/";
+    *///?}
+
 
     private static final String ROOT = "data/nerocolonies/nerocolonies/";
 
@@ -143,7 +149,7 @@ class PlanetaryProfilesTest {
                 "amber", "minecraft:honeycomb",
                 "voidglass", "minecraft:obsidian");
         for (Map.Entry<String, String> entry : fallbacks.entrySet()) {
-            JsonElement tag = json("data/nerocolonies/tags/item/planetary/" + entry.getKey() + ".json");
+            JsonElement tag = json(PLANETARY_TAGS + "" + entry.getKey() + ".json");
             boolean found = false;
             for (JsonElement value : tag.getAsJsonObject().getAsJsonArray("values")) {
                 if (value.isJsonPrimitive() && entry.getValue().equals(value.getAsString())) {
@@ -153,7 +159,7 @@ class PlanetaryProfilesTest {
             assertTrue(found, entry.getKey() + " keeps " + entry.getValue());
         }
         // The two Nerospace-only tags parse too (they are empty without Nerospace, on purpose).
-        json("data/nerocolonies/tags/item/planetary/helium3.json");
-        json("data/nerocolonies/tags/item/planetary/voidglass_lens.json");
+        json(PLANETARY_TAGS + "helium3.json");
+        json(PLANETARY_TAGS + "voidglass_lens.json");
     }
 }

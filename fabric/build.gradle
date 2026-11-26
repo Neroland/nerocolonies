@@ -21,9 +21,11 @@ def mcCeiling = project.findProperty("mc_ceiling_${mc}")
 def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
 def minecraftRequirement = mcCeiling ? ">=${mcFloor} <${mcCeiling}" : ">=${mc}"
 def fabricApi = project.findProperty("fabric_api_version_${mc}")
-def jeiVersion = project.findProperty("jei_version_${mc}")
+def jeiMc = mc == '1.20.5' ? '1.20.6' : mc == '1.20.3' ? '1.20.4' : mc
+def jeiVersion = project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_fabric_${mc}")
-def nerolandcoreVersion = project.findProperty('nerolandcore_version')
+def nerolandcoreVersion = rootProject.property('nerolandcore_version')
+def neroeconomyVersion = rootProject.property('neroeconomy_version')
 
 // This node's projectDir is <loader>/versions/<v>; the authoritative loader source +
 // resources live in the BRANCH root (fabric/). Resolve branch-root paths via the parent.
@@ -116,16 +118,16 @@ dependencies {
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
     if (obfuscated) {
         // 1.21.x: NeroEconomy is an intermediary-named mod jar there, so Loom must remap it.
-        modCompileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${rootProject.neroeconomy_version}"
+        modCompileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${neroeconomyVersion}"
     } else {
-        compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${rootProject.neroeconomy_version}"
+        compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${neroeconomyVersion}"
     }
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). On 1.21.x
     // the sibling Nero mods are intermediary-named mod jars, so Loom must remap them (mod*). Dev clients load
     // it only with -PwithNerospace.
     if (nerospaceOn) {
-        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-fabric-${mc}:${rootProject.nerospace_version}"
+        def nerospaceCoord = "za.co.neroland.nerospace:nerospace-fabric-${mc}:${rootProject.property('nerospace_version')}"
         if (obfuscated) {
             modCompileOnly nerospaceCoord
         } else {
@@ -150,12 +152,12 @@ dependencies {
     // against the Fabric JEI mod at dev runtime. JEI is a soft dependency (compile-time API only; the mod
     // is runtime-only). Same per-MC version as NeoForge (jei_version_<mc>, BlameJared maven from the root).
     if (jeiVersion) {
-        compileOnly "mezz.jei:jei-${mc}-common-api:${jeiVersion}"
+        compileOnly "mezz.jei:jei-${jeiMc}-common-api:${jeiVersion}"
         // 1.21.x: the Mojang-named common API is enough to compile the shared plugin; the Fabric JEI jars
         // are intermediary-named there, so they are only wired on de-obfuscated 26.x.
         if (!obfuscated) {
-            compileOnly "mezz.jei:jei-${mc}-fabric-api:${jeiVersion}"
-            runtimeOnly "mezz.jei:jei-${mc}-fabric:${jeiVersion}"
+            compileOnly "mezz.jei:jei-${jeiMc}-fabric-api:${jeiVersion}"
+            if (mc != '1.20.5') runtimeOnly "mezz.jei:jei-${jeiMc}-fabric:${jeiVersion}"
         }
     }
 
@@ -177,6 +179,7 @@ dependencies {
 // Run & Debug works — while values stay dynamic (sourced from gradle.properties).
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     def props = [
+        java_version: project.javaRelease,
         mod_id               : rootProject.mod_id,
         mod_version          : rootProject.mod_version,
         mod_name             : rootProject.mod_name,

@@ -40,9 +40,22 @@ public class NeedsBoardBlock extends Block {
         super(properties);
     }
 
+    //? if >=1.20.5 {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
             BlockHitResult hit) {
+    //?} else {
+    /*@Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
+            InteractionHand hand, BlockHitResult hit) {
+        ItemStack held = player.getItemInHand(hand);
+        if (!held.isEmpty()) {
+            return contribute(held, level, pos, player);
+        }
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
+    *///?}
         if (!(level instanceof ServerLevel serverLevel) || !(player instanceof ServerPlayer serverPlayer)) {
             return InteractionResult.SUCCESS;
         }
@@ -78,6 +91,7 @@ public class NeedsBoardBlock extends Block {
         return InteractionResult.SUCCESS;
     }
 
+    //? if >=1.20.5 {
     @Override
     //? if >=1.21.2 {
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -91,6 +105,7 @@ public class NeedsBoardBlock extends Block {
         return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
     *///?}
+    //?}
 
     /** Hands the held stack to the board: the colony takes what it currently needs. */
     private static InteractionResult contribute(ItemStack stack, Level level, BlockPos pos, Player player) {

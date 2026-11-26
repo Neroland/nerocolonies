@@ -133,10 +133,16 @@ public final class GratitudeCache {
     }
 
     /** The loot table for a stage. */
+    //? if >=1.20.5 {
     public static ResourceKey<LootTable> tableFor(ColonyStage stage) {
         return ResourceKey.create(Registries.LOOT_TABLE, Identifier.fromNamespaceAndPath(
                 NeroColoniesCommon.MOD_ID, "gratitude/tier_" + (stage.ordinal() + 1)));
     }
+    //?} else {
+    /*public static Identifier tableFor(ColonyStage stage) {
+        return Identifier.fromNamespaceAndPath(NeroColoniesCommon.MOD_ID, "gratitude/tier_" + (stage.ordinal() + 1));
+    }
+    *///?}
 
     /** Stocks the cache if it is time. Called once per colony cycle with the Quartermaster count. */
     public static void tick(ServerLevel level, Colony colony, int quartermasters) {
@@ -179,7 +185,11 @@ public final class GratitudeCache {
      * fit, so nothing is ever thrown away.
      */
     public static boolean stock(ServerLevel level, ColonyLife.Life life, ColonyStage stage) {
+        //? if >=1.20.5 {
         LootTable table = level.getServer().reloadableRegistries().getLootTable(tableFor(stage));
+        //?} else {
+        /*LootTable table = level.getServer().getLootData().getLootTable(tableFor(stage));
+        *///?}
         List<ItemStack> roll = table.getRandomItems(new LootParams.Builder(level).create(LootContextParamSets.EMPTY));
         if (roll.isEmpty()) {
             return true;

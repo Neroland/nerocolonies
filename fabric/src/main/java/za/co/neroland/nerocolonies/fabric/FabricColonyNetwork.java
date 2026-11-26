@@ -1,5 +1,6 @@
 package za.co.neroland.nerocolonies.fabric;
 
+//? if >=1.20.5 {
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -73,3 +74,85 @@ public final class FabricColonyNetwork implements NetworkPlatform {
         ClientPlayNetworking.send(payload);
     }
 }
+//?} else {
+/*import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import za.co.neroland.nerocolonies.network.ColonyNetwork;
+import za.co.neroland.nerocolonies.platform.NetworkPlatform;
+import za.co.neroland.nerolandcore.network.legacy.LegacyPayload;
+import za.co.neroland.nerolandcore.network.legacy.LegacyStreamCodec;
+
+public final class FabricColonyNetwork implements NetworkPlatform {
+    public static void registerCommon() {
+        ColonyNetwork.serverbound().forEach(FabricColonyNetwork::registerServerbound);
+    }
+
+    public static void registerClient() {
+        ColonyNetwork.clientbound().forEach(FabricColonyNetwork::registerClientbound);
+    }
+
+    private static <T extends LegacyPayload> void registerServerbound(ColonyNetwork.Serverbound<T> packet) {
+        ServerPlayNetworking.registerGlobalReceiver(packet.type().id(), (server, player, handler, buffer, sender) -> {
+            T message = packet.codec().decode(buffer);
+            server.execute(() -> packet.handler().accept(message, player));
+        });
+    }
+
+    private static <T extends LegacyPayload> void registerClientbound(ColonyNetwork.Clientbound<T> packet) {
+        ClientPlayNetworking.registerGlobalReceiver(packet.type().id(), (client, handler, buffer, sender) -> {
+            T message = packet.codec().decode(buffer);
+            client.execute(() -> packet.handler().accept(message));
+        });
+    }
+
+    @Override
+    public void sendToPlayer(ServerPlayer player, LegacyPayload payload) {
+        var id = payload.type().id();
+        if (!ServerPlayNetworking.canSend(player, id)) {
+            return;
+        }
+        for (var packet : ColonyNetwork.clientbound()) {
+            if (packet.type().equals(payload.type())) {
+                ServerPlayNetworking.send(player, id, encodeClientbound(packet, payload));
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Unregistered clientbound payload " + id);
+    }
+
+    @Override
+    public void sendToServer(LegacyPayload payload) {
+        var id = payload.type().id();
+        if (!ClientPlayNetworking.canSend(id)) {
+            return;
+        }
+        for (var packet : ColonyNetwork.serverbound()) {
+            if (packet.type().equals(payload.type())) {
+                ClientPlayNetworking.send(id, encodeServerbound(packet, payload));
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Unregistered serverbound payload " + id);
+    }
+
+    private static <T extends LegacyPayload> FriendlyByteBuf encodeClientbound(
+            ColonyNetwork.Clientbound<T> packet, LegacyPayload payload) {
+        return encode(packet.type(), packet.codec(), payload);
+    }
+
+    private static <T extends LegacyPayload> FriendlyByteBuf encodeServerbound(
+            ColonyNetwork.Serverbound<T> packet, LegacyPayload payload) {
+        return encode(packet.type(), packet.codec(), payload);
+    }
+
+    private static <T extends LegacyPayload> FriendlyByteBuf encode(LegacyPayload.Type<T> type,
+            LegacyStreamCodec<? super FriendlyByteBuf, T> codec, LegacyPayload payload) {
+        FriendlyByteBuf buffer = PacketByteBufs.create();
+        codec.encode(buffer, type.payloadClass().cast(payload));
+        return buffer;
+    }
+}
+*///?}

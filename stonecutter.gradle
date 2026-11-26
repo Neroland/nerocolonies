@@ -26,9 +26,47 @@ allprojects {
 // AFTER Stonecutter's own //? processing. Only for pure renames Mojang made with no behaviour change;
 // anything else uses //? if blocks in the source. Loader src/ trees do NOT get these (use //? there).
 ext.legacyRenames = [
+    [below: '1.20.5', from: /\bItemStack\.isSameItemSameComponents\(/, to: 'ItemStack.isSameItemSameTags('],
+    [below: '1.20.5', from: /stack\.getComponentsPatch\(\)\.isEmpty\(\)/, to: '!stack.hasTag()'],
+    [below: '1.20.5', from: /\.setTame\(true, false\)/, to: '.setTame(true)'],
+    [below: '1.20.5', from: /rows\.removeFirst\(\)/, to: 'rows.remove(0)'],
+    [below: '1.20.5', from: /\.eyeHeight\(1\.62F\)/, to: ''],
+    [below: '1.20.5', from: /(\brenderNameTag\([^;]*?buffers, (?:int )?light), (?:float )?partialTick\)/, to: '$1)'],
+    [below: '1.20.5', from: /(ValueInput|ValueOutput)\.of\(tag, this\.registryAccess\(\)\)/, to: '$1.of(tag, null)'],
+    [below: '1.20.5', from: /inventory\.createTag\(this\.registryAccess\(\)\)/, to: 'inventory.createTag()'],
+    [below: '1.20.5', from: /(inventory\.fromTag\(input\.tag\(\)\.getList\("Inventory", net\.minecraft\.nbt\.Tag\.TAG_COMPOUND\)), this\.registryAccess\(\)\)/, to: '$1)'],
+    [below: '1.20.3', from: /\bBlocks\.SHORT_GRASS\b/, to: 'Blocks.GRASS'],
+    [below: '1.20.5', from: /void saveAdditional\(((?:net\.minecraft\.nbt\.)?CompoundTag \w+), (?:net\.minecraft\.core\.)?HolderLookup\.Provider registries\)/, to: 'void saveAdditional($1)'],
+    [below: '1.20.5', from: /protected void loadAdditional\(((?:net\.minecraft\.nbt\.)?CompoundTag \w+), (?:net\.minecraft\.core\.)?HolderLookup\.Provider registries\)/, to: 'public void load($1)'],
+    [below: '1.20.5', from: /super\.saveAdditional\((\w+), registries\)/, to: 'super.saveAdditional($1)'],
+    [below: '1.20.5', from: /super\.loadAdditional\((\w+), registries\)/, to: 'super.load($1)'],
+    [below: '1.20.5', from: /(ValueInput|ValueOutput)\.of\((\w+), registries\)/, to: '$1.of($2, null)'],
+    [below: '1.20.5', from: /CompoundTag getUpdateTag\(HolderLookup\.Provider registries\)/, to: 'CompoundTag getUpdateTag()'],
+    [below: '1.20.5', from: /super\.getUpdateTag\(registries\)/, to: 'super.getUpdateTag()'],
+    [below: '1.20.5', from: /saveCustomOnly\(registries\)/, to: 'saveWithoutMetadata()'],
+    [below: '1.20.5', from: /\bItemStack\.OPTIONAL_CODEC\b/, to: 'ItemStack.CODEC'],
+    [below: '1.20.5', from: /\bItem\.TooltipContext context\b/, to: 'net.minecraft.world.level.Level context'],
+    [below: '1.20.5', from: /\bprotected (BlockState rotate|BlockState mirror|RenderShape getRenderShape|BlockState updateShape|void onRemove|VoxelShape getShape|float getDestroyProgress|boolean hasAnalogOutputSignal|int getAnalogOutputSignal)\(/, to: 'public $1('],
+    [below: '1.20.5', from: /protected InteractionResult useWithoutItem\((BlockState state, Level level, BlockPos pos, Player player,)\s*BlockHitResult/, to: 'public InteractionResult use($1 net.minecraft.world.InteractionHand hand, BlockHitResult'],
+    [below: '1.20.5', from: /void defineSynchedData\(SynchedEntityData\.Builder builder\)/, to: 'void defineSynchedData()'],
+    [below: '1.20.5', from: /super\.defineSynchedData\(builder\);/, to: 'super.defineSynchedData();'],
+    [below: '1.20.5', from: /\bbuilder\.define\((DATA_\w+),/, to: 'this.entityData.define($1,'],
+    [below: '1.20.5', from: /\bMath\.clamp\(/, to: 'net.minecraft.util.Mth.clamp('],
+    [below: '1.20.3', from: /\breturn super\.playerWillDestroy\(/, to: 'super.playerWillDestroy('],
+    [below: '1.20.3', from: /\bBlockState playerWillDestroy\(/, to: 'void playerWillDestroy('],
+    [below: '1.20.5', from: /\.lenientOptionalFieldOf\(("[^"]+"), ([A-Za-z_.]+)\)/, to: '.optionalFieldOf($1, $2).orElse($2)'],
+    [below: '1.20.5', from: /\.getOrThrow\(\)/, to: '.result().orElseThrow()'],
+    [below: '1.20.5', from: /import net\.minecraft\.network\.RegistryFriendlyByteBuf;/, to: 'import net.minecraft.network.FriendlyByteBuf;'],
+    [below: '1.20.5', from: /\bRegistryFriendlyByteBuf\b/, to: 'FriendlyByteBuf'],
+    [below: '1.20.5', from: /import net\.minecraft\.network\.codec\.StreamCodec;/, to: 'import za.co.neroland.nerolandcore.network.legacy.LegacyStreamCodec;'],
+    [below: '1.20.5', from: /\bStreamCodec\b/, to: 'LegacyStreamCodec'],
+    [below: '1.20.5', from: /import net\.minecraft\.network\.protocol\.common\.custom\.CustomPacketPayload;/, to: 'import za.co.neroland.nerolandcore.network.legacy.LegacyPayload;'],
+    [below: '1.20.5', from: /(?<![.\w])CustomPacketPayload\b/, to: 'LegacyPayload'],
     // 1.21.11 renamed ResourceLocation -> Identifier and ResourceKey.location() -> identifier().
     [below: '1.21.11', from: /\bIdentifier\b/, to: 'ResourceLocation'],
     [below: '1.21.11', from: /\.identifier\(\)/, to: '.location()'],
+    [below: '1.21', from: /\b((?:net\.minecraft\.resources\.)?ResourceLocation)\s*\.(?:fromNamespaceAndPath|parse|withDefaultNamespace)\(/, to: 'new $1('],
+    [below: '1.21', from: /\bResourceLocation::parse\b/, to: 'ResourceLocation::new'],
     // 26.1 renamed GuiGraphics -> GuiGraphicsExtractor and its drawString(..) -> text(..). The text()
     // rename is keyed on the receiver names this codebase uses for the graphics object (g / graphics).
     [below: '26.1', from: /\bGuiGraphicsExtractor\b/, to: 'GuiGraphics'],
@@ -89,8 +127,64 @@ subprojects {
 
     // Minecraft 1.21.x runs on Java 21, so its cells must emit Java 21 bytecode (and may not use
     // Java 22+ language features). 26.x cells stay on Java 25. A node's project name IS its MC version.
-    def javaRelease = project.name.startsWith('1.') ? 21 : 25
+    def java17Versions = ['1.20', '1.20.1', '1.20.2', '1.20.3', '1.20.4']
+    def javaRelease = project.name in java17Versions ? 17 : project.name.startsWith('1.') ? 21 : 25
     ext.javaRelease = javaRelease
+
+    if (project.name == '1.20' || project.name.startsWith('1.20.')) {
+        def packFormats = [
+                '1.20': [15, 15], '1.20.1': [15, 15], '1.20.2': [18, 18],
+                '1.20.3': [22, 26], '1.20.4': [22, 26], '1.20.5': [32, 41], '1.20.6': [32, 41]
+        ][project.name]
+        tasks.named('processResources') {
+            inputs.property('packFormats', packFormats)
+            eachFile { file ->
+                file.path = file.path.replaceFirst(/^(data\/[^\/]+\/)(advancement|loot_table|recipe|structure)\//, '$1$2s/')
+                        .replaceFirst(/^(data\/[^\/]+\/tags\/)(block|entity_type|fluid|item)\//, '$1$2s/')
+            }
+            includeEmptyDirs = false
+            if (javaRelease == 17) {
+                filesMatching('**/*.mixins.json') {
+                    filter { line -> line.replace('JAVA_21', 'JAVA_17') }
+
+                }
+            }
+            doLast {
+                if (javaRelease == 17) {
+                    def jsonReader = new groovy.json.JsonSlurper()
+                    project.fileTree(destinationDir).matching {
+                        include 'data/nerocolonies/advancements/recipes/**/*.json'
+                    }.each { file ->
+                        def advancement = jsonReader.parse(file)
+                        advancement.criteria.values().each { criterion ->
+                            if (criterion.trigger == 'minecraft:inventory_changed') {
+                                criterion.conditions.items.each { predicate ->
+                                    if (predicate.items instanceof String) {
+                                        def item = predicate.remove('items')
+                                        if (item.startsWith('#')) {
+                                            predicate.tag = item.substring(1)
+                                        } else {
+                                            predicate.items = [item]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        file.setText(groovy.json.JsonOutput.toJson(advancement), 'UTF-8')
+                    }
+                }
+                if (project.name in ['1.20', '1.20.1', '1.20.2']) {
+                    def tag = new File(destinationDir, 'data/nerocolonies/tags/blocks/clearable_vegetation.json')
+                    tag.setText(tag.getText('UTF-8').replace('"minecraft:short_grass"', '"minecraft:grass"'), 'UTF-8')
+                }
+                def metadata = new File(destinationDir, 'pack.mcmeta')
+                def pack = new groovy.json.JsonSlurper().parse(metadata).pack
+                metadata.setText(groovy.json.JsonOutput.toJson([
+                        pack: [description: pack.description, pack_format: packFormats[0], supported_formats: packFormats]
+                ]), 'UTF-8')
+            }
+        }
+    }
 
     java {
         toolchain.languageVersion = JavaLanguageVersion.of(javaRelease)
@@ -103,45 +197,38 @@ subprojects {
 
     repositories {
         mavenLocal() // Neroland Core (nerolandcore-<loader>-<mc>) published locally; see USING-CORE.md
-        // Neroland Core from GitHub Packages — resolves in CI and on fresh clones, where mavenLocal is
-        // empty. mavenLocal() above still wins for local devs who run Core's publishToMavenLocal.
-        // Auth: gradle props gpr.user/gpr.key, else env GITHUB_ACTOR/GITHUB_TOKEN. Lazy getOrNull() so a
-        // local build that resolves Core from mavenLocal never needs a token. See USING-CORE.md.
-        maven {
-            name = 'NerolandCoreGitHubPackages'
-            url = 'https://maven.pkg.github.com/Neroland/neroland-core'
-            credentials {
-                username = providers.gradleProperty('gpr.user').orElse(providers.environmentVariable('GITHUB_ACTOR')).getOrNull()
-                password = providers.gradleProperty('gpr.key').orElse(providers.environmentVariable('GITHUB_TOKEN')).getOrNull()
-            }
-            content { includeGroup 'za.co.neroland.nerolandcore' }
-        }
-        // NeroEconomy (optional, compileOnly) from GitHub Packages. Declared ONLY when credentials are
-        // present: a repository with a null username fails the whole resolve the moment Gradle consults
-        // it, so a tokenless local build (NeroEconomy from mavenLocal) must not see it at all.
-        def neGprUser = providers.gradleProperty('gpr.user').orElse(providers.environmentVariable('GITHUB_ACTOR')).getOrNull()
-        def neGprKey = providers.gradleProperty('gpr.key').orElse(providers.environmentVariable('GITHUB_TOKEN')).getOrNull()
-        if (neGprUser != null && neGprKey != null) {
-            maven {
-                name = 'NeroEconomyGitHubPackages'
-                url = 'https://maven.pkg.github.com/Neroland/neroeconomy'
-                credentials {
-                    username = neGprUser
-                    password = neGprKey
+        def gprUser = providers.gradleProperty('gpr.user').orElse(providers.environmentVariable('GITHUB_ACTOR')).getOrNull()
+        def gprKey = providers.gradleProperty('gpr.key').orElse(providers.environmentVariable('GITHUB_TOKEN')).getOrNull()
+        if (gprUser != null && gprKey != null) {
+            def addPackages = { String repoName, String repoSlug, String packageGroup ->
+                def configurePackage = { repo ->
+                    repo.name = repoName
+                    repo.url = uri("https://maven.pkg.github.com/Neroland/$repoSlug")
+                    repo.credentials {
+                        username = gprUser
+                        password = gprKey
+                    }
+                    repo.authentication { basic(org.gradle.authentication.http.BasicAuthentication) }
+                    repo.content { includeGroup packageGroup }
                 }
-                content { includeGroup 'za.co.neroland.neroeconomy' }
-            }
-            // Nerospace (optional, compileOnly) from GitHub Packages. Same credential guard: a token-less
-            // build resolves it from mavenLocal() or sets nerospace_compat=false.
-            maven {
-                name = 'NerospaceGitHubPackages'
-                url = 'https://maven.pkg.github.com/Neroland/nerospace'
-                credentials {
-                    username = neGprUser
-                    password = neGprKey
+                // ForgeGradle forwards Maven repository URLs to Mavenizer without credentials or content filters.
+                // The sibling publications are dependency-free jars at Maven-layout paths.
+                if (project.parent?.name == 'forge') {
+                    ivy { repo ->
+                        configurePackage(repo)
+                        patternLayout {
+                            m2compatible = true
+                            artifact '[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]'
+                        }
+                        metadataSources { artifact() }
+                    }
+                } else {
+                    maven { repo -> configurePackage(repo) }
                 }
-                content { includeGroup 'za.co.neroland.nerospace' }
             }
+            addPackages('NerolandCoreGitHubPackages', 'neroland-core', 'za.co.neroland.nerolandcore')
+            addPackages('NeroEconomyGitHubPackages', 'neroeconomy', 'za.co.neroland.neroeconomy')
+            addPackages('NerospaceGitHubPackages', 'nerospace', 'za.co.neroland.nerospace')
         }
         mavenCentral()
         maven { url 'https://maven.fabricmc.net/' }
@@ -358,6 +445,9 @@ subprojects {
                             if (json[k] != null) {
                                 json[k] = conv(json[k])
                             }
+                        }
+                        if (sc.eval(sc.current.version, '<1.20.5') && json.result instanceof Map && json.result.id != null) {
+                            json.result.item = json.result.remove('id')
                         }
                         def dst = new File(outDir, rel)
                         dst.parentFile.mkdirs()

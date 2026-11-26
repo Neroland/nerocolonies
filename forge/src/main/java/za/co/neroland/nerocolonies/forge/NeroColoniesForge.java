@@ -13,7 +13,12 @@ import za.co.neroland.nerocolonies.NeroColoniesCommon;
 @Mod(NeroColoniesCommon.MOD_ID)
 public final class NeroColoniesForge {
 
+    //? if >=1.20.5 {
     public NeroColoniesForge(FMLJavaModLoadingContext context) {
+    //?} else {
+    /*public NeroColoniesForge() {
+        FMLJavaModLoadingContext context = FMLJavaModLoadingContext.get();
+    *///?}
         NeroColoniesCommon.LOGGER.info("[NeroColonies] Forge bootstrap");
         // Common init declares the payloads; the channel below is sealed the moment it is built,
         // so that ordering is mandatory on Forge.

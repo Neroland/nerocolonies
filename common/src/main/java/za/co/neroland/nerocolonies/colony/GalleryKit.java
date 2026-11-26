@@ -11,11 +11,15 @@ import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+//? if >=1.20.5 {
 import net.minecraft.network.chat.ComponentSerialization;
+//?}
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+//? if >=1.21.6 {
 import net.minecraft.util.ProblemReporter;
+//?}
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -161,9 +165,13 @@ final class GalleryKit {
             return;
         }
         CompoundTag tag = new CompoundTag();
+        //? if >=1.20.5 {
         ComponentSerialization.CODEC
                 .encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), text)
                 .result().ifPresent(encoded -> tag.put("text", encoded));
+        //?} else {
+        /*tag.putString("text", Component.Serializer.toJson(text));
+        *///?}
         tag.putString("billboard", "center");
         tag.putInt("line_width", LABEL_LINE_WIDTH);
         tag.putFloat("view_range", LABEL_VIEW_RANGE);

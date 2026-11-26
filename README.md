@@ -11,6 +11,8 @@ own. Everything belongs to the colony rather than to any one block: one shared s
 population of **Nerans** with trades of their own, one morale figure, one research tree, one export
 buffer.
 
+Minecraft 1.20.5 on NeoForge requires loader 20.5.21-beta.
+
 ## Features
 
 - **Colony beacon and claims** — a per-player and a server-wide colony cap, minimum spacing, an
@@ -73,7 +75,7 @@ buffer.
   structure blueprints, the Gratitude Cache loot tables and the land-clearing block tags are all
   data.
 
-Neroland Core (1.15.0 or later) is the only hard dependency. Nerospace, NeroAgriculture,
+Neroland Core (1.24.0 or later) is the only hard dependency. Nerospace, NeroAgriculture,
 NeroLogistics, NeroEconomy, NeroQuests and Energized Power are optional; remove them all and the mod
 still runs.
 

@@ -1,5 +1,8 @@
 # NeroColonies Wiki
 
+The Minecraft 1.20 series is supported through 1.20.6 on Fabric, through 1.20.4 and on 1.20.6 on Forge, and on 1.20.4 through 1.20.6 on NeoForge. NeoForge 1.20.1 uses the Forge 1.20.1 jar. These builds require matching Neroland Core 1.24.0 or newer (below 2.0).
+
+
 Player- and contributor-facing documentation for **NeroColonies**, the settlement layer of the
 Neroland sci-fi Minecraft mod ecosystem. Built on **Neroland Core**.
 
@@ -27,6 +30,8 @@ The failure curve is deliberately gentle and it always stops short of destructio
 that fails decays morale; morale that collapses stops work and leaves Nerans idle; an unpowered job
 station is slow rather than stopped. **No Neran is ever removed as a punishment and nothing a colony
 produced is ever silently voided.** A colony that has gone wrong is a problem to solve.
+
+Minecraft 1.20.5 on NeoForge requires loader 20.5.21-beta.
 
 ## Contents
 

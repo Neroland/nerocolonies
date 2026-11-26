@@ -31,7 +31,11 @@ public interface ResearchEffect {
 
     /** The dispatching codec every {@code effects} list uses. */
     Codec<ResearchEffect> CODEC =
+            //? if >=1.20.5 {
             Identifier.CODEC.dispatch("type", ResearchEffect::typeId, ResearchEffectTypes::codecFor);
+            //?} else {
+            /*Identifier.CODEC.dispatch("type", ResearchEffect::typeId, type -> ResearchEffectTypes.codecFor(type).codec());
+            *///?}
 
     // --- concrete effects ---------------------------------------------------
 

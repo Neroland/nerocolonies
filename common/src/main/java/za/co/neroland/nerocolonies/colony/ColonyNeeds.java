@@ -203,7 +203,7 @@ public final class ColonyNeeds {
             return -1;
         }
         double ticks = Math.ceil(missing / ratePerCycle) * Math.max(1, cycleTicks);
-        return Math.clamp(Math.round(ticks / TICKS_PER_MINUTE), 1, Integer.MAX_VALUE);
+        return (int) Math.max(1L, Math.min(Math.round(ticks / TICKS_PER_MINUTE), Integer.MAX_VALUE));
     }
 
     /** Items gathered per colony cycle by the colony's tradespeople, by item id. */
