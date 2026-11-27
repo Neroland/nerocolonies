@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-27
+
+### Added
+
+- Builds for Minecraft 1.21.3, 26.1 and 26.1.1 on Fabric, Forge and NeoForge, and for NeoForge 1.20.2 and 1.20.3,
+  matching Neroland Core's cells. Nerospace has no build for these lines yet, so its colony types and breathability
+  checks are off there (every colony is generic), and NeroEconomy has none either, so its paid features stay off.
+  JEI has no build pinned for them, so the JEI recipe pages are left out of those jars. On NeoForge 1.20.2 machines
+  expose energy, gas and items through the older capability system.
+
+### Changed
+
+- The planetary amber, hematite and voidglass tags name the Neroland Core items (`nerolandcore:`), since
+  every Nero ore moved to Core 1.25.0.
+- Requires Neroland Core 1.25.0 or newer.
+
 ## [0.9.1]
 
 - Minecraft 1.20 through 1.20.6 on Fabric, 1.20 through 1.20.4 and 1.20.6 on Forge, and 1.20.4 through 1.20.6 on NeoForge.

@@ -101,8 +101,10 @@ effect on next launch). Player-linked colony data, retention, export and erasure
 
 ## Build targets
 
-- **Minecraft:** 26.1.2, 26.2 and 26.3
-- **Loaders:** NeoForge, MinecraftForge/Forge, Fabric (the "9 cells")
+- **Minecraft:** 1.20 through 26.3 (1.20-1.20.6, 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11, 26.1, 26.1.1,
+  26.1.2, 26.2 and 26.3)
+- **Loaders:** Fabric (every version), MinecraftForge/Forge (every version but 1.20.5), NeoForge (1.20.2 and later):
+  54 cells
 - **Java:** 25
 - Mod id: `nerocolonies` · package `za.co.neroland.nerocolonies`
 

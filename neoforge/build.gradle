@@ -14,10 +14,13 @@ plugins {
 def mc = stonecutter.current.version
 def neoVersion = project.findProperty("neo_version_${mc}")
 def jeiMc = mc == '1.20.5' ? '1.20.6' : mc == '1.20.3' ? '1.20.4' : mc
-def jeiVersion = project.findProperty("jei_version_${jeiMc}")
+// NeoForge 20.2 / 20.3 have no JEI build to compile against; the JEI plugin is left out there.
+def jeiVersion = stonecutter.eval(mc, '<1.20.4') ? null : project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
 def nerolandcoreVersion = rootProject.property('nerolandcore_version')
 def neroeconomyVersion = rootProject.property('neroeconomy_version')
+// A cell NeroEconomy has no build for compiles against a neighbouring line (neroeconomy_mc_* in gradle.properties).
+def neroeconomyMc = (rootProject.findProperty("neroeconomy_mc_neoforge_${mc}") ?: rootProject.findProperty("neroeconomy_mc_${mc}") ?: mc).toString()
 // Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
 def mcCeiling = project.findProperty("mc_ceiling_${mc}")
 def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
@@ -32,7 +35,8 @@ def branchDir = project.parent.projectDir
 // the dependency and excludes that package and its services line, so the mod builds with no Nerospace artifact
 // at all. A per-Minecraft-version flag (`nerospace_compat_<mc>`) overrides the global one for this cell only.
 def compatOn = { String flag -> (rootProject.findProperty("${flag}_${mc}") ?: rootProject.findProperty(flag) ?: 'true').toString().trim() == 'true' }
-def nerospaceOn = compatOn('nerospace_compat')
+// `nerospace_compat_neoforge_<mc>=false` does the same for this loader only.
+def nerospaceOn = compatOn('nerospace_compat') && compatOn('nerospace_compat_neoforge')
 if (!nerospaceOn) {
     sourceSets.main.java.exclude 'za/co/neroland/nerocolonies/compat/nerospace/**'
     sourceSets.main.resources.exclude 'META-INF/services/za.co.neroland.nerocolonies.compat.NerospaceCompat'
@@ -83,6 +87,10 @@ sourceSets.main.java.srcDir rootProject.ext.commonJava
 if (!emiFile) {
     sourceSets.main.java.exclude '**/compat/emi/**'
 }
+// No JEI build is pinned for this Minecraft line (jei_version_<mc>), so the JEI plugin is left out of the jar.
+if (!jeiVersion) {
+    sourceSets.main.java.exclude '**/compat/jei/**'
+}
 sourceSets.main.resources.srcDir rootProject.ext.commonResources
 
 dependencies {
@@ -94,7 +102,7 @@ dependencies {
     // NeroEconomy — OPTIONAL. Its public api package on the compile classpath only, for the one bridge
     // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
-    compileOnly "za.co.neroland.neroeconomy:neroeconomy-neoforge-${mc}:${neroeconomyVersion}"
+    compileOnly "za.co.neroland.neroeconomy:neroeconomy-neoforge-${neroeconomyMc}:${neroeconomyVersion}"
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). Dev clients
     // load it only with -PwithNerospace, so the default run proves NeroColonies stays optional-clean.
@@ -144,6 +152,18 @@ dependencies {
 
 tasks.named('test', Test) {
     useJUnitPlatform()
+    // Minecraft 1.20.2's registries refuse to initialise without a game bootstrap, which these plain-JVM tests
+    // do not run. The suites that build registry keys or blocks run on every other cell.
+    if (mc == '1.20.2') {
+        filter {
+            excludeTestsMatching 'za.co.neroland.nerocolonies.colony.ColonyCodecCompatTest'
+            excludeTestsMatching 'za.co.neroland.nerocolonies.colony.ColonyStorageCapacityTest'
+            excludeTestsMatching 'za.co.neroland.nerocolonies.colony.ConstructionFaceBeaconTest'
+            excludeTestsMatching 'za.co.neroland.nerocolonies.data.LenientCodecsTest'
+            excludeTestsMatching 'za.co.neroland.nerocolonies.map.ColonyMapLayersTest'
+            excludeTestsMatching 'za.co.neroland.nerocolonies.map.ColonyMapParityTest'
+        }
+    }
     // Minecraft's logging writes logs/latest.log into the working directory; keep it under build/.
     def runDir = layout.buildDirectory.dir('test-run').get().asFile
     workingDir = runDir
@@ -156,6 +176,7 @@ tasks.named('test', Test) {
 // neoForge.ideSyncTask runs this on IDE sync so bin/main gets the EXPANDED manifest
 // and Run & Debug works — values stay dynamic (from gradle.properties).
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    def legacyMixins = stonecutter.eval(mc, '<1.20.4')
     def props = [
         mod_id                 : rootProject.mod_id,
         mod_version            : rootProject.mod_version,
@@ -176,15 +197,25 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
             name = 'mods.toml'
             filter { line -> line.replace('type = "required"', 'mandatory = true')
                                  .replace('type = "optional"', 'mandatory = false') }
+            // NeoForge before 20.4 has no [[mixins]] table: the config is declared in the jar manifest instead.
+            if (legacyMixins) {
+                filter { line -> line == '[[mixins]]' || line == 'config = "nerocolonies-common.mixins.json"' ? '' : line }
+            }
         }
     }
     into layout.buildDirectory.dir('generated/sources/modMetadata')
 }
 sourceSets.main.resources.srcDir generateModMetadata
 
-// NeoForge 20.5's POM predates the ModDevGradle variants. The original userdev jar supplies the
-// game patches and the original POM supplies dependencies for the compile and test classpaths.
-if (mc == '1.20.5') {
+if (stonecutter.eval(mc, '<1.20.4')) {
+    tasks.named('jar', Jar) {
+        manifest.attributes('MixinConfigs': 'nerocolonies-common.mixins.json')
+    }
+}
+
+// These NeoForge POMs (20.2, 20.3, 20.5) predate the ModDevGradle variants. The original userdev jar supplies
+// the game patches and the original POM supplies dependencies for the compile and test classpaths.
+if (mc in ['1.20.2', '1.20.3', '1.20.5']) {
     dependencies.components.withModule('net.neoforged:neoforge') { details ->
         if (details.id.version == neoVersion) {
             details.withVariant('sources') {

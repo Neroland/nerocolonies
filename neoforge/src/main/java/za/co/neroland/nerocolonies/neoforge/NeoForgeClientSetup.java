@@ -9,7 +9,9 @@ import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+//? if >=1.20.4 {
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+//?}
 import net.neoforged.neoforge.common.NeoForge;
 
 import za.co.neroland.nerocolonies.client.ClientEntityRenderers;
@@ -27,7 +29,12 @@ public final class NeoForgeClientSetup {
     }
 
     public static void init(IEventBus modEventBus) {
+        //? if >=1.20.4 {
         modEventBus.addListener(NeoForgeClientSetup::onRegisterScreens);
+        //?} else {
+        /*modEventBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) ->
+                event.enqueueWork(NeoForgeClientSetup::registerLegacyScreens));
+        *///?}
         modEventBus.addListener(NeoForgeClientSetup::onRegisterEntityRenderers);
         // Drop the synced colony mirrors on leaving a world/server, so one session's colony state can
         // never be shown in the next (or on a server that does not run NeroColonies). This is on the
@@ -36,6 +43,20 @@ public final class NeoForgeClientSetup {
                 ColonyNetwork.clearClientCaches());
     }
 
+    //? if <1.20.4 {
+    /*// NeoForge 20.2 / 20.3 have no RegisterMenuScreensEvent: screens go through vanilla MenuScreens in client setup.
+    private static void registerLegacyScreens() {
+        ScreenBindings.registerAll(new ScreenBindings.Registrar() {
+            @Override
+            public <M extends AbstractContainerMenu, U extends AbstractContainerScreen<M>> void register(
+                    MenuType<M> type, ScreenBindings.ScreenFactory<M, U> factory) {
+                net.minecraft.client.gui.screens.MenuScreens.register(type, factory::create);
+            }
+        });
+    }
+    *///?}
+
+    //? if >=1.20.4 {
     private static void onRegisterScreens(RegisterMenuScreensEvent event) {
         // One canonical menu->screen table in common; adapted onto the NeoForge event here.
         ScreenBindings.registerAll(new ScreenBindings.Registrar() {
@@ -46,6 +67,7 @@ public final class NeoForgeClientSetup {
             }
         });
     }
+    //?}
 
     private static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         // One canonical entity->renderer table in common; adapted onto the NeoForge event here.

@@ -21,6 +21,8 @@ def jeiVersion = project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_neoforge_${mc}")
 def nerolandcoreVersion = rootProject.property('nerolandcore_version')
 def neroeconomyVersion = rootProject.property('neroeconomy_version')
+// A cell NeroEconomy has no build for compiles against a neighbouring line (neroeconomy_mc_* in gradle.properties).
+def neroeconomyMc = (rootProject.findProperty("neroeconomy_mc_forge_${mc}") ?: rootProject.findProperty("neroeconomy_mc_${mc}") ?: mc).toString()
 // Minecraft range: 1.21.x cells are bounded to their API line (gradle.properties); 26.x keep [mc,).
 def mcCeiling = project.findProperty("mc_ceiling_${mc}")
 def mcFloor = project.findProperty("mc_floor_${mc}") ?: mc
@@ -41,7 +43,8 @@ def forgeMajor = forgeBuild.split('\\.')[0]
 // the dependency and excludes that package and its services line, so the mod builds with no Nerospace artifact
 // at all. A per-Minecraft-version flag (`nerospace_compat_<mc>`) overrides the global one for this cell only.
 def compatOn = { String flag -> (rootProject.findProperty("${flag}_${mc}") ?: rootProject.findProperty(flag) ?: 'true').toString().trim() == 'true' }
-def nerospaceOn = compatOn('nerospace_compat')
+// `nerospace_compat_forge_<mc>=false` does the same for this loader only.
+def nerospaceOn = compatOn('nerospace_compat') && compatOn('nerospace_compat_forge')
 if (!nerospaceOn) {
     sourceSets.main.java.exclude 'za/co/neroland/nerocolonies/compat/nerospace/**'
     sourceSets.main.resources.exclude 'META-INF/services/za.co.neroland.nerocolonies.compat.NerospaceCompat'
@@ -89,6 +92,10 @@ sourceSets.main.java.srcDir rootProject.ext.commonJava
 // file leaves the EMI plugin out entirely (and, on Fabric, its entrypoint).
 if (!emiFile) {
     sourceSets.main.java.exclude '**/compat/emi/**'
+}
+// No JEI build is pinned for this Minecraft line (jei_version_<mc>), so the JEI plugin is left out of the jar.
+if (!jeiVersion) {
+    sourceSets.main.java.exclude '**/compat/jei/**'
 }
 sourceSets.main.resources.srcDir rootProject.ext.commonResources
 
@@ -141,7 +148,7 @@ dependencies {
     // NeroEconomy — OPTIONAL. Its public api package on the compile classpath only, for the one bridge
     // class compat/neroeconomy/NeroEconomyBridge (loaded only after isModLoaded("neroeconomy")). Never
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
-    compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${mc}:${neroeconomyVersion}"
+    compileOnly "za.co.neroland.neroeconomy:neroeconomy-forge-${neroeconomyMc}:${neroeconomyVersion}"
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). Dev clients
     // load it only with -PwithNerospace.

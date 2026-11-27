@@ -93,6 +93,8 @@ ext.legacyRenames = [
     [below: '26.1', from: /PayloadTypeRegistry\.serverboundPlay\(\)/, to: 'PayloadTypeRegistry.playC2S()'],
     [below: '26.1', from: /\bModList\.(getMods|isLoaded|getModContainerById)\(/, to: 'ModList.get().$1('],
     // --- NeroColonies additions (pure renames; same rules as above) ---
+    // 1.21.3 has render states but no ArmedEntityRenderState (1.21.4): the living state carries the hand items there.
+    [below: '1.21.4', from: /\bArmedEntityRenderState\b/, to: 'LivingEntityRenderState'],
     // 26.1 renamed ItemStack.getItemHolder() -> typeHolder(), Entity.getTags() -> entityTags(),
     // ChunkPos.asLong(x, z) -> pack(x, z), and the container screen's renderLabels -> extractLabels.
     [below: '26.1', from: /\.typeHolder\(\)/, to: '.getItemHolder()'],

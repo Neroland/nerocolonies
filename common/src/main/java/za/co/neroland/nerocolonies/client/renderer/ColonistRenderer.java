@@ -42,9 +42,11 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
     @SuppressWarnings("this-escape") // idiomatic Minecraft constructor wiring
     public ColonistRenderer(EntityRendererProvider.Context context, ColonistModel model) {
         super(context, model, SHADOW_RADIUS);
-        //? if >=1.21.2 {
+        //? if >=1.21.4 {
         this.addLayer(new ItemInHandLayer<>(this));
-        //?} else {
+        //?} else if >=1.21.2 {
+        /*this.addLayer(new ItemInHandLayer<>(this, context.getItemRenderer()));
+        *///?} else {
         /*this.addLayer(new ItemInHandLayer<>(this, context.getItemInHandRenderer()));
         *///?}
     }
@@ -60,7 +62,7 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
         super.extractRenderState(entity, state, partialTicks);
         ArmedEntityRenderState.extractArmedEntityRenderState(entity, state, this.itemModelResolver, partialTicks);
     }
-    //?} else if >=1.21.2 {
+    //?} else if >=1.21.4 {
     /*@Override
     public ArmedEntityRenderState createRenderState() {
         return new ArmedEntityRenderState();
@@ -70,6 +72,12 @@ public class ColonistRenderer extends MobRenderer<Mob, ArmedEntityRenderState, C
     public void extractRenderState(Mob entity, ArmedEntityRenderState state, float partialTicks) {
         super.extractRenderState(entity, state, partialTicks);
         ArmedEntityRenderState.extractArmedEntityRenderState(entity, state, this.itemModelResolver);
+    }
+    *///?} else if >=1.21.2 {
+    /*// 1.21.3: the living render state (ArmedEntityRenderState above) already carries the hand items.
+    @Override
+    public ArmedEntityRenderState createRenderState() {
+        return new ArmedEntityRenderState();
     }
     *///?} else {
     /*// 1.21.1 has no render states and no getNameTag hook: the status range is checked against the camera

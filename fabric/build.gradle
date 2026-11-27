@@ -26,6 +26,8 @@ def jeiVersion = project.findProperty("jei_version_${jeiMc}")
 def emiFile = project.findProperty("emi_file_fabric_${mc}")
 def nerolandcoreVersion = rootProject.property('nerolandcore_version')
 def neroeconomyVersion = rootProject.property('neroeconomy_version')
+// A cell NeroEconomy has no build for compiles against a neighbouring line (neroeconomy_mc_* in gradle.properties).
+def neroeconomyMc = (rootProject.findProperty("neroeconomy_mc_fabric_${mc}") ?: rootProject.findProperty("neroeconomy_mc_${mc}") ?: mc).toString()
 
 // This node's projectDir is <loader>/versions/<v>; the authoritative loader source +
 // resources live in the BRANCH root (fabric/). Resolve branch-root paths via the parent.
@@ -37,7 +39,8 @@ def branchDir = project.parent.projectDir
 // the dependency and excludes that package and its services line, so the mod builds with no Nerospace artifact
 // at all. A per-Minecraft-version flag (`nerospace_compat_<mc>`) overrides the global one for this cell only.
 def compatOn = { String flag -> (rootProject.findProperty("${flag}_${mc}") ?: rootProject.findProperty(flag) ?: 'true').toString().trim() == 'true' }
-def nerospaceOn = compatOn('nerospace_compat')
+// `nerospace_compat_fabric_<mc>=false` does the same for this loader only.
+def nerospaceOn = compatOn('nerospace_compat') && compatOn('nerospace_compat_fabric')
 if (!nerospaceOn) {
     sourceSets.main.java.exclude 'za/co/neroland/nerocolonies/compat/nerospace/**'
     sourceSets.main.resources.exclude 'META-INF/services/za.co.neroland.nerocolonies.compat.NerospaceCompat'
@@ -85,6 +88,10 @@ sourceSets.main.java.srcDir rootProject.ext.commonJava
 if (!emiFile) {
     sourceSets.main.java.exclude '**/compat/emi/**'
 }
+// No JEI build is pinned for this Minecraft line (jei_version_<mc>), so the JEI plugin is left out of the jar.
+if (!jeiVersion) {
+    sourceSets.main.java.exclude '**/compat/jei/**'
+}
 sourceSets.main.resources.srcDir rootProject.ext.commonResources
 
 dependencies {
@@ -118,9 +125,9 @@ dependencies {
     // implementation/include/jarJar: absent at runtime, NeroColonies runs unchanged.
     if (obfuscated) {
         // 1.21.x: NeroEconomy is an intermediary-named mod jar there, so Loom must remap it.
-        modCompileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${neroeconomyVersion}"
+        modCompileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${neroeconomyMc}:${neroeconomyVersion}"
     } else {
-        compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${mc}:${neroeconomyVersion}"
+        compileOnly "za.co.neroland.neroeconomy:neroeconomy-fabric-${neroeconomyMc}:${neroeconomyVersion}"
     }
 
     // Nerospace — OPTIONAL. compileOnly, never bundled, never required (see the compat block above). On 1.21.x

@@ -1,6 +1,6 @@
 # NeroColonies Wiki
 
-The Minecraft 1.20 series is supported through 1.20.6 on Fabric, through 1.20.4 and on 1.20.6 on Forge, and on 1.20.4 through 1.20.6 on NeoForge. NeoForge 1.20.1 uses the Forge 1.20.1 jar. These builds require matching Neroland Core 1.24.0 or newer (below 2.0).
+NeroColonies supports Minecraft 1.20 through 1.20.6, 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.8, 1.21.10, 1.21.11, 26.1, 26.1.1, 26.1.2, 26.2 and 26.3. Fabric has every version, Forge every version but 1.20.5, and NeoForge 1.20.2 and later. NeoForge 1.20.1 uses the Forge 1.20.1 jar. These builds require matching Neroland Core 1.24.0 or newer (below 2.0).
 
 
 Player- and contributor-facing documentation for **NeroColonies**, the settlement layer of the

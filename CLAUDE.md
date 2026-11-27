@@ -26,7 +26,9 @@
   (storage lives in crates and depots), materials drawn as blocks are laid, eating from storage, four
   beacon module slots and real work for every trade. Verified by the nine-cell build, `ecjCheck`
   and the JUnit suite; **not yet run in a game client**, so never write that it was.
-- Targets **MC 26.1.2, 26.2 AND 26.3** on **NeoForge, MinecraftForge/Forge, and Fabric** → the **"9 cells"**.
+- Targets **MC 1.20 through 26.3** (`mc_versions`) on **NeoForge (1.20.2+), MinecraftForge/Forge (all but 1.20.5), and
+  Fabric** → **54 cells**, the same matrix as Neroland Core (old-version code lives in `//?` blocks and the rename list in
+  `stonecutter.gradle`; the source stays in the 26.x state).
   **Java 25.** Mappings = official Mojang names (26.x ships de-obfuscated; no Parchment).
 - **Neroland Core is the only hard dependency** (floor 1.15.0, the `nerolandcore_version` pin). Nerospace, NeroAgriculture,
   NeroLogistics, NeroEconomy and Energized Power are optional, detected once at init, and interop
@@ -165,7 +167,7 @@
 - **Version/loader axis = Stonecutter.** Each loader×MC is a real node `:<loader>:<mc>`
   (`:fabric:26.1.2 :fabric:26.2 :fabric:26.3 :neoforge:26.1.2 :neoforge:26.2 :neoforge:26.3 :forge:26.1.2 :forge:26.2 :forge:26.3`). `common` is
   NOT a node — its source is spliced via `rootProject.ext.commonJava` / `commonResources`. Dependency pins
-  live in `gradle.properties` as `*_version_<mc>` keys; `mc_versions=26.1.2,26.2,26.3`.
+  live in `gradle.properties` as `*_version_<mc>` keys; `mc_versions=1.20,1.20.1,1.20.2,1.20.3,1.20.4,1.20.5,1.20.6,1.21.1,1.21.3,1.21.4,1.21.5,1.21.8,1.21.10,1.21.11,26.1,26.1.1,26.1.2,26.2,26.3`.
 - **Version-specific code in `common/`.** Non-active nodes run `common/` through Stonecutter (`stonecutterProcessCommon`), so shared code uses the same `//? if >=26.3 {` blocks as the loader `src/` trees. Keep the files in the vcsVersion state, and never put a `*/` inside a disabled block. Datapack files whose format differs by version go in `common/src/main/resources-<mc>/`, which is merged over `common/src/main/resources` for every node at or above `<mc>` (`mergeCommonResources`).
 
 ## Package map
